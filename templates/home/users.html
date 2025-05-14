@@ -1,0 +1,440 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Users {% endblock %}
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+
+  <div class="py-4">
+      <nav aria-label="breadcrumb" class="d-none d-md-inline-block">
+          <ol class="breadcrumb breadcrumb-dark breadcrumb-transparent">
+              <li class="breadcrumb-item">
+                  <a href="#">
+                      <svg class="icon icon-xxs" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                  </a>
+              </li>
+              <li class="breadcrumb-item"><a href="/dashboard_admin.html">Admin Dashboard</a></li>
+              <li class="breadcrumb-item active" aria-current="page">Users</li>
+          </ol>
+      </nav>
+      <div class="d-flex justify-content-between w-100 flex-wrap">
+          <div class="mb-3 mb-lg-0">
+              <h1 class="h4">Remaining Users</h1>
+              <p class="mb-0">List of users with Action.</p>
+          </div>
+      </div>
+  </div>
+
+    <div class="card border-0 shadow">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-centered table-nowrap mb-0 rounded">
+                    <thead class="thead-light">
+                    <tr>
+                        <th class="border-0 rounded-start">First Name</th>
+                        <th class="border-0">Last Name</th>
+                        <th class="border-0">Position</th>
+                        <th class="border-0">Role</th>
+                        <th class="border-0">Plant</th>
+                        <th class="border-0">Email</th>
+                        <th class="border-0">Status</th>
+                        <th class="border-0 rounded-end">Action</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <!-- Item -->
+                    <tr>
+                        <td class="border-0">
+                            <a href="#" class="d-flex align-items-center">
+                                <div><span class="h6">John</span></div>
+                            </a>
+                        </td>
+                        <td class="border-0 fw-bold">Doe</td>
+                        <td class="border-0 fw-bold">
+                            <div class="d-flex align-items-center">
+                                <span class="fw-bold">Admin</span>
+                            </div>
+                        </td>
+                        <td class="border-0 fw-bold">
+                            User
+                        </td>
+                        <td class="border-0">
+                            Bekasi
+                        </td>
+                        <td class="border-0 fw-bold">
+                            johnd@gmail.com
+                        </td>
+                        <td class="border-0 text-secondary">
+                            <div class="d-flex align-items-center">
+                                <span class="fw-bold">Pending</span>
+                            </div>
+                        </td>
+                        <td class="border-0 text-secondary">
+                            <button class="btn btn-sm btn-success" type="button">✔</button>
+                            <button class="btn btn-sm btn-danger" type="button">✘</button>
+                        </td>
+                    </tr>
+                    <!-- End of Item -->
+
+                    <!-- Item -->
+                    <tr>
+                        <td class="border-0">
+                            <a href="#" class="d-flex align-items-center">
+                                <div><span class="h6">Shafira</span></div>
+                            </a>
+                        </td>
+                        <td class="border-0 fw-bold">Aulia</td>
+                        <td class="border-0 fw-bold">
+                            <div class="d-flex align-items-center">
+                                <span class="fw-bold">Intern</span>
+                            </div>
+                        </td>
+                        <td class="border-0 fw-bold">
+                            User
+                        </td>
+                        <td class="border-0">
+                            Jakarta
+                        </td>
+                        <td class="border-0 fw-bold">
+                            shafira@gmail.com
+                        </td>
+                        <td class="border-0 text-secondary">
+                            <div class="d-flex align-items-center">
+                                <span class="fw-bold">Pending</span>
+                            </div>
+                        </td>
+                        <td class="border-0 text-secondary">
+                            <button class="btn btn-sm btn-success" type="button">✔</button>
+                            <button class="btn btn-sm btn-danger" type="button">✘</button>
+                        </td>
+                    </tr>
+                    <!-- End of Item -->
+
+                    <!-- Item -->
+                    <tr>
+                        <td class="border-0">
+                            <a href="#" class="d-flex align-items-center">
+                                <div><span class="h6">Joe</span></div>
+                            </a>
+                        </td>
+                        <td class="border-0 fw-bold">Shmoe</td>
+                        <td class="border-0 fw-bold">
+                            <div class="d-flex align-items-center">
+                                <span class="fw-bold">Operator</span>
+                            </div>
+                        </td>
+                        <td class="border-0 fw-bold">
+                            User
+                        </td>
+                        <td class="border-0">
+                            Bekasi
+                        </td>
+                        <td class="border-0 fw-bold">
+                            shmoe@gmail.com
+                        </td>
+                        <td class="border-0 text-secondary">
+                            <div class="d-flex align-items-center">
+                                <span class="fw-bold">Pending</span>
+                            </div>
+                        </td>
+                        <td class="border-0 text-secondary">
+                            <button class="btn btn-sm btn-success" type="button">✔</button>
+                            <button class="btn btn-sm btn-danger" type="button">✘</button>
+                        </td>
+                    </tr>
+                    <!-- End of Item -->
+
+                    <!-- Item -->
+                    <tr>
+                        <td class="border-0">
+                            <a href="#" class="d-flex align-items-center">
+                                <div><span class="h6">Jane</span></div>
+                            </a>
+                        </td>
+                        <td class="border-0 fw-bold">Doe</td>
+                        <td class="border-0 fw-bold">
+                            <div class="d-flex align-items-center">
+                                <span class="fw-bold">Supervisor</span>
+                            </div>
+                        </td>
+                        <td class="border-0 fw-bold">
+                            User
+                        </td>
+                        <td class="border-0 fw-bold">
+                            <div class="d-flex align-items-center">
+                                <span class="fw-bold">Bekasi</span>
+                            </div>
+                        </td>
+                        <td class="border-0 fw-bold">
+                            janed@gmail.com
+                        </td>
+                        <td class="border-0 text-secondary">
+                            <div class="d-flex align-items-center">
+                                <span class="fw-bold">Pending</span>
+                            </div>
+                        </td>
+                        <td class="border-0 text-secondary">
+                            <button class="btn btn-sm btn-success" type="button">✔</button>
+                            <button class="btn btn-sm btn-danger" type="button">✘</button>
+                        </td>
+                    </tr>
+                    <!-- End of Item -->
+
+                    <!-- Item -->
+                    <tr>
+                        <td class="border-0">
+                            <a href="#" class="d-flex align-items-center">
+                                <div><span class="h6">Joe</span></div>
+                            </a>
+                        </td>
+                        <td class="border-0 fw-bold">Blow</td>
+                        <td class="border-0 fw-bold">
+                            Admin
+                        </td>
+                        <td class="border-0 fw-bold">
+                            User
+                        </td>
+                        <td class="border-0 fw-bold">
+                            Bekasi
+                        </td>
+                        <td class="border-0 fw-bold">
+                            blow@gmail.com
+                        </td>
+                        <td class="border-0 text-secondary">
+                            <div class="d-flex align-items-center">
+                                <span class="fw-bold">Pending</span>
+                            </div>
+                        </td>
+                        <td class="border-0 text-secondary">
+                            <button class="btn btn-sm btn-success" type="button">✔</button>
+                            <button class="btn btn-sm btn-danger" type="button">✘</button>
+                        </td>
+                    </tr>
+                    <!-- End of Item -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer px-3 border-0 d-flex flex-column flex-lg-row align-items-center justify-content-between">
+            <nav aria-label="Page navigation example">
+                <ul class="pagination mb-0">
+                    <li class="page-item">
+                        <a class="page-link" href="#">Previous</a>
+                    </li>
+                    <li class="page-item active">
+                        <a class="page-link" href="#">1</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">2</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">3</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">4</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">5</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Next</a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="fw-normal small mt-4 mt-lg-0">Showing <b>5</b> out of <b>25</b> entries</div>
+        </div>
+    </div>
+
+    <div class="py-4">
+        <div class="d-flex justify-content-between w-100 flex-wrap">
+            <div class="mb-3 mb-lg-0">
+                <h1 class="h4">Users</h1>
+                <p class="mb-0">List of users.</p>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="card border-0 shadow mb-4">
+      <div class="card-body">
+          <div class="table-responsive">
+              <table class="table table-centered table-nowrap mb-0 rounded">
+                  <thead class="thead-light">
+                      <tr>
+                          <th class="border-0 rounded-start">#</th>
+                          <th class="border-0">First Name</th>
+                          <th class="border-0">Last Name</th>
+                          <th class="border-0">Position</th>
+                          <th class="border-0">Role</th>
+                          <th class="border-0">Plant</th>
+                          <th class="border-0 rounded-end">Email</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      <!-- Item -->
+                      <tr>
+                          <td><a href="#" class="text-primary fw-bold">1</a> </td>
+                          <td class="fw-bold d-flex align-items-center">
+                              John
+                          </td>
+                          <td>
+                              Doe
+                          </td>
+                          <td>
+                              Supervisor
+                          </td>
+                          <td>
+                              User
+                          </td>
+                          <td>
+                              Jakarta
+                          </td>
+                          <td class="text-success">
+                              <div class="d-flex align-items-center">
+                                  <span class="fw-bold">joed@gmail.com</span>
+                              </div>
+                          </td>
+                      </tr>
+                      <!-- End of Item -->
+
+                      <!-- Item -->
+                      <tr>
+                          <td><a href="#" class="text-primary fw-bold">2</a> </td>
+                          <td class="fw-bold d-flex align-items-center">
+                              Shafira
+                          </td>
+                          <td>
+                              Aulia
+                          </td>
+                          <td>
+                              Intern
+                          </td>
+                          <td>
+                              User
+                          </td>
+                          <td>
+                              Jakarta
+                          </td>
+                          <td class="text-success">
+                              <div class="d-flex align-items-center">
+                                  <span class="fw-bold">shafira@gmail.com</span>
+                              </div>                          
+                          </td>
+                      </tr>
+                      <!-- End of Item -->
+
+                      <!-- Item -->
+                      <tr>
+                          <td><a href="#" class="text-primary fw-bold">3</a> </td>
+                          <td class="fw-bold d-flex align-items-center">
+                              Jane
+                          </td>
+                          <td>
+                              Doe
+                          </td>
+                          <td>
+                              Admin
+                          </td>
+                          <td>
+                              User
+                          </td>
+                          <td>
+                              Bekasi
+                          </td>
+                          <td class="text-success">
+                              <div class="d-flex align-items-center">
+                                  <span class="fw-bold">janed@gmail.com</span>
+                              </div>
+                          </td>
+                      </tr>
+                      <!-- End of Item -->
+
+                      <!-- Item -->
+                      <tr>
+                          <td><a href="#" class="text-primary fw-bold">4</a> </td>
+                          <td class="fw-bold d-flex align-items-center">
+                              Joe
+                          </td>
+                          <td>
+                             Shmoe
+                          </td>
+                          <td>
+                              Admin
+                          </td>
+                          <td>
+                              User
+                          </td>
+                          <td>
+                              Cikarang
+                          </td>
+                          <td class="text-danger">
+                              <div class="d-flex align-items-center">
+                                  <span class="fw-bold">shmoe@gmail.com</span>
+                              </div>                                
+                          </td>
+                      </tr>
+                      <!-- End of Item -->
+
+                      <!-- Item -->
+                      <tr>
+                          <td><a href="#" class="text-primary fw-bold">5</a> </td>
+                          <td class="fw-bold d-flex align-items-center">
+                              Joe
+                          </td>
+                          <td>
+                              Blow
+                          </td>
+                          <td>
+                              Admin
+                          </td>
+                          <td>
+                                User
+                          </td>
+                          <td>
+                              Cikarang
+                          </td>
+                          <td class="text-success">
+                              blowj@gmail.com
+                          </td>
+                      </tr>
+                      <!-- End of Item -->
+                  </tbody>
+              </table>
+          </div>
+      </div>
+        <div class="card-footer px-3 border-0 d-flex flex-column flex-lg-row align-items-center justify-content-between">
+            <nav aria-label="Page navigation example">
+                <ul class="pagination mb-0">
+                    <li class="page-item">
+                        <a class="page-link" href="#">Previous</a>
+                    </li>
+                    <li class="page-item active">
+                        <a class="page-link" href="#">1</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">2</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">3</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">4</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">5</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Next</a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="fw-normal small mt-4 mt-lg-0">Showing <b>10</b> out of <b>25</b> entries</div>
+        </div>
+  </div>
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}{% endblock javascripts %}
