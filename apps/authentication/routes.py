@@ -62,7 +62,10 @@ def login():
         if user and verify_pass(password, user.password):
 
             login_user(user)
-            return redirect(url_for('authentication_blueprint.route_default'))
+            if user.email == 'admin@gmail.com':
+                return redirect(url_for('home_blueprint.admin'))
+            else:
+                return redirect(url_for('home_blueprint.index'))
 
         # Something (user or pass) is not ok
         return render_template('accounts/login.html',
