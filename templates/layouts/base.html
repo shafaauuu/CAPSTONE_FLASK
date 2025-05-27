@@ -50,12 +50,12 @@
 </head>
 <body>
 
-    {% if current_user.email == 'admin@gmail.com' %}
+    {% if session['role'] == 'admin' %}
         {% include 'includes/sidebar_admin.html' %}
     {% else %}
         {% include 'includes/sidebar.html' %}
     {% endif %}
-    
+
     <main class="content">
 
       {% include 'includes/navigation.html' %}

@@ -1,0 +1,92 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Search Results {% endblock %}
+
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+
+    <div class="py-4">
+        <nav aria-label="breadcrumb" class="d-none d-md-inline-block">
+            <ol class="breadcrumb breadcrumb-dark breadcrumb-transparent">
+                <li class="breadcrumb-item">
+                    <a href="{{ url_for('home_blueprint.index') }}">
+                        <svg class="icon icon-xxs" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    </a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">Search Results</li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between w-100 flex-wrap">
+            <div class="mb-3 mb-lg-0">
+                <h1 class="h4">Search Results</h1>
+                {% if query %}
+                <p class="mb-0">Showing results for: <strong>{{ query }}</strong></p>
+                {% else %}
+                <p class="mb-0">No search query provided</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="h5 mb-0">Search Results</h2>
+                {% if query %}
+                <a href="{{ url_for('home_blueprint.search') }}" class="btn btn-sm btn-primary">New Search</a>
+                {% endif %}
+            </div>
+
+            {% if not query %}
+            <div class="alert alert-info" role="alert">
+                Please enter a search term in the search box at the top of the page.
+            </div>
+            {% elif results|length == 0 %}
+            <div class="alert alert-warning" role="alert">
+                No results found for "{{ query }}". Please try a different search term.
+            </div>
+            {% else %}
+            <div class="table-responsive">
+                <table class="table table-centered table-nowrap mb-0 rounded">
+                    <thead class="thead-light">
+                        <tr>
+                            <th class="border-0 rounded-start">Type</th>
+                            <th class="border-0">Name/Title</th>
+                            <th class="border-0">Details</th>
+                            <th class="border-0 rounded-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for result in results %}
+                        <tr>
+                            <td class="fw-bold">{{ result.type|title }}</td>
+                            <td>{{ result.name }}</td>
+                            <td>{{ result.details }}</td>
+                            <td>
+                                {% if result.type == 'user' %}
+                                <a href="{{ url_for('home_blueprint.profile', user_id=result.id) }}" class="btn btn-sm btn-outline-primary">View Profile</a>
+                                {% elif result.type == 'admin' %}
+                                <a href="{{ url_for('home_blueprint.dashboard_admin') }}{% if result.id %}?admin_id={{ result.id }}{% endif %}" class="btn btn-sm btn-outline-primary">View Admin</a>
+                                {% elif result.type == 'sensor' %}
+                                <a href="{{ url_for('home_blueprint.data_sensor') }}{% if result.id %}?sensor_id={{ result.id }}{% endif %}" class="btn btn-sm btn-outline-primary">View Data</a>
+                                {% elif result.type == 'alert' %}
+                                <a href="{{ url_for('home_blueprint.alert_logs') }}{% if result.id %}?alert_id={{ result.id }}{% endif %}" class="btn btn-sm btn-outline-primary">View Alert</a>
+                                {% elif result.type == 'history' %}
+                                <a href="{{ url_for('home_blueprint.history') }}{% if result.id %}?record_id={{ result.id }}{% endif %}" class="btn btn-sm btn-outline-primary">View History</a>
+                                {% else %}
+                                <a href="{{ result.url|default('#') }}" class="btn btn-sm btn-outline-secondary">View Details</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+{% endblock content %}
+
+{% block javascripts %}{% endblock javascripts %}

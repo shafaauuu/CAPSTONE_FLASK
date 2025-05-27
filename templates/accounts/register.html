@@ -1,8 +1,7 @@
 {% extends "layouts/base-fullscreen.html" %}
 
-{% block title %} Sign UP {% endblock %} 
+{% block title %} Sign UP {% endblock %}
 
-<!-- Specific Page CSS goes HERE  -->
 {% block stylesheets %}{% endblock stylesheets %}
 
 {% block content %}
@@ -12,90 +11,127 @@
             <div class="container">
                 <div class="row justify-content-center form-bg-image" data-background-lg="{{ url_for('static', filename='assets/img/illustrations/signin.svg') }}">
                     <div class="col-12 d-flex align-items-center justify-content-center">
-                        <div class="bg-white shadow border-0 rounded border-light p-4 p-lg-5 w-100 fmxw-500">
+                        <div class="bg-white shadow border-0 rounded border-light p-4 p-lg-5 w-100 fmxw-500" style="max-height: 80vh; overflow-y: auto;">
                             <div class="text-center text-md-center mb-4 mt-md-0">
-                                <h1 class="mb-0 h3">
-                                    Sign UP
-                                </h1>
+                                <h1 class="mb-0 h3">Sign UP</h1>
                                 <br />
                                 <p>
                                     {% if msg %}
                                         {{ msg | safe }}
                                     {% else %}
-                                        Add your username, email and password
-                                    {% endif %}                                     
-                                </p> 
+                                        Let's get you set up with an account.
+                                    {% endif %}
+                                </p>
                             </div>
-                            
+
                             {% if success %}
-
                                 <div class="d-grid">
-                                    <a href="{{ url_for('authentication_blueprint.login') }}" 
-                                       class="btn btn-gray-800">Sign IN</a>
+                                    <a href="{{ url_for('authentication_blueprint.login') }}" class="btn btn-gray-800">Sign IN</a>
                                 </div>
-
                             {% else %}
-
                                 <form method="post" action="" class="mt-4">
-                                    
                                     {{ form.hidden_tag() }}
 
+                                    <!-- NPK -->
                                     <div class="form-group mb-4">
-                                        <label for="email">Username</label>
+                                        <label for="npk">Your NPK</label>
                                         <div class="input-group">
-                                            <span class="input-group-text" id="basic-addon1">
-                                                <span class="fas fa-user-circle"></span>
-                                            </span>
-                                            {{ form.username(placeholder="Username", class="form-control") }}
-                                        </div>  
+                                            <span class="input-group-text"><span class="fas fa-id-card"></span></span>
+                                            {{ form.npk(placeholder="NPK", class="form-control") }}
+                                        </div>
                                     </div>
 
-                                    <!-- Form -->
+                                    <!-- Name -->
+                                    <div class="form-group mb-4">
+                                        <label for="name">Your Name</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><span class="fas fa-user"></span></span>
+                                            {{ form.name(placeholder="Name", class="form-control") }}
+                                        </div>
+                                    </div>
+
+                                    <!-- Plant -->
+                                    <div class="form-group mb-4">
+                                        <label for="plant">Your Plant</label>
+                                        <!-- dropdown -->
+                                        <div class="input-group">
+                                            <span class="input-group-text"><span class="fas fa-building"></span></span>
+                                            {{ form.plant(class="form-control") }}
+                                        </div>
+                                    </div>
+
+                                    <!-- Department -->
+                                    <div class="form-group mb-4">
+                                        <label for="department">Your Department</label>
+                                        <!-- dropdown -->
+                                        <div class="input-group">
+                                            <span class="input-group-text"><span class="fas fa-sitemap"></span></span>
+                                            {{ form.department(class="form-control") }}
+                                        </div>
+                                    </div>
+
+                                    <!-- Division -->
+                                    <div class="form-group mb-4">
+                                        <label for="division">Your Division</label>
+                                        <!-- dropdown -->
+                                        <div class="input-group">
+                                            <span class="input-group-text"><span class="fas fa-users-cog"></span></span>
+                                            {{ form.division(class="form-control") }}
+                                        </div>
+                                    </div>
+
+                                    <!-- Email -->
                                     <div class="form-group mb-4">
                                         <label for="email">Your Email</label>
                                         <div class="input-group">
-                                            <span class="input-group-text" id="basic-addon1">
-                                                <span class="fas fa-envelope"></span>
-                                            </span>
-                                            {{ form.email(placeholder="Email", class="input form-control", type="email") }}
-                                        </div>  
-                                    </div>
-                                    <!-- End of Form -->
-                                    <div class="form-group">
-                                        <!-- Form -->
-                                        <div class="form-group mb-4">
-                                            <label for="password">Your Password</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text" id="basic-addon2">
-                                                    <span class="fas fa-unlock-alt"></span>
-                                                </span>
-                                                {{ form.password(placeholder="Password", class="form-control", type="password") }}
-                                            </div>  
-                                        </div>
-                                        <!-- End of Form -->
-                                        <div class="mb-4">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" value="" id="remember">
-                                                <label class="form-check-label fw-normal mb-0" for="remember">
-                                                    I agree to the <a href="#" class="fw-bold">terms and conditions</a>
-                                                </label>
-                                            </div>
+                                            <span class="input-group-text"><span class="fas fa-envelope"></span></span>
+                                            {{ form.email(placeholder="Email", class="form-control") }}
                                         </div>
                                     </div>
+
+                                    <!-- Password -->
+                                    <div class="form-group mb-4">
+                                        <label for="password">Your Password</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><span class="fas fa-lock"></span></span>
+                                            {{ form.password(placeholder="Password", class="form-control") }}
+                                        </div>
+                                    </div>
+
+                                    <!-- Role -->
+                                    <div class="form-group mb-4">
+                                        <label for="role">Your Role</label>
+                                        <!-- dropdown -->
+                                        <div class="input-group">
+                                            <span class="input-group-text"><span class="fas fa-user-tag"></span></span>
+                                            {{ form.role(class="form-control") }}
+                                        </div>
+                                    </div>
+
+                                    <!-- Terms -->
+                                    <div class="form-group mb-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="" id="terms">
+                                            <label class="form-check-label fw-normal mb-0" for="terms">
+                                                I agree to the <a href="#" class="fw-bold">terms and conditions</a>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- Submit -->
                                     <div class="d-grid">
-                                        <button type="submit" name="register" class="btn btn-gray-800">Sign UP</button>
+                                        <button type="submit" name="register" id="register-btn" class="btn btn-gray-800" disabled>Sign UP</button>
                                     </div>
                                 </form>
+
                                 <br />
                                 <div class="d-flex justify-content-center align-items-center mt-4">
-                                    <span class="fw-normal">
-                                        Already have an account? 
-                                        <a href="{{ url_for('authentication_blueprint.login') }}" class="fw-bold">Sign IN</a>
-                                    </span>
+                                <span class="fw-normal">
+                                    Already have an account?
+                                    <a href="{{ url_for('authentication_blueprint.login') }}" class="fw-bold">Sign IN</a>
+                                </span>
                                 </div>
-                            
                             {% endif %}
-
                         </div>
                     </div>
                 </div>
@@ -105,5 +141,16 @@
 
 {% endblock content %}
 
-<!-- Specific Page JS goes HERE  -->
-{% block javascripts %}{% endblock javascripts %}
+{% block javascripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Terms checkbox functionality
+        const termsCheckbox = document.getElementById('terms');
+        const registerButton = document.getElementById('register-btn');
+        
+        termsCheckbox.addEventListener('change', function() {
+            registerButton.disabled = !this.checked;
+        });
+    });
+</script>
+{% endblock javascripts %}

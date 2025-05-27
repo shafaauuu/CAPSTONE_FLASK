@@ -1,6 +1,6 @@
 {% extends "layouts/base.html" %}
 
-{% block title %} Profile {% endblock %} 
+{% block title %} Profile {% endblock %}
 
 <!-- Specific Page CSS goes HERE  -->
 {% block stylesheets %}{% endblock stylesheets %}
@@ -17,8 +17,8 @@
                 </li>
 
                 <li class="breadcrumb-item">
-                    <a href="{% if current_user.email == 'admin@gmail.com' %}/dashboard_admin.html{% else %}/dashboard.html{% endif %}">
-                        {% if current_user.email == 'admin@gmail.com' %}
+                    <a href="{% if session['role'] == 'admin' %}/dashboard_admin{% else %}/dashboard{% endif %}">
+                        {% if session['role'] == 'admin' %}
                             Admin Dashboard
                         {% else %}
                             User Dashboard
@@ -35,57 +35,46 @@
                 <h2 class="h5 mb-4">Account Information</h2>
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="data-label">First Name</label>
-                        <input class="form-control" id="first_name" type="text" value="Shafira" readonly>
+                        <label class="data-label">NPK</label>
+                        <input class="form-control" id="npk" type="text" value="{{ profile.npk or 'N/A' }}" readonly>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label class="data-label">Last Name</label>
-                        <input class="form-control" id="last_name" type="text" value="Aulia" readonly>
+                        <label class="data-label">Name</label>
+                        <input class="form-control" id="name" type="text" value="{{ profile.name or 'N/A' }}" readonly>
                     </div>
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="data-label">NPNM</label>
-                        <input class="form-control" id="gender" type="text" value="123456789" readonly>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="data-label">Position</label>
-                        <input class="form-control" id="position" type="text" value="Intern" readonly>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="data-label">Role</label>
-                        <input class="form-control" id="role" type="text" value="User" readonly>
-                    </div>
                     <div class="col-md-6 mb-3">
                         <label class="data-label">Department</label>
-                        <input class="form-control" id="department" type="text" value="IT" readonly>
+                        <input class="form-control" id="department" type="text" value="{{ profile.department_name or 'N/A' }}" readonly>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="data-label">Division</label>
+                        <input class="form-control" id="division" type="text" value="{{ profile.division_name or 'N/A' }}" readonly>
                     </div>
                 </div>
 
 
                 <div class="row align-items-center">
                     <div class="col-md-6 mb-3">
-                        <label class="data-label">Division</label>
-                        <input class="form-control" id="division" type="text" value="Developer" readonly>
+                        <label class="data-label">Role</label>
+                        <input class="form-control" id="role" type="text" value="{{ profile.role_name or 'N/A' }}" readonly>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="data-label">Plant</label>
-                        <input class="form-control" id="birthday" type="text" value="Jakarta" readonly>
+                        <input class="form-control" id="plant" type="text" value="{{ profile.plant_name or 'N/A' }}" readonly>
                     </div>
                 </div>
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="data-label">Email</label>
-                        <input class="form-control" id="email" type="text" value="{{ current_user.email }}" readonly>
+                        <input class="form-control" id="email" type="text" value="{{ profile.email or 'N/A' }}" readonly>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label class="data-label">Phone</label>
-                        <input class="form-control" id="phone" type="text" value="+62 838 9598 8764" readonly>
+                        <label class="data-label">Creation Date</label>
+                        <input class="form-control" id="crated_at" type="text" value="{{ profile.created_at or 'N/A' }}" readonly>
                     </div>
                 </div>
             </div>
@@ -98,13 +87,13 @@
                         <div class="card-body pb-5">
                             <img src="{{ url_for('static', filename='assets/img/team/person.png') }}" class="avatar-xl rounded-circle mx-auto mt-n7 mb-4" alt="Neil Portrait">
                             <h4 class="h3">
-                                Shafira Aulia
+                                {{ profile.name or 'N/A' }}
                             </h4>
                             <h5 class="fw-normal">
-                                {{ current_user.username }}
+                                {{ profile.npk or 'N/A' }}
                             </h5>
                             <p class="text-gray mb-4">
-                                {{ current_user.email }}
+                                {{ profile.role_name or 'N/A' }} <br>
                             </p>
                         </div>
                       </div>

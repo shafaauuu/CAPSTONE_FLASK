@@ -3,7 +3,28 @@
 {% block title %} History {% endblock %}
 
 <!-- Specific Page CSS goes HERE  -->
-{% block stylesheets %}{% endblock stylesheets %}
+{% block stylesheets %}
+{{ super() }}
+<style>
+  .status-badge {
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: bold;
+  }
+  .status-approved {
+    background-color: #d4edda;
+    color: #155724;
+  }
+  .status-rejected {
+    background-color: #f8d7da;
+    color: #721c24;
+  }
+  .reason-tooltip {
+    cursor: pointer;
+  }
+</style>
+{% endblock stylesheets %}
 
 {% block content %}
 
@@ -17,17 +38,17 @@
                           <svg class="icon icon-xxs" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
                       </a>
                   </li>
-                  <li class="breadcrumb-item"><a href="/dashboard_admin.html">Admin Dashboard</a></li>
+                  <li class="breadcrumb-item"><a href="/dashboard-admin">Admin Dashboard</a></li>
                   <li class="breadcrumb-item active" aria-current="page">History</li>
               </ol>
           </nav>
-          <h2 class="h4">History</h2>
-          <p class="mb-0">User Acceptance and Rejected History</p>
+          <h2 class="h4">Approval History</h2>
+          <p class="mb-0">User Approval and Rejection History</p>
       </div>
       <div class="btn-toolbar mb-2 mb-md-0">
           <div class="btn-group ms-2 ms-lg-3">
-              <button type="button" class="btn btn-sm btn-outline-gray-600">Share</button>
-              <button type="button" class="btn btn-sm btn-outline-gray-600">Export</button>
+              <button type="button" class="btn btn-sm btn-outline-gray-600" id="refreshHistory">Refresh</button>
+              <button type="button" class="btn btn-sm btn-outline-gray-600" id="exportHistory">Export</button>
           </div>
       </div>
   </div>
@@ -41,239 +62,697 @@
                           <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"></path>
                       </svg>
                   </span>
-                  <input type="text" class="form-control" placeholder="Search user/ID/date">
+                  <input type="text" id="historySearch" class="form-control" placeholder="Search by user name or email">
+              </div>
+          </div>
+          <div class="col-4 col-md-2 col-xl-2 ps-md-0 text-end">
+              <div class="dropdown">
+                  <button class="btn btn-sm btn-outline-gray-600 dropdown-toggle" type="button" id="filterButton" data-bs-toggle="dropdown" aria-expanded="false">
+                      <svg class="icon icon-xs" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                      Filter
+                  </button>
+                  <div class="dropdown-menu" aria-labelledby="filterButton">
+                      <a class="dropdown-item status-filter" href="#" data-status="all">All</a>
+                      <a class="dropdown-item status-filter" href="#" data-status="Approved">Approved</a>
+                      <a class="dropdown-item status-filter" href="#" data-status="Rejected">Rejected</a>
+                  </div>
               </div>
           </div>
       </div>
   </div>
   
+  <div class="fw-normal small mb-3" id="history-counter">Showing <b>0</b> items</div>
+  
   <div class="card card-body border-0 shadow table-wrapper table-responsive">
       <table class="table table-hover">
           <thead>
               <tr>
-                  <th class="border-gray-200">#</th>
-                  <th class="border-gray-200">First Name</th>
-                  <th class="border-gray-200">Last Name</th>
-                  <th class="border-gray-200">Join Date</th>
-                  <th class="border-gray-200">Role</th>
+                  <th class="border-gray-200">User ID</th>
+                  <th class="border-gray-200">User Name</th>
+                  <th class="border-gray-200">Email</th>
+                  <th class="border-gray-200">Approved By</th>
+                  <th class="border-gray-200">Action Date</th>
                   <th class="border-gray-200">Status</th>
-                  <th class="border-gray-200">Accepted/Rejected Date</th>
               </tr>
           </thead>
-          <tbody>
-              <!-- Item -->
+          <tbody id="history-table-body">
               <tr>
-                  <td>
-                      <a href="#" class="fw-bold">
-                          1
-                      </a>
-                  </td>
-                  <td>
-                      <span class="fw-normal">Jane</span>
-                  </td>
-                  <td><span class="fw-normal">Dontol</span></td>
-                  <td><span class="fw-normal">1 Jun 2024</span></td>
-                  <td><span class="fw-bold">User</span></td>
-                  <td><span class="fw-bold text-warning">Pending</span></td>
-                  <td>
-{#                      #}
-                  </td>
-              </tr>
-              <!-- Item -->
-              <tr>
-                  <td>
-                      <a href="#" class="fw-bold">
-                          2
-                      </a>
-                  </td>
-                  <td>
-                      <span class="fw-normal">John</span>
-                  </td>
-                  <td><span class="fw-normal">Cena</span></td>
-                  <td><span class="fw-normal">1 May 2024</span></td>
-                  <td><span class="fw-bold">User</span></td>
-                  <td><span class="fw-bold text-success">Accepted</span></td>
-                  <td>
-{#                      #}
-                  </td>
-              </tr> 
-              <!-- Item -->
-              <tr>
-                  <td>
-                      <a href="#" class="fw-bold">
-                          3
-                      </a>
-                  </td>
-                  <td>
-                      <span class="fw-normal">Jo</span>
-                  </td>
-                  <td><span class="fw-normal">Martin</span></td>
-                  <td><span class="fw-normal">1 Apr 2024</span></td>
-                  <td><span class="fw-bold">User</span></td>
-                  <td><span class="fw-bold text-success">Accepted</span></td>
-                  <td>
-{#                     #}
-                  </td>
-              </tr> 
-              <!-- Item -->
-              <tr>
-                  <td>
-                      <a href="#" class="fw-bold">
-                          4
-                      </a>
-                  </td>
-                  <td>
-                      <span class="fw-normal">Ning</span>
-                  </td>
-                  <td><span class="fw-normal">Ning</span></td>
-                  <td><span class="fw-normal">1 Mar 2024</span></td>
-                  <td><span class="fw-bold">User</span></td>
-                  <td><span class="fw-bold text-success">Accepted</span></td>
-                  <td>
-{#                      #}
-                  </td>
-              </tr> 
-              <!-- Item -->
-              <tr>
-                  <td>
-                      <a href="#" class="fw-bold">
-                          5
-                      </a>
-                  </td>
-                  <td>
-                      <span class="fw-normal">Jane</span>
-                  </td>
-                  <td><span class="fw-normal">Dory</span></td>
-                  <td><span class="fw-normal">1 Feb 2025</span></td>
-                  <td><span class="fw-bold">User</span></td>
-                  <td><span class="fw-bold text-danger">Rejected</span></td>
-                  <td>
-{#                      #}
-                  </td>
-              </tr>
-
-              <tr>
-                  <td>
-                      <a href="#" class="fw-bold">
-                          6
-                      </a>
-                  </td>
-                  <td>
-                      <span class="fw-normal">Jane</span>
-                  </td>
-                  <td><span class="fw-normal">Dontol</span></td>
-                  <td><span class="fw-normal">1 Jun 2024</span></td>
-                  <td><span class="fw-bold">User</span></td>
-                  <td><span class="fw-bold text-warning">Pending</span></td>
-                  <td>
-                      {#                      #}
-                  </td>
-              </tr>
-              <!-- Item -->
-              <tr>
-                  <td>
-                      <a href="#" class="fw-bold">
-                          7
-                      </a>
-                  </td>
-                  <td>
-                      <span class="fw-normal">John</span>
-                  </td>
-                  <td><span class="fw-normal">Cena</span></td>
-                  <td><span class="fw-normal">1 May 2024</span></td>
-                  <td><span class="fw-bold">User</span></td>
-                  <td><span class="fw-bold text-success">Accepted</span></td>
-                  <td>
-                      {#                      #}
-                  </td>
-              </tr>
-              <!-- Item -->
-              <tr>
-                  <td>
-                      <a href="#" class="fw-bold">
-                          8
-                      </a>
-                  </td>
-                  <td>
-                      <span class="fw-normal">Jo</span>
-                  </td>
-                  <td><span class="fw-normal">Martin</span></td>
-                  <td><span class="fw-normal">1 Apr 2024</span></td>
-                  <td><span class="fw-bold">User</span></td>
-                  <td><span class="fw-bold text-success">Accepted</span></td>
-                  <td>
-                      {#                     #}
-                  </td>
-              </tr>
-              <!-- Item -->
-              <tr>
-                  <td>
-                      <a href="#" class="fw-bold">
-                          9
-                      </a>
-                  </td>
-                  <td>
-                      <span class="fw-normal">Ning</span>
-                  </td>
-                  <td><span class="fw-normal">Ning</span></td>
-                  <td><span class="fw-normal">1 Mar 2024</span></td>
-                  <td><span class="fw-bold">User</span></td>
-                  <td><span class="fw-bold text-success">Accepted</span></td>
-                  <td>
-                      {#                      #}
-                  </td>
-              </tr>
-              <!-- Item -->
-              <tr>
-                  <td>
-                      <a href="#" class="fw-bold">
-                          10
-                      </a>
-                  </td>
-                  <td>
-                      <span class="fw-normal">Jane</span>
-                  </td>
-                  <td><span class="fw-normal">Dory</span></td>
-                  <td><span class="fw-normal">1 Feb 2025</span></td>
-                  <td><span class="fw-bold">User</span></td>
-                  <td><span class="fw-bold text-danger">Rejected</span></td>
-                  <td>
-                      {#                      #}
-                  </td>
+                  <td colspan="6" class="text-center">Loading history...</td>
               </tr>
           </tbody>
       </table>
-      <div class="card-footer px-3 border-0 d-flex flex-column flex-lg-row align-items-center justify-content-between">
-          <nav aria-label="Page navigation example">
-              <ul class="pagination mb-0">
-                  <li class="page-item">
-                      <a class="page-link" href="#">Previous</a>
-                  </li>
-                  <li class="page-item active">
-                      <a class="page-link" href="#">1</a>
-                  </li>
-                  <li class="page-item">
-                      <a class="page-link" href="#">2</a>
-                  </li>
-                  <li class="page-item">
-                      <a class="page-link" href="#">3</a>
-                  </li>
-                  <li class="page-item">
-                      <a class="page-link" href="#">4</a>
-                  </li>
-                  <li class="page-item">
-                      <a class="page-link" href="#">5</a>
-                  </li>
-                  <li class="page-item">
-                      <a class="page-link" href="#">Next</a>
-                  </li>
-              </ul>
-          </nav>
-          <div class="fw-normal small mt-4 mt-lg-0">Showing <b>10</b> out of <b>25</b> entries</div>
+  </div>
+  
+  <div class="d-flex justify-content-end mt-4 mb-5">
+      <nav aria-label="Page navigation">
+          <ul class="pagination" id="history-pagination">
+              <!-- Pagination will be generated here -->
+          </ul>
+      </nav>
+  </div>
+
+  <!-- User Details Modal -->
+  <div class="modal fade" id="userDetailsModal" tabindex="-1" role="dialog" aria-labelledby="userDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="userDetailsModalLabel">User Details</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <!-- Status Badge -->
+          <div class="text-center mb-4" id="modal-status-badge"></div>
+          
+          <!-- Approval Information -->
+          <h6 class="fw-bold border-bottom pb-2 mb-3">Approval Information</h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-muted">Approved By</label>
+              <div id="modal-approved-by" class="mb-0"></div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-muted">Approval Date</label>
+              <div id="modal-approval-date" class="mb-0"></div>
+            </div>
+          </div>
+          
+          <!-- User Information -->
+          <h6 class="fw-bold border-bottom pb-2 mb-3">User Information</h6>
+          <div class="row g-3 mb-3">
+            <!-- Left Column -->
+            <div class="col-md-6">
+              <div class="mb-3">
+                <span class="fw-bold small text-muted d-block mb-1">User ID:</span>
+                <span id="modal-user-id" class="d-block"></span>
+              </div>
+              <div class="mb-3">
+                <span class="fw-bold small text-muted d-block mb-1">User Name:</span>
+                <span id="modal-user-name" class="d-block"></span>
+              </div>
+              <div class="mb-3">
+                <span class="fw-bold small text-muted d-block mb-1">Email:</span>
+                <span id="modal-user-email" class="d-block"></span>
+              </div>
+              <div class="mb-3">
+                <span class="fw-bold small text-muted d-block mb-1">Status:</span>
+                <span id="modal-status" class="d-block"></span>
+              </div>
+            </div>
+            
+            <!-- Right Column -->
+            <div class="col-md-6">
+              <div class="mb-3">
+                <span class="fw-bold small text-muted d-block mb-1">Plant:</span>
+                <span id="modal-plant" class="d-block"></span>
+              </div>
+              <div class="mb-3">
+                <span class="fw-bold small text-muted d-block mb-1">Department:</span>
+                <span id="modal-department" class="d-block"></span>
+              </div>
+              <div class="mb-3">
+                <span class="fw-bold small text-muted d-block mb-1">Division:</span>
+                <span id="modal-division" class="d-block"></span>
+              </div>
+              <div class="mb-3">
+                <span class="fw-bold small text-muted d-block mb-1">Created At:</span>
+                <span id="modal-created-at" class="d-block"></span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Rejection reason section (only shown when status is Rejected) -->
+          <div id="rejection-reason-section" style="display: none;">
+            <div class="alert alert-danger p-3">
+              <h6 class="fw-bold mb-2">Rejection Reason</h6>
+              <p id="modal-rejection-reason" class="mb-0"></p>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
       </div>
+    </div>
   </div>
 
 {% endblock content %}
 
 <!-- Specific Page JS goes HERE  -->
-{% block javascripts %}{% endblock javascripts %}
+{% block javascripts %}
+{{ super() }}
+
+<script>
+  // Global variables for tracking data
+  let allHistoryData = [];
+  let filteredHistoryData = [];
+  let currentPage = 1;
+  let itemsPerPage = 10; // Fixed at 10 items per page
+  
+  document.addEventListener('DOMContentLoaded', function() {
+    // Load history data
+    loadApprovalHistory();
+    
+    // Set up search functionality
+    document.getElementById('historySearch').addEventListener('input', function() {
+      filterHistory(this.value);
+    });
+    
+    // Set up status filter
+    document.querySelectorAll('.status-filter').forEach(filter => {
+      filter.addEventListener('click', function(e) {
+        e.preventDefault();
+        const status = this.getAttribute('data-status');
+        filterByStatus(status);
+        document.getElementById('filterButton').textContent = 'Filter: ' + status.charAt(0).toUpperCase() + status.slice(1);
+      });
+    });
+    
+    // Set up refresh button
+    document.getElementById('refreshHistory').addEventListener('click', function() {
+      loadApprovalHistory();
+    });
+    
+    // Set up export button
+    document.getElementById('exportHistory').addEventListener('click', function() {
+      exportToCSV();
+    });
+    
+    // Set up event delegation for dynamically created rows
+    document.getElementById('history-table-body').addEventListener('click', function(e) {
+      // Find the closest username element or its parent row
+      const usernameElement = e.target.closest('.user-name-link');
+      if (usernameElement) {
+        e.preventDefault();
+        const recordData = JSON.parse(usernameElement.closest('tr').getAttribute('data-record'));
+        showUserDetailsModal(recordData);
+      }
+    });
+  });
+  
+  // Function to load approval history from API
+  function loadApprovalHistory() {
+    const tableBody = document.getElementById('history-table-body');
+    tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Loading history...</td></tr>';
+    
+    // Check if user is admin (from server-side)
+    const isAdmin = {{ user.is_admin|tojson }};
+    const userId = {{ user.id|tojson }};
+    
+    // Determine which API endpoint to use based on user role
+    let apiEndpoint = '/api/history/approval';
+    
+    if (isAdmin) {
+      // For admins, load all approval history
+      apiEndpoint = '/api/history/approval';
+    } else {
+      // For regular users, load only their own history
+      apiEndpoint = `/api/history/approval/user/${userId}`;
+    }
+    
+    // Call the API with a timeout to prevent long waiting
+    const apiPromise = fetch(apiEndpoint, { timeout: 5000 })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+      });
+      
+    // Set a timeout for the API call
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('API request timed out')), 5000);
+    });
+    
+    // Race between API call and timeout
+    Promise.race([apiPromise, timeoutPromise])
+      .then(data => {
+        // Store the data
+        allHistoryData = Array.isArray(data) ? data : (data.data || []);
+        
+        // Apply initial filtering
+        filteredHistoryData = [...allHistoryData];
+        
+        // Render the table with the filtered data
+        renderHistoryTable(filteredHistoryData);
+        
+        // Update the counter with total count
+        document.getElementById('history-counter').innerHTML = 
+          `Showing <b>${Math.min(itemsPerPage, filteredHistoryData.length)}</b> of <b>${allHistoryData.length}</b> items`;
+          
+        // Initialize pagination
+        const totalPages = Math.ceil(filteredHistoryData.length / itemsPerPage);
+        renderPagination(totalPages);
+      })
+      .catch(error => {
+        console.error('Error fetching history data:', error);
+        
+        // Show an alert about the API error and fallback to mock data
+        const tableContainer = document.querySelector('.table-wrapper');
+        const existingAlert = tableContainer.querySelector('.alert');
+        if (existingAlert) {
+          existingAlert.remove();
+        }
+        
+        const notification = document.createElement('div');
+        notification.className = 'alert alert-warning alert-dismissible fade show';
+        notification.innerHTML = `
+          <small>API Error: ${error.message}. Using mock data until the backend is available.</small>
+          <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        tableContainer.prepend(notification);
+        
+        // Use mock data as fallback
+        const mockData = [
+          {
+            id: '1001',
+            user_id: '1001',
+            user_name: 'John Doe',
+            user_email: 'john.doe@example.com',
+            approved_by: 'Admin User',
+            approved_date: '2025-05-25T14:30:00',
+            status: 'Approved',
+            plant: 'Plant A',
+            department: 'IT Department',
+            division: 'Software Division'
+          },
+          {
+            id: '1002',
+            user_id: '1002',
+            user_name: 'Jane Smith',
+            user_email: 'jane.smith@example.com',
+            approved_by: 'Admin User',
+            approved_date: '2025-05-24T10:15:00',
+            status: 'Rejected',
+            plant: 'Plant B',
+            department: 'HR Department',
+            division: 'Recruitment Division'
+          },
+          {
+            id: '1003',
+            user_id: '1003',
+            user_name: 'Bob Johnson',
+            user_email: 'bob.johnson@example.com',
+            approved_by: 'Admin User',
+            approved_date: '2025-05-23T16:45:00',
+            status: 'Approved',
+            plant: 'Plant C',
+            department: 'Finance Department',
+            division: 'Accounting Division'
+          },
+          {
+            id: '1004',
+            user_id: '1004',
+            user_name: 'Alice Brown',
+            user_email: 'alice.brown@example.com',
+            approved_by: 'Admin User',
+            approved_date: '2025-05-22T09:30:00',
+            status: 'Rejected',
+            plant: 'Plant A',
+            department: 'Marketing Department',
+            division: 'Digital Marketing Division'
+          },
+          {
+            id: '1005',
+            user_id: '1005',
+            user_name: 'Charlie Wilson',
+            user_email: 'charlie.wilson@example.com',
+            approved_by: 'Admin User',
+            approved_date: '2025-05-21T13:20:00',
+            status: 'Approved',
+            plant: 'Plant B',
+            department: 'Operations Department',
+            division: 'Logistics Division'
+          },
+          {
+            id: '1006',
+            user_id: '1006',
+            user_name: 'David Miller',
+            user_email: 'david.miller@example.com',
+            approved_by: 'Admin User',
+            approved_date: '2025-05-20T11:10:00',
+            status: 'Approved',
+            plant: 'Plant C',
+            department: 'IT Department',
+            division: 'Infrastructure Division'
+          },
+          {
+            id: '1007',
+            user_id: '1007',
+            user_name: 'Emily Taylor',
+            user_email: 'emily.taylor@example.com',
+            approved_by: 'Admin User',
+            approved_date: '2025-05-19T15:40:00',
+            status: 'Rejected',
+            plant: 'Plant A',
+            department: 'Marketing Department',
+            division: 'Branding Division'
+          },
+          {
+            id: '1008',
+            user_id: '1008',
+            user_name: 'Frank White',
+            user_email: 'frank.white@example.com',
+            approved_by: 'Admin User',
+            approved_date: '2025-05-18T09:20:00',
+            status: 'Approved',
+            plant: 'Plant B',
+            department: 'Finance Department',
+            division: 'Audit Division'
+          },
+          {
+            id: '1009',
+            user_id: '1009',
+            user_name: 'Grace Lee',
+            user_email: 'grace.lee@example.com',
+            approved_by: 'Admin User',
+            approved_date: '2025-05-17T14:15:00',
+            status: 'Approved',
+            plant: 'Plant C',
+            department: 'HR Department',
+            division: 'Training Division'
+          },
+          {
+            id: '1010',
+            user_id: '1010',
+            user_name: 'Henry Green',
+            user_email: 'henry.green@example.com',
+            approved_by: 'Admin User',
+            approved_date: '2025-05-16T10:05:00',
+            status: 'Rejected',
+            plant: 'Plant A',
+            department: 'Operations Department',
+            division: 'Supply Chain Division'
+          },
+          {
+            id: '1011',
+            user_id: '1011',
+            user_name: 'Isabella Clark',
+            user_email: 'isabella.clark@example.com',
+            approved_by: 'Admin User',
+            approved_date: '2025-05-15T16:30:00',
+            status: 'Approved',
+            plant: 'Plant B',
+            department: 'IT Department',
+            division: 'Security Division'
+          },
+          {
+            id: '1012',
+            user_id: '1012',
+            user_name: 'Jack Hill',
+            user_email: 'jack.hill@example.com',
+            approved_by: 'Admin User',
+            approved_date: '2025-05-14T13:45:00',
+            status: 'Rejected',
+            plant: 'Plant C',
+            department: 'Marketing Department',
+            division: 'Digital Marketing Division'
+          }
+        ];
+        
+        allHistoryData = mockData;
+        filteredHistoryData = [...allHistoryData];
+        
+        // Render the table with mock data
+        renderHistoryTable(filteredHistoryData);
+        
+        // Update the counter with total count and indicate mock data
+        document.getElementById('history-counter').innerHTML = 
+          `Showing <b>${Math.min(itemsPerPage, filteredHistoryData.length)}</b> of <b>${allHistoryData.length}</b> items (mock data)`;
+          
+        // Initialize pagination
+        const totalPages = Math.ceil(filteredHistoryData.length / itemsPerPage);
+        renderPagination(totalPages);
+      });
+  }
+  
+  // Function to render the history table
+  function renderHistoryTable(historyData) {
+    const tableBody = document.getElementById('history-table-body');
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = Math.min(startIndex + itemsPerPage, historyData.length);
+    const paginatedData = historyData.slice(startIndex, endIndex);
+    
+    if (paginatedData.length === 0) {
+      tableBody.innerHTML = '<tr><td colspan="6" class="text-center">No history records found</td></tr>';
+      return;
+    }
+    
+    tableBody.innerHTML = '';
+    
+    paginatedData.forEach(record => {
+      const row = document.createElement('tr');
+      row.setAttribute('data-record', JSON.stringify(record));
+      
+      // Create status badge with appropriate class
+      const statusClass = record.status === 'Approved' ? 'status-approved' : 'status-rejected';
+      
+      row.innerHTML = `
+        <td>${record.user_id || 'N/A'}</td>
+        <td><a href="#" class="user-name-link">${record.user_name || 'N/A'}</a></td>
+        <td>${record.user_email || 'N/A'}</td>
+        <td>${record.approved_by || 'N/A'}</td>
+        <td>${formatDate(record.approved_date)}</td>
+        <td><span class="status-badge ${statusClass}">${record.status}</span></td>
+      `;
+      
+      tableBody.appendChild(row);
+    });
+    
+    // Update counter with current page info
+    document.getElementById('history-counter').innerHTML = 
+      `Showing <b>${paginatedData.length}</b> of <b>${historyData.length}</b> items ${historyData === allHistoryData ? '' : '(filtered)'}`;
+  }
+  
+  // Function to render pagination
+  function renderPagination(totalPages) {
+    const paginationElement = document.getElementById('history-pagination');
+    paginationElement.innerHTML = '';
+    
+    if (totalPages <= 1) {
+      return; // No pagination needed
+    }
+    
+    // Previous button
+    const prevLi = document.createElement('li');
+    prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+    prevLi.innerHTML = `
+      <a class="page-link" href="#" aria-label="Previous" ${currentPage > 1 ? `onclick="changePage(${currentPage - 1}); return false;"` : ''}>
+        <span aria-hidden="true">&laquo;</span>
+      </a>
+    `;
+    paginationElement.appendChild(prevLi);
+    
+    // Page numbers - limit to 5 visible pages
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    // Adjust if we're near the end
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+    
+    // First page indicator if needed
+    if (startPage > 1) {
+      const firstLi = document.createElement('li');
+      firstLi.className = 'page-item';
+      firstLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(1); return false;">1</a>`;
+      paginationElement.appendChild(firstLi);
+      
+      if (startPage > 2) {
+        const ellipsisLi = document.createElement('li');
+        ellipsisLi.className = 'page-item disabled';
+        ellipsisLi.innerHTML = `<a class="page-link" href="#">...</a>`;
+        paginationElement.appendChild(ellipsisLi);
+      }
+    }
+    
+    // Page numbers
+    for (let i = startPage; i <= endPage; i++) {
+      const pageLi = document.createElement('li');
+      pageLi.className = `page-item ${i === currentPage ? 'active' : ''}`;
+      pageLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a>`;
+      paginationElement.appendChild(pageLi);
+    }
+    
+    // Last page indicator if needed
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        const ellipsisLi = document.createElement('li');
+        ellipsisLi.className = 'page-item disabled';
+        ellipsisLi.innerHTML = `<a class="page-link" href="#">...</a>`;
+        paginationElement.appendChild(ellipsisLi);
+      }
+      
+      const lastLi = document.createElement('li');
+      lastLi.className = 'page-item';
+      lastLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${totalPages}); return false;">${totalPages}</a>`;
+      paginationElement.appendChild(lastLi);
+    }
+    
+    // Next button
+    const nextLi = document.createElement('li');
+    nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+    nextLi.innerHTML = `
+      <a class="page-link" href="#" aria-label="Next" ${currentPage < totalPages ? `onclick="changePage(${currentPage + 1}); return false;"` : ''}>
+        <span aria-hidden="true">&raquo;</span>
+      </a>
+    `;
+    paginationElement.appendChild(nextLi);
+  }
+  
+  // Function to change page
+  function changePage(page) {
+    currentPage = page;
+    renderHistoryTable(filteredHistoryData);
+    
+    // Update pagination
+    const totalPages = Math.ceil(filteredHistoryData.length / itemsPerPage);
+    renderPagination(totalPages);
+    
+    // Scroll to top of table
+    document.querySelector('.table-wrapper').scrollIntoView();
+  }
+  
+  // Function to format date
+  function formatDate(dateString) {
+    if (!dateString || dateString === 'N/A') return 'N/A';
+    
+    try {
+      const date = new Date(dateString);
+      // Check if date is valid
+      if (isNaN(date.getTime())) return 'N/A';
+      
+      return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (e) {
+      console.error('Date formatting error:', e);
+      return 'N/A';
+    }
+  }
+  
+  // Function to filter history by search term
+  function filterHistory(searchTerm) {
+    searchTerm = searchTerm.toLowerCase();
+    
+    if (!searchTerm) {
+      filteredHistoryData = [...allHistoryData];
+    } else {
+      filteredHistoryData = allHistoryData.filter(record => {
+        return (
+          (record.user_name && record.user_name.toLowerCase().includes(searchTerm)) ||
+          (record.user_email && record.user_email.toLowerCase().includes(searchTerm))
+        );
+      });
+    }
+    
+    currentPage = 1;
+    renderHistoryTable(filteredHistoryData);
+    
+    // Update pagination
+    const totalPages = Math.ceil(filteredHistoryData.length / itemsPerPage);
+    renderPagination(totalPages);
+  }
+  
+  // Function to filter by status
+  function filterByStatus(status) {
+    if (status === 'all') {
+      filteredHistoryData = [...allHistoryData];
+    } else {
+      filteredHistoryData = allHistoryData.filter(record => record.status === status);
+    }
+    
+    currentPage = 1;
+    renderHistoryTable(filteredHistoryData);
+    
+    // Update pagination
+    const totalPages = Math.ceil(filteredHistoryData.length / itemsPerPage);
+    renderPagination(totalPages);
+  }
+  
+  // Function to export to CSV
+  function exportToCSV() {
+    if (filteredHistoryData.length === 0) {
+      alert('No data to export');
+      return;
+    }
+    
+    // Create CSV content
+    let csvContent = 'User ID,User Name,Email,Approved By,Action Date,Status\n';
+    
+    filteredHistoryData.forEach(record => {
+      csvContent += [
+        record.user_id,
+        `"${record.user_name.replace(/"/g, '""')}"`,
+        `"${record.user_email.replace(/"/g, '""')}"`,
+        `"${record.approved_by.replace(/"/g, '""')}"`,
+        `"${formatDate(record.approved_date)}"`,
+        record.status
+      ].join(',') + '\n';
+    });
+    
+    // Create download link
+    const encodedUri = encodeURI('data:text/csv;charset=utf-8,' + csvContent);
+    const link = document.createElement('a');
+    
+    const url = encodedUri;
+    link.setAttribute('href', url);
+    link.setAttribute('download', `approval_history_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    
+    // Trigger download and remove link
+    link.click();
+    document.body.removeChild(link);
+  }
+  
+  // Function to show user details modal
+  function showUserDetailsModal(record) {
+    const modal = new bootstrap.Modal(document.getElementById('userDetailsModal'));
+    const modalBody = document.getElementById('userDetailsModal').querySelector('.modal-body');
+    
+    // Set status badge
+    const statusBadge = modalBody.querySelector('#modal-status-badge');
+    statusBadge.className = 'text-center mb-4';
+    statusBadge.innerHTML = `
+      <span class="status-badge ${record.status === 'Approved' ? 'status-approved' : 'status-rejected'}">
+        ${record.status}
+      </span>
+    `;
+    
+    // Set user information
+    modalBody.querySelector('#modal-user-id').textContent = record.user_id || 'N/A';
+    modalBody.querySelector('#modal-user-name').textContent = record.user_name || 'N/A';
+    modalBody.querySelector('#modal-user-email').textContent = record.user_email || 'N/A';
+    modalBody.querySelector('#modal-approval-date').textContent = formatDate(record.approved_date) || 'N/A';
+    modalBody.querySelector('#modal-approved-by').textContent = record.approved_by || 'N/A';
+    modalBody.querySelector('#modal-status').textContent = record.status || 'N/A';
+    
+    // Set additional information
+    modalBody.querySelector('#modal-plant').textContent = record.plant || 'N/A';
+    modalBody.querySelector('#modal-department').textContent = record.department || 'N/A';
+    modalBody.querySelector('#modal-division').textContent = record.division || 'N/A';
+    
+    // Set created_at (using current_at from API if available, otherwise fallback to approved_date)
+    const createdDate = record.current_at || record.created_at || record.approved_date;
+    modalBody.querySelector('#modal-created-at').textContent = createdDate ? formatDate(createdDate) : 'N/A';
+    
+    // Set rejection reason (if applicable)
+    const rejectionReasonSection = modalBody.querySelector('#rejection-reason-section');
+    if (record.status === 'Rejected' && record.reject_reason) {
+      rejectionReasonSection.style.display = 'block';
+      modalBody.querySelector('#modal-rejection-reason').textContent = record.reject_reason || 'No reason provided';
+    } else {
+      rejectionReasonSection.style.display = 'none';
+    }
+    
+    // Show modal
+    modal.show();
+  }
+</script>
+
+{% endblock javascripts %}
