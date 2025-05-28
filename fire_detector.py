@@ -2,19 +2,28 @@ import cv2
 import numpy as np
 from pathlib import Path
 import time
+import requests
+import base64
 from flask import Response
 from ultralytics import YOLO
 
 class FireDetector:
-    def __init__(self, model_path="models/fire_detector/best.pt", conf_threshold=0.5):
+    def __init__(self, model_path="models/fire_detector/best.pt", conf_threshold=0.5, 
+                 backend_url="http://localhost:3000/api/camera-detection", camera_location="Main Camera"):
         """
         Initialize the Fire Detection model using YOLOv8
         
         Args:
             model_path: Path to the trained YOLO model
             conf_threshold: Confidence threshold for detections
+            backend_url: URL of the Node.js backend API endpoint
+            camera_location: The location identifier for the camera
         """
         self.conf_threshold = conf_threshold
+        self.backend_url = backend_url
+        self.camera_location = camera_location
+        self.last_alert_time = 0
+        self.alert_cooldown = 30  # seconds between alerts to avoid flooding the backend
         
         # Load the model using ultralytics YOLO directly
         try:
@@ -46,24 +55,71 @@ class FireDetector:
         
         # Check if fire is detected in any of the results
         has_fire = False
+        confidence_score = 0.0
+        
         for r in results:
             if len(r.boxes) > 0:  # If any detection boxes exist
                 for box in r.boxes:
                     cls = int(box.cls[0])
                     cls_name = r.names[cls]
+                    conf = float(box.conf[0])
                     if 'fire' in cls_name.lower():
                         has_fire = True
-                        break
+                        # Use the highest confidence score if multiple detections
+                        confidence_score = max(confidence_score, conf)
         
-        return annotated_frame, has_fire
+        return annotated_frame, has_fire, confidence_score
+
+    def send_alert_to_backend(self, frame, confidence_score):
+        """
+        Send the fire detection alert to the Node.js backend
+        
+        Args:
+            frame: The image frame with detected fire
+            confidence_score: The confidence score of the detection
+        """
+        try:
+            # Convert the image to base64 string
+            _, buffer = cv2.imencode('.jpg', frame)
+            img_base64 = base64.b64encode(buffer).decode('utf-8')
+            
+            # Prepare the payload
+            payload = {
+                'imageData': f"data:image/jpeg;base64,{img_base64}",
+                'cameraLocation': self.camera_location,
+                'confidenceScore': float(confidence_score)
+            }
+            
+            # Send POST request to backend
+            response = requests.post(self.backend_url, json=payload)
+            
+            # Check if the request was successful
+            if response.status_code == 201:
+                print("Alert sent successfully to MySQL database!")
+                print(f"Detection ID: {response.json().get('detectionId')}")
+                return True
+            else:
+                print(f"Error sending alert to backend: {response.status_code}")
+                print(response.text)
+                return False
+        
+        except Exception as e:
+            print(f"Exception while sending alert to backend: {str(e)}")
+            return False
 
 # Global fire detector instance
 fire_detector = None
 
-def initialize_detector(model_path="models/fire_detector/best.pt"):
+def initialize_detector(model_path="models/fire_detector/best.pt", 
+                        backend_url="http://localhost:3000/api/camera-detection",
+                        camera_location="Dashboard Camera"):
     """Initialize the fire detector with the specified model path"""
     global fire_detector
-    fire_detector = FireDetector(model_path=model_path)
+    fire_detector = FireDetector(
+        model_path=model_path,
+        backend_url=backend_url,
+        camera_location=camera_location
+    )
     return fire_detector
 
 def generate_frames(camera_source=0):
@@ -166,13 +222,18 @@ def generate_frames(camera_source=0):
             
         # Process frame with fire detector
         try:
-            annotated_frame, has_fire = fire_detector.detect_fire(frame)
+            annotated_frame, has_fire, confidence_score = fire_detector.detect_fire(frame)
             
             # Update fire status with alert cooldown
             current_time = time.time()
             if has_fire:
                 fire_status = True
-                last_alert_time = current_time
+                
+                # Send alert to backend if we're not in cooldown period
+                if current_time - last_alert_time > alert_cooldown:
+                    print(f"Fire detected with confidence {confidence_score:.2f}! Sending alert to MySQL...")
+                    fire_detector.send_alert_to_backend(frame, confidence_score)
+                    last_alert_time = current_time
             elif current_time - last_alert_time > alert_cooldown:
                 fire_status = False
             
