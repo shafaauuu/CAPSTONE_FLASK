@@ -5,9 +5,16 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <!-- Primary Meta Tags -->
 
-<title>
-    Admin Dashboard - {% block title %}{% endblock %} | CAPSTONE
-</title>
+    <title>
+        {% if session['role'] == 'admin' %}
+            Admin Dashboard
+        {% elif session['role'] == 'user' %}
+            User Dashboard
+        {% else %}
+            Dashboard
+        {% endif %}
+        - {% block title %}{% endblock %} | CAPSTONE
+    </title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="title" content="Volt - Free Bootstrap 5 Dashboard">

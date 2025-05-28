@@ -59,21 +59,12 @@
                           </a>
 
                           <div role="separator" class="dropdown-divider my-1"></div>
-                            <a class="dropdown-item d-flex align-items-center" href="#" onclick="confirmLogoutDropdown(event)">
+                            <a class="dropdown-item d-flex align-items-center" href="#" data-bs-toggle="modal" data-bs-target="#logoutModal">
                               <svg class="dropdown-icon text-danger me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
                               </svg>
                               Logout
                             </a>
-                        
-                            <script>
-                                function confirmLogoutDropdown(event) {
-                                    event.preventDefault();
-                                    if (confirm("Are you sure you want to log out?")) {
-                                        window.location.href = "{{ url_for('authentication_blueprint.logout') }}";
-                                    }
-                                }
-                            </script>
                         
                       </div>
                     </li>
@@ -81,3 +72,22 @@
                 </div>
               </div>
             </nav>
+
+<!-- Logout Confirmation Modal -->
+<div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="logoutModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="logoutModalLabel">Confirm Logout</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to log out?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <a href="{{ url_for('authentication_blueprint.logout') }}" class="btn btn-sm btn-danger">Logout</a>
+      </div>
+    </div>
+  </div>
+</div>

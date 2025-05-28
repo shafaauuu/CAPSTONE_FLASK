@@ -1,9 +1,57 @@
 {% extends "layouts/base.html" %}
 
-{% block title %} User Dashboard {% endblock %}
+{% block title %} Camera Monitoring Dashboard {% endblock %}
 
 <!-- Specific Page CSS goes HERE  -->
-{% block stylesheets %}{% endblock stylesheets %}
+{% block stylesheets %}
+<style>
+    .camera-feed {
+        width: 100%;
+        border-radius: 5px;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .fire-status {
+        padding: 10px;
+        border-radius: 5px;
+        text-align: center;
+        margin-bottom: 15px;
+    }
+    
+    .status-safe {
+        background-color: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.4);
+        color: #10B981;
+    }
+    
+    .status-warning {
+        background-color: rgba(245, 158, 11, 0.1);
+        border: 1px solid rgba(245, 158, 11, 0.4);
+        color: #F59E0B;
+    }
+    
+    .status-danger {
+        background-color: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.4);
+        color: #EF4444;
+    }
+    
+    .alert-history {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .blink {
+        animation: blink-animation 1s steps(5, start) infinite;
+    }
+    
+    @keyframes blink-animation {
+        to {
+            visibility: hidden;
+        }
+    }
+</style>
+{% endblock stylesheets %}
 
 {% block content %}
     <div class="py-4">
@@ -15,202 +63,108 @@
                     </a>
                 </li>
                 <li class="breadcrumb-item"><a href="/dashboard">User Dashboard</a></li>
-                <li class="breadcrumb-item"><a href="">Monitor</a></li>
+                <li class="breadcrumb-item"><a href="">Monitoring</a></li>
                 <li class="breadcrumb-item active" aria-current="page">Camera</li>
             </ol>
         </nav>
         <div class="mb-3 mb-lg-0">
-            <h1 class="h4">Live Monitoring</h1>
-            <p class="mb-0">ESP32-CAM Modules</p>
+            <h1 class="h4">Fire Detection System</h1>
+            <p class="mb-0">ESP32-CAM Live Monitoring</p>
         </div>
     </div>
+    
     <div class="row">
+        <!-- Main Camera Feed Column -->
         <div class="col-12 col-xl-8">
             <div class="row">
+                <!-- Primary Camera Feed -->
                 <div class="col-12 mb-4">
                     <div class="card border-0 shadow">
                         <div class="card-header">
                             <div class="row align-items-center">
                                 <div class="col">
-                                    <h2 class="fs-5 fw-bold mb-0">Page visits</h2>
+                                    <h2 class="fs-5 fw-bold mb-0">Primary Camera</h2>
                                 </div>
                                 <div class="col text-end">
-                                    <a href="#" class="btn btn-sm btn-primary">See all</a>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-primary dropdown-toggle" type="button" id="cameraDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                            Camera Options
+                                        </button>
+                                        <ul class="dropdown-menu" aria-labelledby="cameraDropdown">
+                                            <li><a class="dropdown-item" href="#">Camera 1</a></li>
+                                            <li><a class="dropdown-item" href="#">Camera 2</a></li>
+                                            <li><a class="dropdown-item" href="#">Camera 3</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item" href="#">Refresh Feed</a></li>
+                                        </ul>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="table-responsive">
-                            <table class="table align-items-center table-flush">
-                                <thead class="thead-light">
-                                <tr>
-                                    <th class="border-bottom" scope="col">Page name</th>
-                                    <th class="border-bottom" scope="col">Page Views</th>
-                                    <th class="border-bottom" scope="col">Page Value</th>
-                                    <th class="border-bottom" scope="col">Bounce rate</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                <tr>
-                                    <th class="text-gray-900" scope="row">
-                                        /demo/admin/index.html
-                                    </th>
-                                    <td class="fw-bolder text-gray-500">
-                                        3,225
-                                    </td>
-                                    <td class="fw-bolder text-gray-500">
-                                        $20
-                                    </td>
-                                    <td class="fw-bolder text-gray-500">
-                                        <div class="d-flex">
-                                            <svg class="icon icon-xs text-danger me-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L6.707 7.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
-                                            42,55%
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th class="text-gray-900" scope="row">
-                                        /demo/admin/forms.html
-                                    </th>
-                                    <td class="fw-bolder text-gray-500">
-                                        2,987
-                                    </td>
-                                    <td class="fw-bolder text-gray-500">
-                                        0
-                                    </td>
-                                    <td class="fw-bolder text-gray-500">
-                                        <div class="d-flex">
-                                            <svg class="icon icon-xs text-success me-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M14.707 12.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l2.293-2.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
-                                            43,24%
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th class="text-gray-900" scope="row">
-                                        /demo/admin/util.html
-                                    </th>
-                                    <td class="fw-bolder text-gray-500">
-                                        2,844
-                                    </td>
-                                    <td class="fw-bolder text-gray-500">
-                                    294
-                                    </td>
-                                    <td class="fw-bolder text-gray-500">
-                                        <div class="d-flex">
-                                            <svg class="icon icon-xs text-success me-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M14.707 12.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l2.293-2.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
-                                            32,35%
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th class="text-gray-900" scope="row">
-                                        /demo/admin/validation.html
-                                    </th>
-                                    <td class="fw-bolder text-gray-500">
-                                        2,050
-                                    </td>
-                                    <td class="fw-bolder text-gray-500">
-                                        $147
-                                    </td>
-                                    <td class="fw-bolder text-gray-500">
-                                        <div class="d-flex">
-                                            <svg class="icon icon-xs text-danger me-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L6.707 7.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
-                                            50,87%
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th class="text-gray-900" scope="row">
-                                        /demo/admin/modals.html
-                                    </th>
-                                    <td class="fw-bolder text-gray-500">
-                                        1,483
-                                    </td>
-                                    <td class="fw-bolder text-gray-500">
-                                        $19
-                                    </td>
-                                    <td class="fw-bolder text-gray-500">
-                                        <div class="d-flex">
-                                            <svg class="icon icon-xs text-success me-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M14.707 12.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l2.293-2.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
-                                            26,12%
-                                        </div>
-                                    </td>
-                                </tr>
-                                </tbody>
-                            </table>
+                        <div class="card-body">
+                            <div class="row align-items-center justify-content-center">
+                                <!-- Fire Status Indicator -->
+                                <div class="col-12 mb-3">
+                                    <div class="fire-status status-safe">
+                                        <h5 class="mb-0">
+                                            <span class="fas fa-fire-extinguisher me-2"></span>
+                                            Fire Status: Normal
+                                        </h5>
+                                    </div>
+                                </div>
+                                <!-- Live Camera Feed -->
+                                <div class="col-12">
+                                    <img src="{{ url_for('home_blueprint.video_feed') }}" class="camera-feed" id="liveCameraFeed" alt="Live Camera Feed">
+                                </div>
+                                <div class="col-12 mt-3">
+                                    <div class="d-flex justify-content-between">
+                                        <button class="btn btn-sm btn-primary" id="captureImage">
+                                            Capture
+                                        </button>
+                                        <button class="btn btn-sm btn-danger" id="recordVideo">
+                                            Record
+                                        </button>
+                                        <button class="btn btn-sm btn-warning" id="toggleDetection">
+                                            Toggle Detection
+                                        </button>
+                                        <button class="btn btn-sm btn-info" id="configureSettings">
+                                            Settings
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-12 col-xxl-6 mb-4">
+                
+                <!-- Secondary Cameras Grid -->
+                <div class="col-12 mb-4">
                     <div class="card border-0 shadow">
-                        <div class="card-header border-bottom d-flex align-items-center justify-content-between">
-                            <h2 class="fs-5 fw-bold mb-0">Progress track</h2>
-                              <a href="#" class="btn btn-sm btn-primary">See tasks</a>
-                          </div>
+                        <div class="card-header">
+                            <div class="row align-items-center">
+                                <div class="col">
+                                    <h2 class="fs-5 fw-bold mb-0">Additional Camera Feeds</h2>
+                                </div>
+                                <div class="col text-end">
+                                    <a href="#" class="btn btn-sm btn-primary">View All</a>
+                                </div>
+                            </div>
+                        </div>
                         <div class="card-body">
-                            <!-- Project 1 -->
-                            <div class="row mb-4">
-                                <div class="col-auto">
-                                    <svg class="icon icon-sm text-gray-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path></svg>
-                                </div>
-                                <div class="col">
-                                    <div class="progress-wrapper">
-                                        <div class="progress-info">
-                                            <div class="h6 mb-0">Rocket - SaaS Template</div>
-                                            <div class="small fw-bold text-gray-500"><span>75 %</span></div>
-                                        </div>
-                                        <div class="progress mb-0">
-                                            <div class="progress-bar bg-success" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 75%;"></div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <div class="card">
+                                        <div class="card-body p-2">
+                                            <h6 class="card-title mb-2">Camera 2</h6>
+                                            <img src="{{ url_for('static', filename='assets/img/camera-placeholder.jpg') }}" class="camera-feed" alt="Camera 2">
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            <!-- Project 2 -->
-                            <div class="row align-items-center mb-4">
-                                <div class="col-auto">
-                                    <svg class="icon icon-sm text-gray-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path></svg>
-                                </div>
-                                <div class="col">
-                                    <div class="progress-wrapper">
-                                        <div class="progress-info">
-                                            <div class="h6 mb-0">Themesberg - Design System</div>
-                                            <div class="small fw-bold text-gray-500"><span>60 %</span></div>
-                                        </div>
-                                        <div class="progress mb-0">
-                                            <div class="progress-bar bg-success" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- Project 3 -->
-                            <div class="row align-items-center mb-4">
-                                <div class="col-auto">
-                                    <svg class="icon icon-sm text-gray-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path></svg>
-                                </div>
-                                <div class="col">
-                                    <div class="progress-wrapper">
-                                        <div class="progress-info">
-                                            <div class="h6 mb-0">Homepage Design in Figma</div>
-                                            <div class="small fw-bold text-gray-500"><span>45 %</span></div>
-                                        </div>
-                                        <div class="progress mb-0">
-                                            <div class="progress-bar bg-warning" role="progressbar" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100" style="width: 45%;"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- Project 4 -->
-                            <div class="row align-items-center mb-3">
-                                <div class="col-auto">
-                                    <svg class="icon icon-sm text-gray-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path></svg>
-                                </div>
-                                <div class="col">
-                                    <div class="progress-wrapper">
-                                        <div class="progress-info">
-                                            <div class="h6 mb-0">Backend for Themesberg v2</div>
-                                            <div class="small fw-bold text-gray-500"><span>34 %</span></div>
-                                        </div>
-                                        <div class="progress mb-0">
-                                            <div class="progress-bar bg-danger" role="progressbar" aria-valuenow="34" aria-valuemin="0" aria-valuemax="100" style="width: 34%;"></div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="card">
+                                        <div class="card-body p-2">
+                                            <h6 class="card-title mb-2">Camera 3</h6>
+                                            <img src="{{ url_for('static', filename='assets/img/camera-placeholder.jpg') }}" class="camera-feed" alt="Camera 3">
                                         </div>
                                     </div>
                                 </div>
@@ -220,65 +174,211 @@
                 </div>
             </div>
         </div>
+
+        <!-- Sidebar with Statistics and Alerts -->
         <div class="col-12 col-xl-4">
+            <!-- Recent Fire Alerts -->
             <div class="col-12 px-0 mb-4">
                 <div class="card border-0 shadow">
-                    <div class="card-header d-flex flex-row align-items-center flex-0 border-bottom">
-                        <div class="d-block">
-                            <div class="h6 fw-normal text-gray mb-2">Total orders</div>
-                            <h2 class="h3 fw-extrabold">452</h2>
-                            <div class="small mt-2">                               
-                                <span class="fas fa-angle-up text-success"></span>                                   
-                                <span class="text-success fw-bold">18.2%</span>
-                            </div>
-                        </div>
-                        <div class="d-block ms-auto">
-                            <div class="d-flex align-items-center text-end mb-2">
-                                <span class="dot rounded-circle bg-gray-800 me-2"></span>
-                                <span class="fw-normal small">July</span>
-                            </div>
-                            <div class="d-flex align-items-center text-end">
-                                <span class="dot rounded-circle bg-secondary me-2"></span>
-                                <span class="fw-normal small">August</span>
-                            </div>
-                        </div>
+                    <div class="card-header border-bottom d-flex align-items-center justify-content-between">
+                        <h2 class="fs-5 fw-bold mb-0">Recent Alerts</h2>
+                        <a href="/alert-logs" class="btn btn-sm btn-primary">View All</a>
                     </div>
-                    <div class="card-body p-2">
-                        <div class="ct-chart-ranking ct-golden-section ct-series-a"></div>
+                    <div class="card-body alert-history">
+                        <!-- Alert 1 -->
+                        <div class="d-flex mt-2 mb-3 pb-3 border-bottom">
+                            <div class="icon-shape icon-sm icon-shape-danger rounded me-3">
+                                <span class="fas fa-fire"></span>
+                            </div>
+                            <div class="d-block">
+                                <div class="d-flex align-items-center mb-1">
+                                    <h5 class="mb-0">Fire Detected</h5>
+                                    <span class="badge bg-danger text-white">High</span>
+                                </div>
+                                <div class="small text-gray">
+                                    <span class="fas fa-clock me-1"></span>
+                                    Today at 12:34 PM
+                                </div>
+                                <p class="text-sm mt-2">Fire detected in Camera 1 - Kitchen area</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Alert 2 -->
+                        <div class="d-flex mt-2 mb-3 pb-3 border-bottom">
+                            <div class="icon-shape icon-sm icon-shape-warning rounded me-3">
+                                <span class="fas fa-exclamation-triangle"></span>
+                            </div>
+                            <div class="d-block">
+                                <div class="d-flex align-items-center mb-1">
+                                    <h5 class="mb-0">Smoke Detected</h5>
+                                    <span class="badge bg-warning text-white">Medium</span>
+                                </div>
+                                <div class="small text-gray">
+                                    <span class="fas fa-clock me-1"></span>
+                                    Yesterday at 18:12 PM
+                                </div>
+                                <p class="text-sm mt-2">Smoke detected in Camera 2 - Living room</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Alert 3 -->
+                        <div class="d-flex mt-2 mb-3 pb-3 border-bottom">
+                            <div class="icon-shape icon-sm icon-shape-success rounded me-3">
+                                <span class="fas fa-check"></span>
+                            </div>
+                            <div class="d-block">
+                                <div class="d-flex align-items-center mb-1">
+                                    <h5 class="mb-0">System Check</h5>
+                                    <span class="badge bg-success text-white">Info</span>
+                                </div>
+                                <div class="small text-gray">
+                                    <span class="fas fa-clock me-1"></span>
+                                    2 days ago at 09:30 AM
+                                </div>
+                                <p class="text-sm mt-2">Routine system check completed successfully</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Alert 4 -->
+                        <div class="d-flex mt-2 mb-3 pb-3 border-bottom">
+                            <div class="icon-shape icon-sm icon-shape-warning rounded me-3">
+                                <span class="fas fa-exclamation-triangle"></span>
+                            </div>
+                            <div class="d-block">
+                                <div class="d-flex align-items-center mb-1">
+                                    <h5 class="mb-0">High Temperature</h5>
+                                    <span class="badge bg-warning text-white">Medium</span>
+                                </div>
+                                <div class="small text-gray">
+                                    <span class="fas fa-clock me-1"></span>
+                                    3 days ago at 15:45 PM
+                                </div>
+                                <p class="text-sm mt-2">Abnormal temperature in Camera 3 - Garage</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+            
+            <!-- System Status -->
             <div class="col-12 px-0">
                 <div class="card border-0 shadow">
+                    <div class="card-header border-bottom">
+                        <h2 class="fs-5 fw-bold mb-0">System Status</h2>
+                    </div>
                     <div class="card-body">
-                        <h2 class="fs-5 fw-bold mb-1">Acquisition</h2>
-                        <p>Tells you where your visitors originated from, such as search engines, social networks or website referrals.</p>
-                        <div class="d-block">
-                            <div class="d-flex align-items-center me-5">
-                                <div class="icon-shape icon-sm icon-shape-danger rounded me-3">
-                                    <svg fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11 4a1 1 0 10-2 0v4a1 1 0 102 0V7zm-3 1a1 1 0 10-2 0v3a1 1 0 102 0V8zM8 9a1 1 0 00-2 0v2a1 1 0 102 0V9z" clip-rule="evenodd"></path></svg>
-                                </div>
-                                <div class="d-block">
-                                    <label class="mb-0">Bounce Rate</label>
-                                    <h4 class="mb-0">33.50%</h4>
-                                </div>
+                        <!-- Camera Status -->
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <div>
+                                <h6 class="mb-0">Camera 1</h6>
+                                <small class="text-success">Online</small>
                             </div>
-                            <div class="d-flex align-items-center pt-3">
-                                <div class="icon-shape icon-sm icon-shape-purple rounded me-3">
-                                    <svg fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path></svg>                                        </div>
-                                <div class="d-block">
-                                    <label class="mb-0">Sessions</label>
-                                    <h4 class="mb-0">9,567</h4>
-                                </div>
+                            <span class="badge bg-success">Active</span>
+                        </div>
+                        
+                        <!-- Camera Status -->
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <div>
+                                <h6 class="mb-0">Camera 2</h6>
+                                <small class="text-success">Online</small>
                             </div>
+                            <span class="badge bg-success">Active</span>
+                        </div>
+                        
+                        <!-- Camera Status -->
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <div>
+                                <h6 class="mb-0">Camera 3</h6>
+                                <small class="text-muted">Offline</small>
+                            </div>
+                            <span class="badge bg-danger">Inactive</span>
+                        </div>
+                        
+                        <!-- Fire Detection Module -->
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <div>
+                                <h6 class="mb-0">Fire Detection Module</h6>
+                                <small class="text-success">Running</small>
+                            </div>
+                            <span class="badge bg-success">Active</span>
+                        </div>
+                        
+                        <!-- Alert System -->
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <h6 class="mb-0">Alert System</h6>
+                                <small class="text-success">Online</small>
+                            </div>
+                            <span class="badge bg-success">Active</span>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
 {% endblock content %}
 
 <!-- Specific Page JS goes HERE  -->
-{% block javascripts %}{% endblock javascripts %}
+{% block javascripts %}
+<script>
+    // Simulating a live camera feed update
+    document.addEventListener('DOMContentLoaded', function() {
+        // This is a placeholder for actual camera implementation
+        // In a real application, you would connect to your ESP32-CAM stream
+        
+        // Example of fire detection simulation for demo purposes
+        const fireStatus = document.querySelector('.fire-status');
+        const liveFeed = document.getElementById('liveCameraFeed');
+        
+        // Simulate status changes (remove in production)
+        let statusIndex = 0;
+        const statuses = [
+            { class: 'status-safe', text: 'Normal', icon: 'fa-fire-extinguisher' },
+            { class: 'status-warning', text: 'Warning: Checking', icon: 'fa-exclamation-triangle' },
+            { class: 'status-danger', text: 'FIRE DETECTED!', icon: 'fa-fire' }
+        ];
+        
+        // This is just for demonstration - would be replaced with actual detection logic
+        /*
+        setInterval(() => {
+            statusIndex = (statusIndex + 1) % statuses.length;
+            const status = statuses[statusIndex];
+            
+            // Remove all status classes and add the current one
+            fireStatus.className = 'fire-status ' + status.class;
+            
+            // Update the content
+            fireStatus.innerHTML = `<h5 class="mb-0 ${statusIndex === 2 ? 'blink' : ''}">
+                <span class="fas ${status.icon} me-2"></span>
+                Fire Status: ${status.text}
+            </h5>`;
+            
+        }, 5000);
+        */
+        
+        // Button event handlers
+        document.getElementById('captureImage').addEventListener('click', function() {
+            alert('Image captured and saved.');
+        });
+        
+        document.getElementById('recordVideo').addEventListener('click', function() {
+            this.classList.toggle('btn-danger');
+            this.classList.toggle('btn-secondary');
+            this.innerHTML = this.classList.contains('btn-danger') ? 
+                '<span class="fas fa-video me-2"></span>Record' : 
+                '<span class="fas fa-stop me-2"></span>Stop';
+        });
+        
+        document.getElementById('toggleDetection').addEventListener('click', function() {
+            this.classList.toggle('btn-warning');
+            this.classList.toggle('btn-secondary');
+            alert('Fire detection has been ' + 
+                  (this.classList.contains('btn-warning') ? 'enabled' : 'disabled'));
+        });
+        
+        document.getElementById('configureSettings').addEventListener('click', function() {
+            alert('Settings configuration dialog would open here.');
+        });
+    });
+</script>
+{% endblock javascripts %}

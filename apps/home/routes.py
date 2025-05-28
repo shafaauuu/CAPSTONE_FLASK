@@ -1,11 +1,15 @@
-from flask import render_template, request, session, flash, redirect, url_for, jsonify
+from flask import render_template, request, session, flash, redirect, url_for, jsonify, Response
 import requests
 import traceback
 from datetime import datetime, timedelta
+import os
 
 from apps.home import blueprint
 from apps.authentication.routes import login_required
 from jinja2 import TemplateNotFound
+
+# Import fire detector
+from fire_detector import initialize_detector, generate_frames
 
 @blueprint.route('/index')
 @login_required
@@ -819,6 +823,56 @@ def search():
                            profile=profile_data,
                            query=query,
                            results=search_results)
+
+@blueprint.route('/video_feed')
+@login_required
+def video_feed():
+    """Video streaming route. Put this in the src attribute of an img tag"""
+    # Get camera source from request args, default to 0 (webcam)
+    camera_source = request.args.get('camera', '0')
+    
+    # If camera_source is a number, convert to int
+    if camera_source.isdigit():
+        camera_source = int(camera_source)
+    
+    return Response(
+        generate_frames(camera_source=camera_source),
+        mimetype='multipart/x-mixed-replace; boundary=frame'
+    )
+
+@blueprint.route('/initialize_fire_detector')
+@login_required
+def init_fire_detector():
+    """Initialize the fire detector model"""
+    try:
+        # Setup model directory if it doesn't exist
+        model_dir = os.path.join(os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'models', 'fire_detector')
+        os.makedirs(model_dir, exist_ok=True)
+        
+        # Path to the model file
+        model_path = os.path.join(model_dir, 'best.pt')
+        
+        # Check if model exists
+        if not os.path.exists(model_path):
+            return jsonify({
+                'status': 'error',
+                'message': f'Model file not found at {model_path}. Please upload your model file.'
+            }), 404
+        
+        # Initialize the detector
+        detector = initialize_detector(model_path=model_path)
+        
+        # Return success
+        return jsonify({
+            'status': 'success',
+            'message': 'Fire detector initialized successfully'
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'Failed to initialize fire detector: {str(e)}',
+            'error': traceback.format_exc()
+        }), 500
 
 @blueprint.route('/<template>')
 @login_required

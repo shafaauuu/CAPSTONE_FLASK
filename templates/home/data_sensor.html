@@ -1,9 +1,6 @@
 {% extends "layouts/base.html" %}
 
-{% block title %} Data Sensor {% endblock %}
-
-<!-- Specific Page CSS goes HERE  -->
-{% block stylesheets %}{% endblock stylesheets %}
+{% block title %} Fire Detection Sensors {% endblock %}
 
 {% block content %}
 
@@ -17,213 +14,224 @@
                         </a>
                     </li>
                     <li class="breadcrumb-item"><a href="/dashboard">User Dashboard</a></li>
-                    <li class="breadcrumb-item"><a href="">Monitor</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Data Sensor</li>
+                    <li class="breadcrumb-item"><a href="#">Monitoring</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Fire Detection Sensors</li>
                 </ol>
             </nav>
-            <h1 class="h4">Data Sensor Monitoring</h1>
-            <p class="mb-0">Dozens of reusable components built to provide buttons, alerts, popovers, and more.</p>
+            <h1 class="h4">Sensor Data Monitoring</h1>
+            <p class="mb-0">Real-time monitoring of temperature, smoke, and flame sensors for fire detection system.</p>
         </div>
         <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="dropdown me-2">
+                <button class="btn btn-sm btn-outline-primary dropdown-toggle me-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="fas fa-filter me-2"></span>Filter
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#">All Sensors</a></li>
+                    <li><a class="dropdown-item" href="#">Temperature Sensors</a></li>
+                    <li><a class="dropdown-item" href="#">Smoke Detectors</a></li>
+                    <li><a class="dropdown-item" href="#">Flame Sensors</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#">Active Only</a></li>
+                    <li><a class="dropdown-item" href="#">Warning Status</a></li>
+                    <li><a class="dropdown-item" href="#">Critical Status</a></li>
+                </ul>
+            </div>
             <div class="btn-group ms-2 ms-lg-3">
-                <button type="button" class="btn btn-sm btn-outline-gray-600">Share</button>
-                <button type="button" class="btn btn-sm btn-outline-gray-600">Export</button>
+                <button type="button" class="btn btn-sm btn-outline-primary">
+                    <span class="fas fa-download me-2"></span>Export Data
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-primary">
+                    <span class="fas fa-sync me-2"></span>Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sensor Overview Cards -->
+    <div class="row">
+        <div class="col-12 col-md-4 mb-4">
+            <div class="card border-0 shadow">
+                <div class="card-body">
+                    <div class="row d-block d-xl-flex align-items-center">
+                        <div class="col-12 col-xl-5 text-xl-center mb-3 mb-xl-0 d-flex align-items-center justify-content-xl-center">
+                            <div class="icon-shape icon-shape-tertiary rounded me-4 me-sm-0">
+                                <svg class="icon" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clip-rule="evenodd"></path></svg>
+                            </div>
+                            <div class="d-sm-none">
+                                <h2 class="h5">Flame Detectors</h2>
+                                <h3 class="fw-extrabold mb-1">4</h3>
+                            </div>
+                        </div>
+                        <div class="col-12 col-xl-7 px-xl-0">
+                            <div class="d-none d-sm-block">
+                                <h2 class="h5">Flame Detectors</h2>
+                                <h3 class="fw-extrabold mb-1">4</h3>
+                            </div>
+                            <small>Active <span class="fw-bold text-success">4</span> | Warning <span class="fw-bold text-warning">0</span> | Danger <span class="fw-bold text-danger">0</span></small>
+                            <div class="small d-flex mt-1">
+                                <div>Last check <span class="fw-bold">2 mins ago</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4 mb-4">
+            <div class="card border-0 shadow">
+                <div class="card-body">
+                    <div class="row d-block d-xl-flex align-items-center">
+                        <div class="col-12 col-xl-5 text-xl-center mb-3 mb-xl-0 d-flex align-items-center justify-content-xl-center">
+                            <div class="icon-shape icon-shape-secondary rounded me-4 me-sm-0">
+                                <svg class="icon" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 2a8 8 0 00-8 8c0 3.038 1.68 5.858 4.376 7.305a1 1 0 001.212-.21l3.162-3.568a1 1 0 00.076-1.266A4 4 0 0110 6a4 4 0 013.533 5.89 1 1 0 00.248 1.156l2.872 2.621a1 1 0 001.223.088A7.967 7.967 0 0118 10a8 8 0 00-8-8zm4 5a1 1 0 10-2 0 1 1 0 002 0z" clip-rule="evenodd"></path></svg>
+                            </div>
+                            <div class="d-sm-none">
+                                <h2 class="h5">Smoke Detectors</h2>
+                                <h3 class="fw-extrabold mb-1">8</h3>
+                            </div>
+                        </div>
+                        <div class="col-12 col-xl-7 px-xl-0">
+                            <div class="d-none d-sm-block">
+                                <h2 class="h5">Smoke Detectors</h2>
+                                <h3 class="fw-extrabold mb-1">8</h3>
+                            </div>
+                            <small>Active <span class="fw-bold text-success">8</span> | Warning <span class="fw-bold text-warning">0</span> | Danger <span class="fw-bold text-danger">0</span></small>
+                            <div class="small d-flex mt-1">
+                                <div>Last check <span class="fw-bold">2 mins ago</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4 mb-4">
+            <div class="card border-0 shadow">
+                <div class="card-body">
+                    <div class="row d-block d-xl-flex align-items-center">
+                        <div class="col-12 col-xl-5 text-xl-center mb-3 mb-xl-0 d-flex align-items-center justify-content-xl-center">
+                            <div class="icon-shape icon-shape-primary rounded me-4 me-sm-0">
+                                <svg class="icon" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M5 4a3 3 0 00-3 3v6a3 3 0 003 3h10a3 3 0 003-3V7a3 3 0 00-3-3H5zm-1 9v-1h5v2H5a1 1 0 01-1-1zm7 1h4a1 1 0 001-1v-1h-5v2zm0-4h5V8h-5v2zM9 8H4v2h5V8z" clip-rule="evenodd"></path></svg>
+                            </div>
+                            <div class="d-sm-none">
+                                <h2 class="h5">DHT11 Sensors</h2>
+                                <h3 class="fw-extrabold mb-1">12</h3>
+                            </div>
+                        </div>
+                        <div class="col-12 col-xl-7 px-xl-0">
+                            <div class="d-none d-sm-block">
+                                <h2 class="h5">DHT11 Sensors</h2>
+                                <h3 class="fw-extrabold mb-1">12</h3>
+                            </div>
+                            <small>Active <span class="fw-bold text-success">10</span> | Warning <span class="fw-bold text-warning">2</span> | Danger <span class="fw-bold text-danger">0</span></small>
+                            <div class="small d-flex mt-1">
+                                <div>Avg. Temperature <span class="fw-bold">36.5°C</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <div class="card border-0 shadow mb-4">
+        <div class="card-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h2 class="fs-5 fw-bold mb-0">Flame Detectors</h2>
+                </div>
+                <div class="col text-end">
+                    <a href="#" class="btn btn-sm btn-primary">
+                        <svg class="icon icon-xs me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                        Configure Alerts
+                    </a>
+                </div>
+            </div>
+        </div>
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-centered table-nowrap mb-0 rounded">
                     <thead class="thead-light">
                     <tr>
-                        <th class="border-0 rounded-start">#</th>
-                        <th class="border-0">Traffic Source</th>
-                        <th class="border-0">Source Type</th>
-                        <th class="border-0">Category</th>
-                        <th class="border-0">Global Rank</th>
-                        <th class="border-0">Traffic Share</th>
-                        <th class="border-0 rounded-end">Change</th>
+                        <th class="border-0 rounded-start">Sensor ID</th>
+                        <th class="border-0">Location</th>
+                        <th class="border-0">Detection Range</th>
+                        <th class="border-0">Sensitivity</th>
+                        <th class="border-0">Power Source</th>
+                        <th class="border-0">Last Test Date</th>
+                        <th class="border-0">Status</th>
+                        <th class="border-0 rounded-end">Last Updated</th>
                     </tr>
                     </thead>
                     <tbody>
                     <!-- Item -->
-                    <tr>
-                        <td><a href="#" class="text-primary fw-bold">1</a> </td>
-                        <td class="fw-bold d-flex align-items-center">
-                            <svg class="icon icon-xxs text-gray-500 me-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM4.332 8.027a6.012 6.012 0 011.912-2.706C6.512 5.73 6.974 6 7.5 6A1.5 1.5 0 019 7.5V8a2 2 0 004 0 2 2 0 011.523-1.943A5.977 5.977 0 0116 10c0 .34-.028.675-.083 1H15a2 2 0 00-2 2v2.197A5.973 5.973 0 0110 16v-2a2 2 0 00-2-2 2 2 0 01-2-2 2 2 0 00-1.668-1.973z" clip-rule="evenodd"></path></svg>
-                            Direct
-                        </td>
+                    <tr class="sensor-card sensor-normal">
+                        <td><a href="#" class="text-primary fw-bold">FLAME-001</a></td>
+                        <td class="fw-bold">Kitchen</td>
+                        <td>30 feet</td>
+                        <td>High</td>
+                        <td>AC Power</td>
+                        <td>2023-05-15</td>
                         <td>
-                            Direct
-                        </td>
-                        <td>
-                            -
-                        </td>
-                        <td>
-                            --
-                        </td>
-                        <td>
-                            <div class="row d-flex align-items-center">
-                                <div class="col-12 col-xl-2 px-0">
-                                    <div class="small fw-bold">51%</div>
-                                </div>
-                                <div class="col-12 col-xl-10 px-0 px-xl-1">
-                                    <div class="progress progress-lg mb-0">
-                                        <div class="progress-bar bg-dark" role="progressbar" aria-valuenow="51" aria-valuemin="0" aria-valuemax="100" style="width: 51%;"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="text-success">
                             <div class="d-flex align-items-center">
-                                <svg class="icon icon-xs me-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"></path></svg>
-                                <span class="fw-bold">2.45%</span>
+                                <span class="status-indicator status-active"></span>
+                                <span class="fw-bold text-success">Normal</span>
                             </div>
                         </td>
+                        <td>2 mins ago</td>
                     </tr>
                     <!-- End of Item -->
 
                     <!-- Item -->
-                    <tr>
-                        <td><a href="#" class="text-primary fw-bold">2</a> </td>
-                        <td class="fw-bold d-flex align-items-center">
-                            <svg class="icon icon-xxs text-gray-500 me-2" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google"  role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path></svg>
-                            Google Search
-                        </td>
+                    <tr class="sensor-card sensor-normal">
+                        <td><a href="#" class="text-primary fw-bold">FLAME-002</a></td>
+                        <td class="fw-bold">Living Room</td>
+                        <td>25 feet</td>
+                        <td>Medium</td>
+                        <td>AC Power</td>
+                        <td>2023-05-15</td>
                         <td>
-                            Search / Organic
-                        </td>
-                        <td>
-                            -
-                        </td>
-                        <td>
-                            --
-                        </td>
-                        <td>
-                            <div class="row d-flex align-items-center">
-                                <div class="col-12 col-xl-2 px-0">
-                                    <div class="small fw-bold">18%</div>
-                                </div>
-                                <div class="col-12 col-xl-10 px-0 px-xl-1">
-                                    <div class="progress progress-lg mb-0">
-                                        <div class="progress-bar bg-dark" role="progressbar" aria-valuenow="18" aria-valuemin="0" aria-valuemax="100" style="width: 18%;"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="text-success">
                             <div class="d-flex align-items-center">
-                                <svg class="icon icon-xs me-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"></path></svg>
-                                <span class="fw-bold">17.78%</span>
+                                <span class="status-indicator status-active"></span>
+                                <span class="fw-bold text-success">Normal</span>
                             </div>
                         </td>
+                        <td>1 min ago</td>
                     </tr>
                     <!-- End of Item -->
 
                     <!-- Item -->
-                    <tr>
-                        <td><a href="#" class="text-primary fw-bold">3</a> </td>
-                        <td class="fw-bold d-flex align-items-center">
-                            <svg class="icon icon-xxs text-gray-500 me-2" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="youtube" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><path fill="currentColor" d="M549.655 124.083c-6.281-23.65-24.787-42.276-48.284-48.597C458.781 64 288 64 288 64S117.22 64 74.629 75.486c-23.497 6.322-42.003 24.947-48.284 48.597-11.412 42.867-11.412 132.305-11.412 132.305s0 89.438 11.412 132.305c6.281 23.65 24.787 41.5 48.284 47.821C117.22 448 288 448 288 448s170.78 0 213.371-11.486c23.497-6.321 42.003-24.171 48.284-47.821 11.412-42.867 11.412-132.305 11.412-132.305s0-89.438-11.412-132.305zm-317.51 213.508V175.185l142.739 81.205-142.739 81.201z"></path></svg>
-                            youtube.com
-                        </td>
+                    <tr class="sensor-card sensor-normal">
+                        <td><a href="#" class="text-primary fw-bold">FLAME-003</a></td>
+                        <td class="fw-bold">Garage</td>
+                        <td>40 feet</td>
+                        <td>High</td>
+                        <td>AC Power</td>
+                        <td>2023-05-15</td>
                         <td>
-                            Social
-                        </td>
-                        <td>
-                            <a class="small fw-bold" href="#">Arts and Entertainment</a>
-                        </td>
-                        <td>
-                            #2
-                        </td>
-                        <td>
-                            <div class="row d-flex align-items-center">
-                                <div class="col-12 col-xl-2 px-0">
-                                    <div class="small fw-bold">18%</div>
-                                </div>
-                                <div class="col-12 col-xl-10 px-0 px-xl-1">
-                                    <div class="progress progress-lg mb-0">
-                                        <div class="progress-bar bg-dark" role="progressbar" aria-valuenow="18" aria-valuemin="0" aria-valuemax="100" style="width: 18%;"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            -
-                        </td>
-                    </tr>
-                    <!-- End of Item -->
-
-                    <!-- Item -->
-                    <tr>
-                        <td><a href="#" class="text-primary fw-bold">4</a> </td>
-                        <td class="fw-bold d-flex align-items-center">
-                            <svg class="icon icon-xxs text-gray-500 me-2" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="yahoo" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M223.69,141.06,167,284.23,111,141.06H14.93L120.76,390.19,82.19,480h94.17L317.27,141.06Zm105.4,135.79a58.22,58.22,0,1,0,58.22,58.22A58.22,58.22,0,0,0,329.09,276.85ZM394.65,32l-93,223.47H406.44L499.07,32Z"></path></svg>
-                            yahoo.com
-                        </td>
-                        <td>
-                            Referral
-                        </td>
-                        <td>
-                            <a class="small fw-bold" href="#">News and Media</a>
-                        </td>
-                        <td>
-                            #11
-                        </td>
-                        <td>
-                            <div class="row d-flex align-items-center">
-                                <div class="col-12 col-xl-2 px-0">
-                                    <div class="small fw-bold">8%</div>
-                                </div>
-                                <div class="col-12 col-xl-10 px-0 px-xl-1">
-                                    <div class="progress progress-lg mb-0">
-                                        <div class="progress-bar bg-dark" role="progressbar" aria-valuenow="8" aria-valuemin="0" aria-valuemax="100" style="width: 8%;"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="text-danger">
                             <div class="d-flex align-items-center">
-                                <svg class="icon icon-xs me-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-                                <span class="fw-bold">9.45%</span>
+                                <span class="status-indicator status-active"></span>
+                                <span class="fw-bold text-success">Normal</span>
                             </div>
                         </td>
+                        <td>5 mins ago</td>
                     </tr>
                     <!-- End of Item -->
 
                     <!-- Item -->
-                    <tr>
-                        <td><a href="#" class="text-primary fw-bold">5</a> </td>
-                        <td class="fw-bold d-flex align-items-center">
-                            <svg class="icon icon-xxs text-gray-500 me-2" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="twitter" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M459.37 151.716c.325 4.548.325 9.097.325 13.645 0 138.72-105.583 298.558-298.558 298.558-59.452 0-114.68-17.219-161.137-47.106 8.447.974 16.568 1.299 25.34 1.299 49.055 0 94.213-16.568 130.274-44.832-46.132-.975-84.792-31.188-98.112-72.772 6.498.974 12.995 1.624 19.818 1.624 9.421 0 18.843-1.3 27.614-3.573-48.081-9.747-84.143-51.98-84.143-102.985v-1.299c13.969 7.797 30.214 12.67 47.431 13.319-28.264-18.843-46.781-51.005-46.781-87.391 0-19.492 5.197-37.36 14.294-52.954 51.655 63.675 129.3 105.258 216.365 109.807-1.624-7.797-2.599-15.918-2.599-24.04 0-57.828 46.782-104.934 104.934-104.934 30.213 0 57.502 12.67 76.67 33.137 23.715-4.548 46.456-13.32 66.599-25.34-7.798 24.366-24.366 44.833-46.132 57.827 21.117-2.273 41.584-8.122 60.426-16.243-14.292 20.791-32.161 39.308-52.628 54.253z"></path></svg>
-                            twitter.com
-                        </td>
+                    <tr class="sensor-card sensor-normal">
+                        <td><a href="#" class="text-primary fw-bold">FLAME-004</a></td>
+                        <td class="fw-bold">Kitchen (Stove)</td>
+                        <td>15 feet</td>
+                        <td>Very High</td>
+                        <td>AC Power</td>
+                        <td>2023-05-15</td>
                         <td>
-                            Social
-                        </td>
-                        <td>
-                            <a class="small fw-bold" href="#">Social Networks</a>
-                        </td>
-                        <td>
-                            #4
-                        </td>
-                        <td>
-                            <div class="row d-flex align-items-center">
-                                <div class="col-12 col-xl-2 px-0">
-                                    <div class="small fw-bold">4%</div>
-                                </div>
-                                <div class="col-12 col-xl-10 px-0 px-xl-1">
-                                    <div class="progress progress-lg mb-0">
-                                        <div class="progress-bar bg-dark" role="progressbar" aria-valuenow="4" aria-valuemin="0" aria-valuemax="100" style="width: 4%;"></div>
-                                    </div>
-                                </div>
+                            <div class="d-flex align-items-center">
+                                <span class="status-indicator status-active"></span>
+                                <span class="fw-bold text-success">Normal</span>
                             </div>
                         </td>
-                        <td>
-                            -
-                        </td>
+                        <td>Just now</td>
                     </tr>
                     <!-- End of Item -->
                     </tbody>
@@ -232,226 +240,347 @@
         </div>
     </div>
 
-    <div class="card border-0 shadow">
+    <div class="card border-0 shadow mb-4">
+        <div class="card-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h2 class="fs-5 fw-bold mb-0">Smoke Detectors</h2>
+                </div>
+                <div class="col text-end">
+                    <a href="#" class="btn btn-sm btn-primary">
+                        <svg class="icon icon-xs me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                        Configure Alerts
+                    </a>
+                </div>
+            </div>
+        </div>
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-centered table-nowrap mb-0 rounded">
                     <thead class="thead-light">
                     <tr>
-                        <th class="border-0 rounded-start">Country</th>
-                        <th class="border-0">All</th>
-                        <th class="border-0">All Change</th>
-                        <th class="border-0">Travel & Local</th>
-                        <th class="border-0">Travel & Local Change</th>
-                        <th class="border-0">Widgets</th>
-                        <th class="border-0 rounded-end">Widgets Change</th>
+                        <th class="border-0 rounded-start">Sensor ID</th>
+                        <th class="border-0">Location</th>
+                        <th class="border-0">Smoke Level</th>
+                        <th class="border-0">Alert Threshold</th>
+                        <th class="border-0">Last Test Date</th>
+                        <th class="border-0">Status</th>
+                        <th class="border-0 rounded-end">Last Updated</th>
                     </tr>
                     </thead>
                     <tbody>
                     <!-- Item -->
-                    <tr>
-                        <td class="border-0">
-                            <a href="#" class="d-flex align-items-center">
-                                <img class="me-2 image image-small rounded-circle" alt="Image placeholder" src="{{ url_for('static', filename='assets/img/flags/united-states-of-america.svg') }}">
-                                <div><span class="h6">United States</span></div>
-                            </a>
-                        </td>
-                        <td class="border-0 fw-bold">106</td>
-                        <td class="border-0 text-danger">
+                    <tr class="sensor-card sensor-normal">
+                        <td><a href="#" class="text-primary fw-bold">SMOKE-001</a></td>
+                        <td class="fw-bold">Kitchen</td>
+                        <td><span class="sensor-reading">Normal</span></td>
+                        <td>Medium</td>
+                        <td>2023-05-15</td>
+                        <td>
                             <div class="d-flex align-items-center">
-                                <svg class="icon icon-xs me-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-                                <span class="fw-bold">5</span>
+                                <span class="status-indicator status-active"></span>
+                                <span class="fw-bold text-success">Normal</span>
                             </div>
                         </td>
-                        <td class="border-0 fw-bold">
-                            3
-                        </td>
-                        <td class="border-0">
-                            =
-                        </td>
-                        <td class="border-0 fw-bold">
-                            32
-                        </td>
-                        <td class="border-0 text-success">
-                            <div class="d-flex align-items-center">
-                                <svg class="icon icon-xs me-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"></path></svg>
-                                <span class="fw-bold">3</span>
-                            </div>
-                        </td>
+                        <td>2 mins ago</td>
                     </tr>
                     <!-- End of Item -->
 
                     <!-- Item -->
-                    <tr>
-                        <td class="border-0">
-                            <a href="#" class="d-flex align-items-center">
-                                <img class="me-2 image image-small rounded-circle" alt="Image placeholder" src="{{ url_for('static', filename='assets/img/flags/canada.svg') }}">
-                                <div><span class="h6">Canada</span></div>
-                            </a>
-                        </td>
-                        <td class="border-0 fw-bold">76</td>
-                        <td class="border-0 text-success">
+                    <tr class="sensor-card sensor-normal">
+                        <td><a href="#" class="text-primary fw-bold">SMOKE-002</a></td>
+                        <td class="fw-bold">Living Room</td>
+                        <td><span class="sensor-reading">Normal</span></td>
+                        <td>Medium</td>
+                        <td>2023-05-15</td>
+                        <td>
                             <div class="d-flex align-items-center">
-                                <svg class="icon icon-xs me-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"></path></svg>
-                                <span class="fw-bold">17</span>
+                                <span class="status-indicator status-active"></span>
+                                <span class="fw-bold text-success">Normal</span>
                             </div>
                         </td>
-                        <td class="border-0 fw-bold">
-                            4
-                        </td>
-                        <td class="border-0">
-                            =
-                        </td>
-                        <td class="border-0 fw-bold">
-                            30
-                        </td>
-                        <td class="border-0 text-success">
-                            <div class="d-flex align-items-center">
-                                <svg class="icon icon-xs me-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"></path></svg>
-                                <span class="fw-bold">3</span>
-                            </div>
-                        </td>
+                        <td>1 min ago</td>
                     </tr>
                     <!-- End of Item -->
 
                     <!-- Item -->
-                    <tr>
-                        <td class="border-0">
-                            <a href="#" class="d-flex align-items-center">
-                                <img class="me-2 image image-small rounded-circle" alt="Image placeholder" src="{{ url_for('static', filename='assets/img/flags/united-kingdom.svg') }}">
-                                <div><span class="h6">United Kingdom</span></div>
-                            </a>
-                        </td>
-                        <td class="border-0 fw-bold">147</td>
-                        <td class="border-0 text-success">
+                    <tr class="sensor-card sensor-normal">
+                        <td><a href="#" class="text-primary fw-bold">SMOKE-003</a></td>
+                        <td class="fw-bold">Bedroom</td>
+                        <td><span class="sensor-reading">Normal</span></td>
+                        <td>Low</td>
+                        <td>2023-05-15</td>
+                        <td>
                             <div class="d-flex align-items-center">
-                                <svg class="icon icon-xs me-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"></path></svg>
-                                <span class="fw-bold">10</span>
+                                <span class="status-indicator status-active"></span>
+                                <span class="fw-bold text-success">Normal</span>
                             </div>
                         </td>
-                        <td class="border-0 fw-bold">
-                            5
-                        </td>
-                        <td class="border-0">
-                            =
-                        </td>
-                        <td class="border-0 fw-bold">
-                            34
-                        </td>
-                        <td class="border-0 text-success">
-                            <div class="d-flex align-items-center">
-                                <svg class="icon icon-xs me-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"></path></svg>
-                                <span class="fw-bold">7</span>
-                            </div>
-                        </td>
+                        <td>3 mins ago</td>
                     </tr>
                     <!-- End of Item -->
 
                     <!-- Item -->
-                    <tr>
-                        <td class="border-0">
-                            <a href="#" class="d-flex align-items-center">
-                                <img class="me-2 image image-small rounded-circle" alt="Image placeholder" src="{{ url_for('static', filename='assets/img/flags/france.svg') }}">
-                                <div><span class="h6">France</span></div>
-                            </a>
-                        </td>
-                        <td class="border-0 fw-bold">112</td>
-                        <td class="border-0 text-success">
+                    <tr class="sensor-card sensor-normal">
+                        <td><a href="#" class="text-primary fw-bold">SMOKE-004</a></td>
+                        <td class="fw-bold">Garage</td>
+                        <td><span class="sensor-reading">Normal</span></td>
+                        <td>High</td>
+                        <td>2023-05-15</td>
+                        <td>
                             <div class="d-flex align-items-center">
-                                <svg class="icon icon-xs me-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"></path></svg>
-                                <span class="fw-bold">3</span>
+                                <span class="status-indicator status-active"></span>
+                                <span class="fw-bold text-success">Normal</span>
                             </div>
                         </td>
-                        <td class="border-0 fw-bold">
-                            5
-                        </td>
-                        <td class="border-0 text-success">
-                            <div class="d-flex align-items-center">
-                                <svg class="icon icon-xs me-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"></path></svg>
-                                <span class="fw-bold">1</span>
-                            </div>
-                        </td>
-                        <td class="border-0 fw-bold">
-                            34
-                        </td>
-                        <td class="border-0 text-danger">
-                            <div class="d-flex align-items-center">
-                                <svg class="icon icon-xs me-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-                                <span class="fw-bold">2</span>
-                            </div>
-                        </td>
+                        <td>5 mins ago</td>
                     </tr>
                     <!-- End of Item -->
 
                     <!-- Item -->
-                    <tr>
-                        <td class="border-0">
-                            <a href="#" class="d-flex align-items-center">
-                                <img class="me-2 image image-small rounded-circle" alt="Image placeholder" src="{{ url_for('static', filename='assets/img/flags/japan.svg') }}">
-                                <div><span class="h6">Japan</span></div>
-                            </a>
-                        </td>
-                        <td class="border-0 fw-bold">115</td>
-                        <td class="border-0 text-danger">
+                    <tr class="sensor-card sensor-normal">
+                        <td><a href="#" class="text-primary fw-bold">SMOKE-005</a></td>
+                        <td class="fw-bold">Hallway</td>
+                        <td><span class="sensor-reading">Normal</span></td>
+                        <td>Medium</td>
+                        <td>2023-05-15</td>
+                        <td>
                             <div class="d-flex align-items-center">
-                                <svg class="icon icon-xs me-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-                                <span class="fw-bold">12</span>
+                                <span class="status-indicator status-active"></span>
+                                <span class="fw-bold text-success">Normal</span>
                             </div>
                         </td>
-                        <td class="border-0 fw-bold">
-                            6
-                        </td>
-                        <td class="border-0 text-danger">
-                            <div class="d-flex align-items-center">
-                                <svg class="icon icon-xs me-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-                                <span class="fw-bold">1</span>
-                            </div>
-                        </td>
-                        <td class="border-0 fw-bold">
-                            37
-                        </td>
-                        <td class="border-0 text-danger">
-                            <div class="d-flex align-items-center">
-                                <svg class="icon icon-xs me-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-                                <span class="fw-bold">5</span>
-                            </div>
-                        </td>
+                        <td>4 mins ago</td>
                     </tr>
                     <!-- End of Item -->
 
                     <!-- Item -->
+                    <tr class="sensor-card sensor-maintenance">
+                        <td><a href="#" class="text-primary fw-bold">SMOKE-006</a></td>
+                        <td class="fw-bold">Bathroom</td>
+                        <td><span class="sensor-reading">Normal</span></td>
+                        <td>Low</td>
+                        <td>2023-05-15</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <span class="status-indicator status-maintenance"></span>
+                                <span class="fw-bold text-warning">Maintenance</span>
+                            </div>
+                        </td>
+                        <td>6 mins ago</td>
+                    </tr>
+                    <!-- End of Item -->
+
+                    <!-- Item -->
+                    <tr class="sensor-card sensor-normal">
+                        <td><a href="#" class="text-primary fw-bold">SMOKE-007</a></td>
+                        <td class="fw-bold">Kitchen (Stove)</td>
+                        <td><span class="sensor-reading">Normal</span></td>
+                        <td>High</td>
+                        <td>2023-05-15</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <span class="status-indicator status-active"></span>
+                                <span class="fw-bold text-success">Normal</span>
+                            </div>
+                        </td>
+                        <td>Just now</td>
+                    </tr>
+                    <!-- End of Item -->
+
+                    <!-- Item -->
+                    <tr class="sensor-card sensor-offline">
+                        <td><a href="#" class="text-primary fw-bold">SMOKE-008</a></td>
+                        <td class="fw-bold">Basement</td>
+                        <td><span class="text-muted">--</span></td>
+                        <td>Medium</td>
+                        <td>2023-05-15</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <span class="status-indicator status-offline"></span>
+                                <span class="fw-bold text-muted">Offline</span>
+                            </div>
+                        </td>
+                        <td>3 hours ago</td>
+                    </tr>
+                    <!-- End of Item -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow mb-4">
+        <div class="card-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h2 class="fs-5 fw-bold mb-0">Temperature Sensors</h2>
+                </div>
+                <div class="col text-end">
+                    <a href="#" class="btn btn-sm btn-primary">
+                        <svg class="icon icon-xs me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                        Configure Alerts
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-centered table-nowrap mb-0 rounded">
+                    <thead class="thead-light">
                     <tr>
-                        <td class="border-0">
-                            <a href="#" class="d-flex align-items-center">
-                                <img class="me-2 image image-small rounded-circle" alt="Image placeholder" src="{{ url_for('static', filename='assets/img/flags/germany.svg') }}">
-                                <div><span class="h6">Germany</span></div>
-                            </a>
-                        </td>
-                        <td class="border-0 fw-bold">220</td>
-                        <td class="border-0 text-danger">
+                        <th class="border-0 rounded-start">Sensor ID</th>
+                        <th class="border-0">Location</th>
+                        <th class="border-0">Current Reading</th>
+                        <th class="border-0">24h Average</th>
+                        <th class="border-0">24h High</th>
+                        <th class="border-0">Alert Threshold</th>
+                        <th class="border-0">Status</th>
+                        <th class="border-0 rounded-end">Last Updated</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <!-- Item -->
+                    <tr class="sensor-card sensor-normal">
+                        <td><a href="#" class="text-primary fw-bold">TEMP-001</a></td>
+                        <td class="fw-bold">Kitchen</td>
+                        <td><span class="temp-badge temp-normal">32.5°C</span></td>
+                        <td>31.8°C</td>
+                        <td>33.2°C</td>
+                        <td>45.0°C</td>
+                        <td>
                             <div class="d-flex align-items-center">
-                                <svg class="icon icon-xs me-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-                                <span class="fw-bold">56</span>
+                                <span class="status-indicator status-active"></span>
+                                <span class="fw-bold text-success">Normal</span>
                             </div>
                         </td>
-                        <td class="border-0 fw-bold">
-                            7
-                        </td>
-                        <td class="border-0 text-danger">
+                        <td>2 mins ago</td>
+                    </tr>
+                    <!-- End of Item -->
+
+                    <!-- Item -->
+                    <tr class="sensor-card sensor-warning">
+                        <td><a href="#" class="text-primary fw-bold">TEMP-002</a></td>
+                        <td class="fw-bold">Living Room</td>
+                        <td><span class="temp-badge temp-warning">41.7°C</span></td>
+                        <td>38.5°C</td>
+                        <td>42.1°C</td>
+                        <td>45.0°C</td>
+                        <td>
                             <div class="d-flex align-items-center">
-                                <svg class="icon icon-xs me-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-                                <span class="fw-bold">3</span>
+                                <span class="status-indicator status-warning"></span>
+                                <span class="fw-bold text-warning">Warning</span>
                             </div>
                         </td>
-                        <td class="border-0 fw-bold">
-                            30
-                        </td>
-                        <td class="border-0 text-success">
+                        <td>1 min ago</td>
+                    </tr>
+                    <!-- End of Item -->
+
+                    <!-- Item -->
+                    <tr class="sensor-card sensor-normal">
+                        <td><a href="#" class="text-primary fw-bold">TEMP-003</a></td>
+                        <td class="fw-bold">Bedroom</td>
+                        <td><span class="temp-badge temp-normal">29.8°C</span></td>
+                        <td>28.9°C</td>
+                        <td>30.2°C</td>
+                        <td>45.0°C</td>
+                        <td>
                             <div class="d-flex align-items-center">
-                                <svg class="icon icon-xs me-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"></path></svg>
-                                <span class="fw-bold">2</span>
+                                <span class="status-indicator status-active"></span>
+                                <span class="fw-bold text-success">Normal</span>
                             </div>
                         </td>
+                        <td>3 mins ago</td>
+                    </tr>
+                    <!-- End of Item -->
+
+                    <!-- Item -->
+                    <tr class="sensor-card sensor-normal">
+                        <td><a href="#" class="text-primary fw-bold">TEMP-004</a></td>
+                        <td class="fw-bold">Garage</td>
+                        <td><span class="temp-badge temp-normal">33.1°C</span></td>
+                        <td>32.5°C</td>
+                        <td>34.8°C</td>
+                        <td>50.0°C</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <span class="status-indicator status-active"></span>
+                                <span class="fw-bold text-success">Normal</span>
+                            </div>
+                        </td>
+                        <td>5 mins ago</td>
+                    </tr>
+                    <!-- End of Item -->
+
+                    <!-- Item -->
+                    <tr class="sensor-card sensor-warning">
+                        <td><a href="#" class="text-primary fw-bold">TEMP-005</a></td>
+                        <td class="fw-bold">Kitchen (Stove)</td>
+                        <td><span class="temp-badge temp-warning">43.5°C</span></td>
+                        <td>37.2°C</td>
+                        <td>44.1°C</td>
+                        <td>50.0°C</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <span class="status-indicator status-warning"></span>
+                                <span class="fw-bold text-warning">Warning</span>
+                            </div>
+                        </td>
+                        <td>Just now</td>
+                    </tr>
+                    <!-- End of Item -->
+
+                    <!-- Item -->
+                    <tr class="sensor-card sensor-normal">
+                        <td><a href="#" class="text-primary fw-bold">TEMP-006</a></td>
+                        <td class="fw-bold">Hallway</td>
+                        <td><span class="temp-badge temp-normal">31.2°C</span></td>
+                        <td>30.9°C</td>
+                        <td>32.3°C</td>
+                        <td>45.0°C</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <span class="status-indicator status-active"></span>
+                                <span class="fw-bold text-success">Normal</span>
+                            </div>
+                        </td>
+                        <td>4 mins ago</td>
+                    </tr>
+                    <!-- End of Item -->
+
+                    <!-- Item -->
+                    <tr class="sensor-card sensor-normal">
+                        <td><a href="#" class="text-primary fw-bold">TEMP-007</a></td>
+                        <td class="fw-bold">Bathroom</td>
+                        <td><span class="temp-badge temp-normal">30.5°C</span></td>
+                        <td>29.8°C</td>
+                        <td>31.7°C</td>
+                        <td>45.0°C</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <span class="status-indicator status-active"></span>
+                                <span class="fw-bold text-success">Normal</span>
+                            </div>
+                        </td>
+                        <td>6 mins ago</td>
+                    </tr>
+                    <!-- End of Item -->
+
+                    <!-- Item -->
+                    <tr class="sensor-card sensor-offline">
+                        <td><a href="#" class="text-primary fw-bold">TEMP-008</a></td>
+                        <td class="fw-bold">Basement</td>
+                        <td><span class="text-muted">--</span></td>
+                        <td class="text-muted">--</td>
+                        <td class="text-muted">--</td>
+                        <td>45.0°C</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <span class="status-indicator status-offline"></span>
+                                <span class="fw-bold text-muted">Offline</span>
+                            </div>
+                        </td>
+                        <td>3 hours ago</td>
                     </tr>
                     <!-- End of Item -->
                     </tbody>
