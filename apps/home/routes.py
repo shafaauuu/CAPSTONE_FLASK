@@ -1,8 +1,11 @@
-from flask import render_template, request, session, flash, redirect, url_for, jsonify, Response
+from flask import render_template, request, session, flash, redirect, url_for, jsonify, Response, send_file
 import requests
 import traceback
 from datetime import datetime, timedelta
 import os
+import json
+from io import BytesIO
+import base64
 
 from apps.home import blueprint
 from apps.authentication.routes import login_required
@@ -86,7 +89,7 @@ def dashboard_admin():
     if admin_id:
         try:
             # Use the correct profile endpoint with type=admin query parameter
-            response = requests.get(f'http://localhost:3000/api/profile?id={admin_id}&type=admin')
+            response = request.get(f'http://127.0.0.1:3000/api/profile?id={admin_id}&type=admin')
             
             if response.status_code == 200:
                 admin_data = response.json()
@@ -140,7 +143,7 @@ def dashboard_admin():
         
         try:
             # Get all users count
-            all_users_response = requests.get('http://localhost:3000/api/users/count')
+            all_users_response = requests.get('http://127.0.0.1:3000/api/users/count')
             if all_users_response.status_code == 200:
                 all_users_count = all_users_response.json().get('count', 0)
                 print(f"API response for all users: {all_users_response.json()}")
@@ -149,7 +152,7 @@ def dashboard_admin():
                 all_users_count = 0
             
             # Get new users (registered this week instead of this month)
-            new_users_response = requests.get(f'http://localhost:3000/api/users/count/new?since={one_week_ago.strftime("%Y-%m-%d")}')
+            new_users_response = requests.get(f'http://127.0.0.1:3000/api/users/count/new?since={one_week_ago.strftime("%Y-%m-%d")}')
             if new_users_response.status_code == 200:
                 new_users_count = new_users_response.json().get('count', 0)
                 print(f"API response for new users (past week): {new_users_response.json()}")
@@ -158,7 +161,7 @@ def dashboard_admin():
                 new_users_count = 0
             
             # Get remaining users to approve
-            pending_users_response = requests.get('http://localhost:3000/api/approval/pending')
+            pending_users_response = requests.get('http://127.0.0.1:3000/api/approval/pending')
             if pending_users_response.status_code == 200:
                 pending_users = pending_users_response.json()
                 print(f"API received {len(pending_users)} pending users")
@@ -170,7 +173,7 @@ def dashboard_admin():
             # Try to get a direct count of ALL users (regardless of status)
             try:
                 # Try to get all users directly first
-                all_users_list_response = requests.get('http://localhost:3000/api/users')
+                all_users_list_response = requests.get('http://127.0.0.1:3000/api/users')
                 if all_users_list_response.status_code == 200:
                     all_users_list = all_users_list_response.json()
                     direct_all_users_count = len(all_users_list)
@@ -190,7 +193,7 @@ def dashboard_admin():
                     # Get approved users
                     try:
                         # Try the standard endpoint first
-                        approved_users_response = requests.get('http://localhost:3000/api/users/approved')
+                        approved_users_response = requests.get('http://127.0.0.1:3000/api/users/approved')
                         if approved_users_response.status_code == 200:
                             approved_users = approved_users_response.json()
                             approved_users_count = len(approved_users)
@@ -546,7 +549,7 @@ def profile():
 
         # Try to fetch profile data from API
         try:
-            api_url = 'http://localhost:3000/api/profile'
+            api_url = 'http://127.0.0.1:3000/api/profile'
             params = {'id': user_id, 'type': user_type}
             print(f"Requesting profile: {api_url}, params: {params}, headers: {{'Authorization': 'Bearer ***' if token else 'None'}}")
 
@@ -691,7 +694,7 @@ def history():
 def api_history():
     try:
         # Your Node.js backend URL - update this with your actual backend URL
-        backend_url = 'http://localhost:3000/api/history'
+        backend_url = 'http://127.0.0.1:3000/api/history'
         response = requests.get(backend_url)
         return response.json(), response.status_code
     except Exception as e:
@@ -702,8 +705,8 @@ def api_history():
 @login_required
 def api_history_approval():
     try:
-        # Your Node.js backend URL - update this with your actual backend URL
-        backend_url = 'http://localhost:3000/api/history/approval'
+        # Node.js backend URL
+        backend_url = 'http://127.0.0.1:3000/api/history/approval'
         response = requests.get(backend_url)
         return response.json(), response.status_code
     except Exception as e:
@@ -714,8 +717,8 @@ def api_history_approval():
 @login_required
 def api_history_approval_admin(admin_id):
     try:
-        # Your Node.js backend URL - update this with your actual backend URL
-        backend_url = f'http://localhost:3000/api/history/approval/admin/{admin_id}'
+        #  Node.js backend URL
+        backend_url = f'http://127.0.0.1:3000/api/history/approval/admin/{admin_id}'
         response = requests.get(backend_url)
         return response.json(), response.status_code
     except Exception as e:
@@ -726,8 +729,8 @@ def api_history_approval_admin(admin_id):
 @login_required
 def api_history_approval_user(user_id):
     try:
-        # Your Node.js backend URL - update this with your actual backend URL
-        backend_url = f'http://localhost:3000/api/history/approval/user/{user_id}'
+        # Node.js backend URL
+        backend_url = f'http://127.0.0.1:3000/api/history/approval/user/{user_id}'
         response = requests.get(backend_url)
         return response.json(), response.status_code
     except Exception as e:
@@ -795,7 +798,7 @@ def search():
     if query:
         try:
             # Use the unified search endpoint from the Node.js backend
-            response = requests.get('http://localhost:3000/api/search', params={'q': query})
+            response = requests.get('http://127.0.0.1:3000/api/search', params={'q': query})
             
             if response.status_code == 200:
                 search_data = response.json()
@@ -839,6 +842,37 @@ def video_feed():
         generate_frames(camera_source=camera_source),
         mimetype='multipart/x-mixed-replace; boundary=frame'
     )
+
+@blueprint.route('/download/sensor_data/<filename>')
+@login_required
+def download_sensor_data(filename):
+    try:
+        # Get the base64 encoded data from session
+        if 'excel_exports' in session and filename in session['excel_exports']:
+            excel_data_base64 = session['excel_exports'][filename]
+            
+            # Decode base64 to binary
+            excel_data = base64.b64decode(excel_data_base64)
+            
+            # Create BytesIO object
+            excel_file = BytesIO(excel_data)
+            excel_file.seek(0)
+            
+            # Send the file to the client
+            return send_file(
+                excel_file,
+                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                as_attachment=True,
+                download_name=filename
+            )
+        else:
+            flash('Export file not found or expired. Please try exporting again.', 'error')
+            return redirect(url_for('home_blueprint.data_sensor'))
+    except Exception as e:
+        print(f"Error downloading sensor data export: {str(e)}")
+        traceback.print_exc()
+        flash('Error downloading export file. Please try again.', 'error')
+        return redirect(url_for('home_blueprint.data_sensor'))
 
 @blueprint.route('/initialize_fire_detector')
 @login_required

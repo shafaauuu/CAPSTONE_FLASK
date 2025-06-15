@@ -173,10 +173,6 @@
                 <span class="fw-bold small text-muted d-block mb-1">Division:</span>
                 <span id="modal-division" class="d-block"></span>
               </div>
-              <div class="mb-3">
-                <span class="fw-bold small text-muted d-block mb-1">Created At:</span>
-                <span id="modal-created-at" class="d-block"></span>
-              </div>
             </div>
           </div>
           
@@ -320,154 +316,6 @@
           <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert" aria-label="Close"></button>
         `;
         tableContainer.prepend(notification);
-        
-        // Use mock data as fallback
-        const mockData = [
-          {
-            id: '1001',
-            user_id: '1001',
-            user_name: 'John Doe',
-            user_email: 'john.doe@example.com',
-            approved_by: 'Admin User',
-            approved_date: '2025-05-25T14:30:00',
-            status: 'Approved',
-            plant: 'Plant A',
-            department: 'IT Department',
-            division: 'Software Division'
-          },
-          {
-            id: '1002',
-            user_id: '1002',
-            user_name: 'Jane Smith',
-            user_email: 'jane.smith@example.com',
-            approved_by: 'Admin User',
-            approved_date: '2025-05-24T10:15:00',
-            status: 'Rejected',
-            plant: 'Plant B',
-            department: 'HR Department',
-            division: 'Recruitment Division'
-          },
-          {
-            id: '1003',
-            user_id: '1003',
-            user_name: 'Bob Johnson',
-            user_email: 'bob.johnson@example.com',
-            approved_by: 'Admin User',
-            approved_date: '2025-05-23T16:45:00',
-            status: 'Approved',
-            plant: 'Plant C',
-            department: 'Finance Department',
-            division: 'Accounting Division'
-          },
-          {
-            id: '1004',
-            user_id: '1004',
-            user_name: 'Alice Brown',
-            user_email: 'alice.brown@example.com',
-            approved_by: 'Admin User',
-            approved_date: '2025-05-22T09:30:00',
-            status: 'Rejected',
-            plant: 'Plant A',
-            department: 'Marketing Department',
-            division: 'Digital Marketing Division'
-          },
-          {
-            id: '1005',
-            user_id: '1005',
-            user_name: 'Charlie Wilson',
-            user_email: 'charlie.wilson@example.com',
-            approved_by: 'Admin User',
-            approved_date: '2025-05-21T13:20:00',
-            status: 'Approved',
-            plant: 'Plant B',
-            department: 'Operations Department',
-            division: 'Logistics Division'
-          },
-          {
-            id: '1006',
-            user_id: '1006',
-            user_name: 'David Miller',
-            user_email: 'david.miller@example.com',
-            approved_by: 'Admin User',
-            approved_date: '2025-05-20T11:10:00',
-            status: 'Approved',
-            plant: 'Plant C',
-            department: 'IT Department',
-            division: 'Infrastructure Division'
-          },
-          {
-            id: '1007',
-            user_id: '1007',
-            user_name: 'Emily Taylor',
-            user_email: 'emily.taylor@example.com',
-            approved_by: 'Admin User',
-            approved_date: '2025-05-19T15:40:00',
-            status: 'Rejected',
-            plant: 'Plant A',
-            department: 'Marketing Department',
-            division: 'Branding Division'
-          },
-          {
-            id: '1008',
-            user_id: '1008',
-            user_name: 'Frank White',
-            user_email: 'frank.white@example.com',
-            approved_by: 'Admin User',
-            approved_date: '2025-05-18T09:20:00',
-            status: 'Approved',
-            plant: 'Plant B',
-            department: 'Finance Department',
-            division: 'Audit Division'
-          },
-          {
-            id: '1009',
-            user_id: '1009',
-            user_name: 'Grace Lee',
-            user_email: 'grace.lee@example.com',
-            approved_by: 'Admin User',
-            approved_date: '2025-05-17T14:15:00',
-            status: 'Approved',
-            plant: 'Plant C',
-            department: 'HR Department',
-            division: 'Training Division'
-          },
-          {
-            id: '1010',
-            user_id: '1010',
-            user_name: 'Henry Green',
-            user_email: 'henry.green@example.com',
-            approved_by: 'Admin User',
-            approved_date: '2025-05-16T10:05:00',
-            status: 'Rejected',
-            plant: 'Plant A',
-            department: 'Operations Department',
-            division: 'Supply Chain Division'
-          },
-          {
-            id: '1011',
-            user_id: '1011',
-            user_name: 'Isabella Clark',
-            user_email: 'isabella.clark@example.com',
-            approved_by: 'Admin User',
-            approved_date: '2025-05-15T16:30:00',
-            status: 'Approved',
-            plant: 'Plant B',
-            department: 'IT Department',
-            division: 'Security Division'
-          },
-          {
-            id: '1012',
-            user_id: '1012',
-            user_name: 'Jack Hill',
-            user_email: 'jack.hill@example.com',
-            approved_by: 'Admin User',
-            approved_date: '2025-05-14T13:45:00',
-            status: 'Rejected',
-            plant: 'Plant C',
-            department: 'Marketing Department',
-            division: 'Digital Marketing Division'
-          }
-        ];
         
         allHistoryData = mockData;
         filteredHistoryData = [...allHistoryData];
@@ -723,7 +571,7 @@
         ${record.status}
       </span>
     `;
-    
+
     // Set user information
     modalBody.querySelector('#modal-user-id').textContent = record.user_id || 'N/A';
     modalBody.querySelector('#modal-user-name').textContent = record.user_name || 'N/A';
@@ -731,16 +579,12 @@
     modalBody.querySelector('#modal-approval-date').textContent = formatDate(record.approved_date) || 'N/A';
     modalBody.querySelector('#modal-approved-by').textContent = record.approved_by || 'N/A';
     modalBody.querySelector('#modal-status').textContent = record.status || 'N/A';
-    
+
     // Set additional information
     modalBody.querySelector('#modal-plant').textContent = record.plant || 'N/A';
     modalBody.querySelector('#modal-department').textContent = record.department || 'N/A';
     modalBody.querySelector('#modal-division').textContent = record.division || 'N/A';
-    
-    // Set created_at (using current_at from API if available, otherwise fallback to approved_date)
-    const createdDate = record.current_at || record.created_at || record.approved_date;
-    modalBody.querySelector('#modal-created-at').textContent = createdDate ? formatDate(createdDate) : 'N/A';
-    
+
     // Set rejection reason (if applicable)
     const rejectionReasonSection = modalBody.querySelector('#rejection-reason-section');
     if (record.status === 'Rejected' && record.reject_reason) {

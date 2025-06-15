@@ -39,3 +39,7 @@
 
 <!-- Volt JS -->
 <script src="{{ url_for('static', filename='assets/js/volt.js') }}"></script>
+<!-- Add this before your closing </body> tag in your base template -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.4/socket.io.min.js"></script>
+<script src="{{ url_for('static', filename='assets/js/socket-client.js') }}"></script>

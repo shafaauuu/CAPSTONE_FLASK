@@ -42,7 +42,7 @@
               <button type="button" class="btn btn-sm btn-outline-primary">
                   <span class="fas fa-print me-2"></span>Print
               </button>
-              <button class="btn btn-danger" id="notifyTopRight">ALERT</button>
+              <button class="btn btn-danger" id="alertButton">ALERT</button>
           </div>
       </div>
   </div>
@@ -375,17 +375,18 @@
 {% endblock content %}
 
 {% block javascripts %}
-<script>
-    const swalWithBootstrapButtons = Swal.mixin({
-        customClass: {
-            confirmButton: 'btn btn-primary',
-            cancelButton: 'btn btn-gray'
-        },
-        buttonsStyling: false
-    });
+    <script>
+        const swalWithBootstrapButtons = Swal.mixin({
+            customClass: {
+                confirmButton: 'btn btn-primary',
+                cancelButton: 'btn btn-gray'
+            },
+            buttonsStyling: false
+        });
 
-    document.getElementById('notifyTopRight').addEventListener('click', function () {
         const notyf = new Notyf({
+            duration: 3000,
+            ripple: false,
             position: {
                 x: 'right',
                 y: 'top',
@@ -403,10 +404,12 @@
                 }
             ]
         });
-        notyf.open({
-            type: 'error',
-            message: 'FIRE IS DETECTED! Fire detected in Camera 1. Immediate action required.',
+
+        document.getElementById('alertButton').addEventListener('click', function() {
+            notyf.open({
+                type: 'error',
+                message: 'FIRE IS DETECTED! Fire detected in Camera 1. Immediate action required.',
+            });
         });
-    });
-</script>
+    </script>
 {% endblock javascripts %}

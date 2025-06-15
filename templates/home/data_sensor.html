@@ -21,35 +21,64 @@
             <h1 class="h4">Sensor Data Monitoring</h1>
             <p class="mb-0">Real-time monitoring of temperature, smoke, and flame sensors for fire detection system.</p>
         </div>
-        <div class="btn-toolbar mb-2 mb-md-0">
-            <div class="dropdown me-2">
-                <button class="btn btn-sm btn-outline-primary dropdown-toggle me-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <span class="fas fa-filter me-2"></span>Filter
-                </button>
-                <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="#">All Sensors</a></li>
-                    <li><a class="dropdown-item" href="#">Temperature Sensors</a></li>
-                    <li><a class="dropdown-item" href="#">Smoke Detectors</a></li>
-                    <li><a class="dropdown-item" href="#">Flame Sensors</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="#">Active Only</a></li>
-                    <li><a class="dropdown-item" href="#">Warning Status</a></li>
-                    <li><a class="dropdown-item" href="#">Critical Status</a></li>
-                </ul>
+        <!-- Filter Controls -->
+        <div class="row align-items-center">
+            <div class="col-12 col-lg-8 d-flex flex-wrap">
+
+                <!-- Status Filter -->
+                <div class="dropdown me-2 mb-2">
+                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" id="statusFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="fas fa-filter me-1"></span> <span id="current-status-filter">All Statuses</span>
+                    </button>
+                    <ul class="dropdown-menu shadow-sm" aria-labelledby="statusFilterDropdown">
+                        <li><a class="dropdown-item status-filter active" href="#" data-status=""><i class="fas fa-globe me-2"></i>All Statuses</a></li>
+                        <li><a class="dropdown-item status-filter" href="#" data-status="Normal"><i class="fas fa-check-circle text-success me-2"></i>Normal</a></li>
+                        <li><a class="dropdown-item status-filter" href="#" data-status="High Temp"><i class="fas fa-thermometer-full text-warning me-2"></i>High Temperature</a></li>
+                        <li><a class="dropdown-item status-filter" href="#" data-status="Detected"><i class="fas fa-fire text-danger me-2"></i>Detected</a></li>
+                        <li><a class="dropdown-item status-filter" href="#" data-status="Not Detected"><i class="fas fa-fire-alt text-success me-2"></i>Not Detected</a></li>
+                    </ul>
+                </div>
+
+                <!-- Location Filter -->
+                <div class="dropdown me-2 mb-2">
+                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" id="locationFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="fas fa-map-marker-alt me-1"></span> <span id="current-location-filter">All Locations</span>
+                    </button>
+                    <ul class="dropdown-menu shadow-sm" aria-labelledby="locationFilterDropdown">
+                        <li><a class="dropdown-item location-filter active" href="#" data-location=""><i class="fas fa-globe me-2"></i>All Locations</a></li>
+                    </ul>
+                </div>
+
+                <!-- Page Size Selector -->
+                <div class="dropdown mb-2">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="pageSizeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="fas fa-list me-1"></span> <span id="current-page-size">10</span> per page
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="pageSizeDropdown">
+                        <li><a class="dropdown-item page-size-option active" href="#" data-size="10">10 per page</a></li>
+                        <li><a class="dropdown-item page-size-option" href="#" data-size="25">25 per page</a></li>
+                        <li><a class="dropdown-item page-size-option" href="#" data-size="50">50 per page</a></li>
+                        <li><a class="dropdown-item page-size-option" href="#" data-size="100">100 per page</a></li>
+                    </ul>
+                </div>
             </div>
-            <div class="btn-group ms-2 ms-lg-3">
-                <button type="button" class="btn btn-sm btn-outline-primary">
-                    <span class="fas fa-download me-2"></span>Export Data
-                </button>
-                <button type="button" class="btn btn-sm btn-outline-primary">
-                    <span class="fas fa-sync me-2"></span>Refresh
-                </button>
+
+            <div class="col-12 col-lg-4 d-flex justify-content-lg-end mt-2 mt-lg-0">
+                <div class="btn-group">
+                    <button type="button" id="export-sensor-data" class="btn btn-sm btn-outline-primary">
+                        <span class="fas fa-download me-1"></span>Export
+                    </button>
+                    <button type="button" id="refresh-sensor-data" class="btn btn-sm btn-outline-primary">
+                        <span class="fas fa-sync me-1"></span>Refresh
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Sensor Overview Cards -->
     <div class="row">
+        <!-- Flame Detector Card -->
         <div class="col-12 col-md-4 mb-4">
             <div class="card border-0 shadow">
                 <div class="card-body">
@@ -60,23 +89,29 @@
                             </div>
                             <div class="d-sm-none">
                                 <h2 class="h5">Flame Detectors</h2>
-                                <h3 class="fw-extrabold mb-1">4</h3>
+                                <h3 class="fw-extrabold mb-1" id="fire-sensor-count-mobile">0</h3>
                             </div>
                         </div>
                         <div class="col-12 col-xl-7 px-xl-0">
                             <div class="d-none d-sm-block">
                                 <h2 class="h5">Flame Detectors</h2>
-                                <h3 class="fw-extrabold mb-1">4</h3>
+                                <h3 class="fw-extrabold mb-1" id="fire-sensor-count">0</h3>
                             </div>
-                            <small>Active <span class="fw-bold text-success">4</span> | Warning <span class="fw-bold text-warning">0</span> | Danger <span class="fw-bold text-danger">0</span></small>
+                            <small>
+                                Active <span class="fw-bold text-success" id="fire-sensor-normal">0</span> |
+                                Warning <span class="fw-bold text-warning" id="fire-sensor-warning">0</span> |
+                                Danger <span class="fw-bold text-danger" id="fire-sensor-danger">0</span>
+                            </small>
                             <div class="small d-flex mt-1">
-                                <div>Last check <span class="fw-bold">2 mins ago</span></div>
+                                <div>Last check <span class="fw-bold" id="fire-sensor-last-check">-</span></div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Smoke Detector Card -->
         <div class="col-12 col-md-4 mb-4">
             <div class="card border-0 shadow">
                 <div class="card-body">
@@ -87,23 +122,29 @@
                             </div>
                             <div class="d-sm-none">
                                 <h2 class="h5">Smoke Detectors</h2>
-                                <h3 class="fw-extrabold mb-1">8</h3>
+                                <h3 class="fw-extrabold mb-1" id="smoke-sensor-count-mobile">0</h3>
                             </div>
                         </div>
                         <div class="col-12 col-xl-7 px-xl-0">
                             <div class="d-none d-sm-block">
                                 <h2 class="h5">Smoke Detectors</h2>
-                                <h3 class="fw-extrabold mb-1">8</h3>
+                                <h3 class="fw-extrabold mb-1" id="smoke-sensor-count">0</h3>
                             </div>
-                            <small>Active <span class="fw-bold text-success">8</span> | Warning <span class="fw-bold text-warning">0</span> | Danger <span class="fw-bold text-danger">0</span></small>
+                            <small>
+                                Active <span class="fw-bold text-success" id="smoke-sensor-normal">0</span> |
+                                Warning <span class="fw-bold text-warning" id="smoke-sensor-warning">0</span> |
+                                Danger <span class="fw-bold text-danger" id="smoke-sensor-danger">0</span>
+                            </small>
                             <div class="small d-flex mt-1">
-                                <div>Last check <span class="fw-bold">2 mins ago</span></div>
+                                <div>Last check <span class="fw-bold" id="smoke-sensor-last-check">-</span></div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- DHT11 Sensor Card -->
         <div class="col-12 col-md-4 mb-4">
             <div class="card border-0 shadow">
                 <div class="card-body">
@@ -114,17 +155,21 @@
                             </div>
                             <div class="d-sm-none">
                                 <h2 class="h5">DHT11 Sensors</h2>
-                                <h3 class="fw-extrabold mb-1">12</h3>
+                                <h3 class="fw-extrabold mb-1" id="dht11-sensor-count-mobile">0</h3>
                             </div>
                         </div>
                         <div class="col-12 col-xl-7 px-xl-0">
                             <div class="d-none d-sm-block">
                                 <h2 class="h5">DHT11 Sensors</h2>
-                                <h3 class="fw-extrabold mb-1">12</h3>
+                                <h3 class="fw-extrabold mb-1" id="dht11-sensor-count">0</h3>
                             </div>
-                            <small>Active <span class="fw-bold text-success">10</span> | Warning <span class="fw-bold text-warning">2</span> | Danger <span class="fw-bold text-danger">0</span></small>
+                            <small>
+                                Active <span class="fw-bold text-success" id="dht11-sensor-normal">0</span> |
+                                Warning <span class="fw-bold text-warning" id="dht11-sensor-warning">0</span> |
+                                Danger <span class="fw-bold text-danger" id="dht11-sensor-danger">0</span>
+                            </small>
                             <div class="small d-flex mt-1">
-                                <div>Avg. Temperature <span class="fw-bold">36.5°C</span></div>
+                                <div>Avg. Temperature <span class="fw-bold" id="dht11-avg-temp">-</span></div>
                             </div>
                         </div>
                     </div>
@@ -139,103 +184,37 @@
                 <div class="col">
                     <h2 class="fs-5 fw-bold mb-0">Flame Detectors</h2>
                 </div>
-                <div class="col text-end">
-                    <a href="#" class="btn btn-sm btn-primary">
-                        <svg class="icon icon-xs me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                        Configure Alerts
-                    </a>
-                </div>
             </div>
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-centered table-nowrap mb-0 rounded">
+                <table id="fire-sensor-table" class="table table-centered table-nowrap mb-0 rounded">
                     <thead class="thead-light">
                     <tr>
                         <th class="border-0 rounded-start">Sensor ID</th>
                         <th class="border-0">Location</th>
-                        <th class="border-0">Detection Range</th>
-                        <th class="border-0">Sensitivity</th>
-                        <th class="border-0">Power Source</th>
-                        <th class="border-0">Last Test Date</th>
                         <th class="border-0">Status</th>
-                        <th class="border-0 rounded-end">Last Updated</th>
+                        <th class="border-0 rounded-end">Timestamp</th>
                     </tr>
                     </thead>
                     <tbody>
-                    <!-- Item -->
-                    <tr class="sensor-card sensor-normal">
-                        <td><a href="#" class="text-primary fw-bold">FLAME-001</a></td>
-                        <td class="fw-bold">Kitchen</td>
-                        <td>30 feet</td>
-                        <td>High</td>
-                        <td>AC Power</td>
-                        <td>2023-05-15</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <span class="status-indicator status-active"></span>
-                                <span class="fw-bold text-success">Normal</span>
-                            </div>
-                        </td>
-                        <td>2 mins ago</td>
+                    <!-- Data will be populated by JavaScript -->
+                    <tr>
+                        <td colspan="4" class="text-center">Loading data...</td>
                     </tr>
-                    <!-- End of Item -->
-
-                    <!-- Item -->
-                    <tr class="sensor-card sensor-normal">
-                        <td><a href="#" class="text-primary fw-bold">FLAME-002</a></td>
-                        <td class="fw-bold">Living Room</td>
-                        <td>25 feet</td>
-                        <td>Medium</td>
-                        <td>AC Power</td>
-                        <td>2023-05-15</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <span class="status-indicator status-active"></span>
-                                <span class="fw-bold text-success">Normal</span>
-                            </div>
-                        </td>
-                        <td>1 min ago</td>
-                    </tr>
-                    <!-- End of Item -->
-
-                    <!-- Item -->
-                    <tr class="sensor-card sensor-normal">
-                        <td><a href="#" class="text-primary fw-bold">FLAME-003</a></td>
-                        <td class="fw-bold">Garage</td>
-                        <td>40 feet</td>
-                        <td>High</td>
-                        <td>AC Power</td>
-                        <td>2023-05-15</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <span class="status-indicator status-active"></span>
-                                <span class="fw-bold text-success">Normal</span>
-                            </div>
-                        </td>
-                        <td>5 mins ago</td>
-                    </tr>
-                    <!-- End of Item -->
-
-                    <!-- Item -->
-                    <tr class="sensor-card sensor-normal">
-                        <td><a href="#" class="text-primary fw-bold">FLAME-004</a></td>
-                        <td class="fw-bold">Kitchen (Stove)</td>
-                        <td>15 feet</td>
-                        <td>Very High</td>
-                        <td>AC Power</td>
-                        <td>2023-05-15</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <span class="status-indicator status-active"></span>
-                                <span class="fw-bold text-success">Normal</span>
-                            </div>
-                        </td>
-                        <td>Just now</td>
-                    </tr>
-                    <!-- End of Item -->
                     </tbody>
                 </table>
+            </div>
+            <!-- Enhanced Pagination for fire sensor table -->
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <div class="pagination-info small text-muted">
+                    Showing <span class="fw-bold" id="fire-showing-start">1</span> to <span class="fw-bold" id="fire-showing-end">10</span> of <span class="fw-bold" id="fire-total-items">0</span> items
+                </div>
+                <nav aria-label="Fire sensor pagination">
+                    <ul id="fire-sensor-pagination" class="pagination pagination-sm mb-0">
+                        <!-- Pagination will be populated by JavaScript -->
+                    </ul>
+                </nav>
             </div>
         </div>
     </div>
@@ -246,166 +225,36 @@
                 <div class="col">
                     <h2 class="fs-5 fw-bold mb-0">Smoke Detectors</h2>
                 </div>
-                <div class="col text-end">
-                    <a href="#" class="btn btn-sm btn-primary">
-                        <svg class="icon icon-xs me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                        Configure Alerts
-                    </a>
-                </div>
             </div>
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-centered table-nowrap mb-0 rounded">
+                <table id="smoke-sensor-table" class="table table-centered table-nowrap mb-0 rounded">
                     <thead class="thead-light">
                     <tr>
                         <th class="border-0 rounded-start">Sensor ID</th>
                         <th class="border-0">Location</th>
-                        <th class="border-0">Smoke Level</th>
-                        <th class="border-0">Alert Threshold</th>
-                        <th class="border-0">Last Test Date</th>
                         <th class="border-0">Status</th>
-                        <th class="border-0 rounded-end">Last Updated</th>
+                        <th class="border-0 rounded-end">Timestamp</th>
                     </tr>
                     </thead>
                     <tbody>
-                    <!-- Item -->
-                    <tr class="sensor-card sensor-normal">
-                        <td><a href="#" class="text-primary fw-bold">SMOKE-001</a></td>
-                        <td class="fw-bold">Kitchen</td>
-                        <td><span class="sensor-reading">Normal</span></td>
-                        <td>Medium</td>
-                        <td>2023-05-15</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <span class="status-indicator status-active"></span>
-                                <span class="fw-bold text-success">Normal</span>
-                            </div>
-                        </td>
-                        <td>2 mins ago</td>
+                    <!-- Data will be populated by JavaScript -->
+                    <tr>
+                        <td colspan="4" class="text-center">Loading data...</td>
                     </tr>
-                    <!-- End of Item -->
-
-                    <!-- Item -->
-                    <tr class="sensor-card sensor-normal">
-                        <td><a href="#" class="text-primary fw-bold">SMOKE-002</a></td>
-                        <td class="fw-bold">Living Room</td>
-                        <td><span class="sensor-reading">Normal</span></td>
-                        <td>Medium</td>
-                        <td>2023-05-15</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <span class="status-indicator status-active"></span>
-                                <span class="fw-bold text-success">Normal</span>
-                            </div>
-                        </td>
-                        <td>1 min ago</td>
-                    </tr>
-                    <!-- End of Item -->
-
-                    <!-- Item -->
-                    <tr class="sensor-card sensor-normal">
-                        <td><a href="#" class="text-primary fw-bold">SMOKE-003</a></td>
-                        <td class="fw-bold">Bedroom</td>
-                        <td><span class="sensor-reading">Normal</span></td>
-                        <td>Low</td>
-                        <td>2023-05-15</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <span class="status-indicator status-active"></span>
-                                <span class="fw-bold text-success">Normal</span>
-                            </div>
-                        </td>
-                        <td>3 mins ago</td>
-                    </tr>
-                    <!-- End of Item -->
-
-                    <!-- Item -->
-                    <tr class="sensor-card sensor-normal">
-                        <td><a href="#" class="text-primary fw-bold">SMOKE-004</a></td>
-                        <td class="fw-bold">Garage</td>
-                        <td><span class="sensor-reading">Normal</span></td>
-                        <td>High</td>
-                        <td>2023-05-15</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <span class="status-indicator status-active"></span>
-                                <span class="fw-bold text-success">Normal</span>
-                            </div>
-                        </td>
-                        <td>5 mins ago</td>
-                    </tr>
-                    <!-- End of Item -->
-
-                    <!-- Item -->
-                    <tr class="sensor-card sensor-normal">
-                        <td><a href="#" class="text-primary fw-bold">SMOKE-005</a></td>
-                        <td class="fw-bold">Hallway</td>
-                        <td><span class="sensor-reading">Normal</span></td>
-                        <td>Medium</td>
-                        <td>2023-05-15</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <span class="status-indicator status-active"></span>
-                                <span class="fw-bold text-success">Normal</span>
-                            </div>
-                        </td>
-                        <td>4 mins ago</td>
-                    </tr>
-                    <!-- End of Item -->
-
-                    <!-- Item -->
-                    <tr class="sensor-card sensor-maintenance">
-                        <td><a href="#" class="text-primary fw-bold">SMOKE-006</a></td>
-                        <td class="fw-bold">Bathroom</td>
-                        <td><span class="sensor-reading">Normal</span></td>
-                        <td>Low</td>
-                        <td>2023-05-15</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <span class="status-indicator status-maintenance"></span>
-                                <span class="fw-bold text-warning">Maintenance</span>
-                            </div>
-                        </td>
-                        <td>6 mins ago</td>
-                    </tr>
-                    <!-- End of Item -->
-
-                    <!-- Item -->
-                    <tr class="sensor-card sensor-normal">
-                        <td><a href="#" class="text-primary fw-bold">SMOKE-007</a></td>
-                        <td class="fw-bold">Kitchen (Stove)</td>
-                        <td><span class="sensor-reading">Normal</span></td>
-                        <td>High</td>
-                        <td>2023-05-15</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <span class="status-indicator status-active"></span>
-                                <span class="fw-bold text-success">Normal</span>
-                            </div>
-                        </td>
-                        <td>Just now</td>
-                    </tr>
-                    <!-- End of Item -->
-
-                    <!-- Item -->
-                    <tr class="sensor-card sensor-offline">
-                        <td><a href="#" class="text-primary fw-bold">SMOKE-008</a></td>
-                        <td class="fw-bold">Basement</td>
-                        <td><span class="text-muted">--</span></td>
-                        <td>Medium</td>
-                        <td>2023-05-15</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <span class="status-indicator status-offline"></span>
-                                <span class="fw-bold text-muted">Offline</span>
-                            </div>
-                        </td>
-                        <td>3 hours ago</td>
-                    </tr>
-                    <!-- End of Item -->
                     </tbody>
                 </table>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <div class="pagination-info small text-muted">
+                    Showing <span class="fw-bold" id="smoke-showing-start">1</span> to <span class="fw-bold" id="smoke-showing-end">10</span> of <span class="fw-bold" id="smoke-total-items">0</span> items
+                </div>
+                <nav aria-label="Smoke sensor pagination">
+                    <ul id="smoke-sensor-pagination" class="pagination pagination-sm mb-0">
+                        <!-- Pagination will be populated by JavaScript -->
+                    </ul>
+                </nav>
             </div>
         </div>
     </div>
@@ -416,180 +265,370 @@
                 <div class="col">
                     <h2 class="fs-5 fw-bold mb-0">Temperature Sensors</h2>
                 </div>
-                <div class="col text-end">
-                    <a href="#" class="btn btn-sm btn-primary">
-                        <svg class="icon icon-xs me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                        Configure Alerts
-                    </a>
-                </div>
             </div>
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-centered table-nowrap mb-0 rounded">
+                <table id="dht11-sensor-table" class="table table-centered table-nowrap mb-0 rounded">
                     <thead class="thead-light">
                     <tr>
                         <th class="border-0 rounded-start">Sensor ID</th>
                         <th class="border-0">Location</th>
-                        <th class="border-0">Current Reading</th>
-                        <th class="border-0">24h Average</th>
-                        <th class="border-0">24h High</th>
-                        <th class="border-0">Alert Threshold</th>
                         <th class="border-0">Status</th>
-                        <th class="border-0 rounded-end">Last Updated</th>
+                        <th class="border-0 rounded-end">Timestamp</th>
                     </tr>
                     </thead>
                     <tbody>
-                    <!-- Item -->
-                    <tr class="sensor-card sensor-normal">
-                        <td><a href="#" class="text-primary fw-bold">TEMP-001</a></td>
-                        <td class="fw-bold">Kitchen</td>
-                        <td><span class="temp-badge temp-normal">32.5°C</span></td>
-                        <td>31.8°C</td>
-                        <td>33.2°C</td>
-                        <td>45.0°C</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <span class="status-indicator status-active"></span>
-                                <span class="fw-bold text-success">Normal</span>
-                            </div>
-                        </td>
-                        <td>2 mins ago</td>
+                    <!-- Data will be populated by JavaScript -->
+                    <tr>
+                        <td colspan="4" class="text-center">Loading data...</td>
                     </tr>
-                    <!-- End of Item -->
-
-                    <!-- Item -->
-                    <tr class="sensor-card sensor-warning">
-                        <td><a href="#" class="text-primary fw-bold">TEMP-002</a></td>
-                        <td class="fw-bold">Living Room</td>
-                        <td><span class="temp-badge temp-warning">41.7°C</span></td>
-                        <td>38.5°C</td>
-                        <td>42.1°C</td>
-                        <td>45.0°C</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <span class="status-indicator status-warning"></span>
-                                <span class="fw-bold text-warning">Warning</span>
-                            </div>
-                        </td>
-                        <td>1 min ago</td>
-                    </tr>
-                    <!-- End of Item -->
-
-                    <!-- Item -->
-                    <tr class="sensor-card sensor-normal">
-                        <td><a href="#" class="text-primary fw-bold">TEMP-003</a></td>
-                        <td class="fw-bold">Bedroom</td>
-                        <td><span class="temp-badge temp-normal">29.8°C</span></td>
-                        <td>28.9°C</td>
-                        <td>30.2°C</td>
-                        <td>45.0°C</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <span class="status-indicator status-active"></span>
-                                <span class="fw-bold text-success">Normal</span>
-                            </div>
-                        </td>
-                        <td>3 mins ago</td>
-                    </tr>
-                    <!-- End of Item -->
-
-                    <!-- Item -->
-                    <tr class="sensor-card sensor-normal">
-                        <td><a href="#" class="text-primary fw-bold">TEMP-004</a></td>
-                        <td class="fw-bold">Garage</td>
-                        <td><span class="temp-badge temp-normal">33.1°C</span></td>
-                        <td>32.5°C</td>
-                        <td>34.8°C</td>
-                        <td>50.0°C</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <span class="status-indicator status-active"></span>
-                                <span class="fw-bold text-success">Normal</span>
-                            </div>
-                        </td>
-                        <td>5 mins ago</td>
-                    </tr>
-                    <!-- End of Item -->
-
-                    <!-- Item -->
-                    <tr class="sensor-card sensor-warning">
-                        <td><a href="#" class="text-primary fw-bold">TEMP-005</a></td>
-                        <td class="fw-bold">Kitchen (Stove)</td>
-                        <td><span class="temp-badge temp-warning">43.5°C</span></td>
-                        <td>37.2°C</td>
-                        <td>44.1°C</td>
-                        <td>50.0°C</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <span class="status-indicator status-warning"></span>
-                                <span class="fw-bold text-warning">Warning</span>
-                            </div>
-                        </td>
-                        <td>Just now</td>
-                    </tr>
-                    <!-- End of Item -->
-
-                    <!-- Item -->
-                    <tr class="sensor-card sensor-normal">
-                        <td><a href="#" class="text-primary fw-bold">TEMP-006</a></td>
-                        <td class="fw-bold">Hallway</td>
-                        <td><span class="temp-badge temp-normal">31.2°C</span></td>
-                        <td>30.9°C</td>
-                        <td>32.3°C</td>
-                        <td>45.0°C</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <span class="status-indicator status-active"></span>
-                                <span class="fw-bold text-success">Normal</span>
-                            </div>
-                        </td>
-                        <td>4 mins ago</td>
-                    </tr>
-                    <!-- End of Item -->
-
-                    <!-- Item -->
-                    <tr class="sensor-card sensor-normal">
-                        <td><a href="#" class="text-primary fw-bold">TEMP-007</a></td>
-                        <td class="fw-bold">Bathroom</td>
-                        <td><span class="temp-badge temp-normal">30.5°C</span></td>
-                        <td>29.8°C</td>
-                        <td>31.7°C</td>
-                        <td>45.0°C</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <span class="status-indicator status-active"></span>
-                                <span class="fw-bold text-success">Normal</span>
-                            </div>
-                        </td>
-                        <td>6 mins ago</td>
-                    </tr>
-                    <!-- End of Item -->
-
-                    <!-- Item -->
-                    <tr class="sensor-card sensor-offline">
-                        <td><a href="#" class="text-primary fw-bold">TEMP-008</a></td>
-                        <td class="fw-bold">Basement</td>
-                        <td><span class="text-muted">--</span></td>
-                        <td class="text-muted">--</td>
-                        <td class="text-muted">--</td>
-                        <td>45.0°C</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <span class="status-indicator status-offline"></span>
-                                <span class="fw-bold text-muted">Offline</span>
-                            </div>
-                        </td>
-                        <td>3 hours ago</td>
-                    </tr>
-                    <!-- End of Item -->
                     </tbody>
                 </table>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <div class="pagination-info small text-muted">
+                    Showing <span class="fw-bold" id="dht11-showing-start">1</span> to <span class="fw-bold" id="dht11-showing-end">10</span> of <span class="fw-bold" id="dht11-total-items">0</span> items
+                </div>
+                <nav aria-label="DHT11 sensor pagination">
+                    <ul id="dht11-sensor-pagination" class="pagination pagination-sm mb-0">
+                        <!-- Pagination will be populated by JavaScript -->
+                    </ul>
+                </nav>
             </div>
         </div>
     </div>
 
 {% endblock content %}
 
-<!-- Specific Page JS goes HERE  -->
-{% block javascripts %}{% endblock javascripts %}
+{% block javascripts %}
+    <!-- Load Socket.IO first -->
+    <script src="{{ url_for('static', filename='assets/js/socket.io.min.js') }}"></script>
+    <!-- Load custom Socket.IO client -->
+    <script src="{{ url_for('static', filename='assets/js/socket-client.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Sensor data page loaded, requesting data...');
+
+            // Debug socket connection
+            socket.on('connect', function() {
+                console.log('Connected to server on sensor data page');
+            });
+
+            // Initial data request
+            requestSensorData();
+
+            // Set up status filter event handlers
+            document.querySelectorAll('.status-filter').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const status = this.getAttribute('data-status');
+                    const statusText = status || 'All Statuses';
+
+                    // Update active class
+                    document.querySelectorAll('.status-filter').forEach(el => el.classList.remove('active'));
+                    this.classList.add('active');
+
+                    // Update button text
+                    document.getElementById('current-status-filter').textContent = statusText;
+
+                    // Get current location filter and page size
+                    const location = document.getElementById('current-location-filter').textContent === 'All Locations' ? '' : document.getElementById('current-location-filter').textContent;
+                    const pageSize = parseInt(document.getElementById('current-page-size').textContent);
+
+                    console.log('Filtering by status:', status);
+                    requestSensorData(1, pageSize, location, status);
+                });
+            });
+
+            // Set up page size selector event handlers
+            document.querySelectorAll('.page-size-option').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const pageSize = parseInt(this.getAttribute('data-size'));
+
+                    // Update active class
+                    document.querySelectorAll('.page-size-option').forEach(el => el.classList.remove('active'));
+                    this.classList.add('active');
+
+                    // Update button text
+                    document.getElementById('current-page-size').textContent = pageSize;
+
+                    // Get current filters
+                    const location = document.getElementById('current-location-filter').textContent === 'All Locations' ? '' : document.getElementById('current-location-filter').textContent;
+                    const status = document.getElementById('current-status-filter').textContent === 'All Statuses' ? '' : document.getElementById('current-status-filter').textContent;
+
+                    console.log('Changing page size to:', pageSize);
+                    requestSensorData(1, pageSize, location, status);
+                });
+            });
+
+            // Set up refresh button
+            document.getElementById('refresh-sensor-data').addEventListener('click', function() {
+                // Get current filters and page size
+                const location = document.getElementById('current-location-filter').textContent === 'All Locations' ? '' : document.getElementById('current-location-filter').textContent;
+                const status = document.getElementById('current-status-filter').textContent === 'All Statuses' ? '' : document.getElementById('current-status-filter').textContent;
+                const pageSize = parseInt(document.getElementById('current-page-size').textContent);
+
+                console.log('Refreshing sensor data with filters:', { location, status, pageSize });
+                requestSensorData(1, pageSize, location, status);
+            });
+
+            // Set up export button
+            document.getElementById('export-sensor-data').addEventListener('click', function() {
+                // Get current filters
+                const location = document.getElementById('current-location-filter').textContent === 'All Locations' ? '' : document.getElementById('current-location-filter').textContent;
+                const status = document.getElementById('current-status-filter').textContent === 'All Statuses' ? '' : document.getElementById('current-status-filter').textContent;
+
+                console.log('Exporting sensor data with filters:', { location, status });
+                
+                // Show loading indicator
+                const originalText = this.innerHTML;
+                this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Exporting...';
+                this.disabled = true;
+
+                // Emit export event to server
+                socket.emit('export_sensor_data', {
+                    location: location,
+                    status: status
+                });
+                
+                // Handle export response
+                socket.once('export_sensor_data_response', function(response) {
+                    // Reset button
+                    const exportBtn = document.getElementById('export-sensor-data');
+                    exportBtn.innerHTML = originalText;
+                    exportBtn.disabled = false;
+                    
+                    if (response.success) {
+                        console.log('Export successful, downloading file:', response.filename);
+                        
+                        // Handle direct download via data URL
+                        if (response.data_url) {
+                            // Create a temporary link element to trigger download
+                            const downloadLink = document.createElement('a');
+                            downloadLink.href = response.data_url;
+                            downloadLink.download = response.filename;
+                            document.body.appendChild(downloadLink);
+                            downloadLink.click();
+                            document.body.removeChild(downloadLink);
+                            
+                            // Show success notification
+                            const toast = document.createElement('div');
+                            toast.className = 'toast align-items-center text-white bg-success border-0 position-fixed bottom-0 end-0 m-3';
+                            toast.setAttribute('role', 'alert');
+                            toast.setAttribute('aria-live', 'assertive');
+                            toast.setAttribute('aria-atomic', 'true');
+                            toast.innerHTML = `
+                                <div class="d-flex">
+                                    <div class="toast-body">
+                                        <i class="fas fa-check-circle me-2"></i> Export successful! Downloading XLSX file...
+                                    </div>
+                                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                                </div>
+                            `;
+                            document.body.appendChild(toast);
+                            
+                            // Initialize and show the toast
+                            const bsToast = new bootstrap.Toast(toast);
+                            bsToast.show();
+                            
+                            // Remove toast after it's hidden
+                            toast.addEventListener('hidden.bs.toast', function() {
+                                document.body.removeChild(toast);
+                            });
+                        } else {
+                            // Fallback to server-side download URL
+                            const downloadLink = document.createElement('a');
+                            downloadLink.href = response.download_url;
+                            downloadLink.download = response.filename;
+                            document.body.appendChild(downloadLink);
+                            downloadLink.click();
+                            document.body.removeChild(downloadLink);
+                            
+                            // Show success notification
+                            const toast = document.createElement('div');
+                            toast.className = 'toast align-items-center text-white bg-success border-0 position-fixed bottom-0 end-0 m-3';
+                            toast.setAttribute('role', 'alert');
+                            toast.setAttribute('aria-live', 'assertive');
+                            toast.setAttribute('aria-atomic', 'true');
+                            toast.innerHTML = `
+                                <div class="d-flex">
+                                    <div class="toast-body">
+                                        <i class="fas fa-check-circle me-2"></i> Export successful! Downloading XLSX file...
+                                    </div>
+                                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                                </div>
+                            `;
+                            document.body.appendChild(toast);
+                            
+                            // Initialize and show the toast
+                            const bsToast = new bootstrap.Toast(toast);
+                            bsToast.show();
+                            
+                            // Remove toast after it's hidden
+                            toast.addEventListener('hidden.bs.toast', function() {
+                                document.body.removeChild(toast);
+                            });
+                        }
+                    } else {
+                        console.error('Export failed:', response.error);
+                        
+                        // Show error notification
+                        const toast = document.createElement('div');
+                        toast.className = 'toast align-items-center text-white bg-danger border-0 position-fixed bottom-0 end-0 m-3';
+                        toast.setAttribute('role', 'alert');
+                        toast.setAttribute('aria-live', 'assertive');
+                        toast.setAttribute('aria-atomic', 'true');
+                        toast.innerHTML = `
+                            <div class="d-flex">
+                                <div class="toast-body">
+                                    <i class="fas fa-exclamation-circle me-2"></i> Export failed: ${response.error || 'Unknown error'}
+                                </div>
+                                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                            </div>
+                        `;
+                        document.body.appendChild(toast);
+                        
+                        // Initialize and show the toast
+                        const bsToast = new bootstrap.Toast(toast);
+                        bsToast.show();
+                        
+                        // Remove toast after it's hidden
+                        toast.addEventListener('hidden.bs.toast', function() {
+                            document.body.removeChild(toast);
+                        });
+                    }
+                });
+            });
+
+            // Set up location filter event handlers
+            document.querySelectorAll('.location-filter').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const location = this.getAttribute('data-location');
+                    const locationText = location || 'All Locations';
+
+                    // Update active class
+                    document.querySelectorAll('.location-filter').forEach(el => el.classList.remove('active'));
+                    this.classList.add('active');
+
+                    // Update button text
+                    document.getElementById('current-location-filter').textContent = locationText;
+
+                    // Get current status filter and page size
+                    const status = document.getElementById('current-status-filter').textContent === 'All Statuses' ? '' : document.getElementById('current-status-filter').textContent;
+                    const pageSize = parseInt(document.getElementById('current-page-size').textContent);
+
+                    console.log('Filtering by location:', location);
+                    requestSensorData(1, pageSize, location, status);
+                });
+            });
+
+            // Function to update sensor overview cards with real-time data
+            function updateSensorOverviewCards(sensorData) {
+                console.log("Updating sensor overview cards with:", sensorData);
+
+                // Format time for "last check" display
+                const now = new Date();
+                const lastCheckTime = now.toLocaleTimeString();
+
+                // Update Fire Sensor Card
+                if (sensorData.fireSensorData && sensorData.fireSensorData.data) {
+                    const fireData = sensorData.fireSensorData.data;
+                    const fireTotal = fireData.length;
+
+                    // Count sensors by status
+                    let normalCount = 0;
+                    let warningCount = 0;
+                    let dangerCount = 0;
+
+                    fireData.forEach(sensor => {
+                        if (sensor.fire_status === 'Not Detected') {
+                            normalCount++;
+                        } else if (sensor.fire_status === 'Warning') {
+                            warningCount++;
+                        } else if (sensor.fire_status === 'Detected') {
+                            dangerCount++;
+                        }
+                    });
+
+                    // Update UI elements
+                    document.getElementById('fire-sensor-count').textContent = fireTotal;
+                    document.getElementById('fire-sensor-count-mobile').textContent = fireTotal;
+                    document.getElementById('fire-sensor-normal').textContent = normalCount;
+                    document.getElementById('fire-sensor-warning').textContent = warningCount;
+                    document.getElementById('fire-sensor-danger').textContent = dangerCount;
+                    document.getElementById('fire-sensor-last-check').textContent = lastCheckTime;
+                }
+
+                // Update Smoke Sensor Card
+                if (sensorData.smokeSensorData && sensorData.smokeSensorData.data) {
+                    const smokeData = sensorData.smokeSensorData.data;
+                    const smokeTotal = smokeData.length;
+
+                    // Count sensors by status
+                    let normalCount = 0;
+                    let warningCount = 0;
+                    let dangerCount = 0;
+
+                    smokeData.forEach(sensor => {
+                        if (sensor.smoke_status === 'Not Detected') {
+                            normalCount++;
+                        } else if (sensor.smoke_status === 'Warning') {
+                            warningCount++;
+                        } else if (sensor.smoke_status === 'Detected') {
+                            dangerCount++;
+                        }
+                    });
+
+                    // Update UI elements
+                    document.getElementById('smoke-sensor-count').textContent = smokeTotal;
+                    document.getElementById('smoke-sensor-count-mobile').textContent = smokeTotal;
+                    document.getElementById('smoke-sensor-normal').textContent = normalCount;
+                    document.getElementById('smoke-sensor-warning').textContent = warningCount;
+                    document.getElementById('smoke-sensor-danger').textContent = dangerCount;
+                    document.getElementById('smoke-sensor-last-check').textContent = lastCheckTime;
+                }
+
+                // Update DHT11 Sensor Card
+                if (sensorData.dht11Data && sensorData.dht11Data.data) {
+                    const dht11Data = sensorData.dht11Data.data;
+                    const dht11Total = dht11Data.length;
+
+                    // Count sensors by status and calculate average temperature
+                    let normalCount = 0;
+                    let warningCount = 0;
+                    let dangerCount = 0;
+                    let totalTemp = 0;
+
+                    dht11Data.forEach(sensor => {
+                        if (sensor.dht11_status === 'Normal') {
+                            normalCount++;
+                        } else if (sensor.dht11_status === 'High Temp' || sensor.dht11_status === 'Low Temp' || sensor.dht11_status === 'Warning') {
+                            warningCount++;
+                        } else if (sensor.dht11_status === 'Danger') {
+                            dangerCount++;
+                        }
+
+                        // Add temperature for average calculation if it exists and is a number
+                        if (sensor.temperature && !isNaN(sensor.temperature)) {
+                            totalTemp += parseFloat(sensor.temperature);
+                        }
+                    });
+
+                    // Calculate average temperature
+                    const avgTemp = dht11Total > 0 ? (totalTemp / dht11Total).toFixed(1) + '°C' : '-';
+
+                    // Update UI elements
+                    document.getElementById('dht11-sensor-count').textContent = dht11Total;
+                    document.getElementById('dht11-sensor-count-mobile').textContent = dht11Total;
+                    document.getElementById('dht11-sensor-normal').textContent = normalCount;
+                    document.getElementById('dht11-sensor-warning').textContent = warningCount;
+                    document.getElementById('dht11-sensor-danger').textContent = dangerCount;
+                    document.getElementById('dht11-avg-temp').textContent = avgTemp;
+                }
+            }
+        });
+    </script>
+{% endblock %}

@@ -31,7 +31,7 @@ gunicorn==23.0.0
 Flask-Minify==0.49
 Flask-CDN==1.5.3
 
-# flask_mysqldb
+# flask_mysqldb //using mysql in backend (node.js)
 # psycopg2-binary
 
 requests~=2.32.3
@@ -103,3 +103,13 @@ opencv-python==4.8.0.76
 torch==2.0.1
 torchvision==0.15.2
 ultralytics==8.0.196
+
+# Socket.IO
+flask-socketio==5.3.6
+python-socketio==5.11.1
+python-engineio==4.8.2
+
+# Excel export
+openpyxl==3.1.2
+pandas==2.2.3
+xlsxwriter==3.2.3

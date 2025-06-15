@@ -111,6 +111,7 @@
                                             Fire Status: Normal
                                         </h5>
                                     </div>
+
                                 </div>
                                 <!-- Live Camera Feed -->
                                 <div class="col-12">
@@ -136,7 +137,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Secondary Cameras Grid -->
                 <div class="col-12 mb-4">
                     <div class="card border-0 shadow">
@@ -202,7 +203,7 @@
                                 <p class="text-sm mt-2">Fire detected in Camera 1 - Kitchen area</p>
                             </div>
                         </div>
-                        
+
                         <!-- Alert 2 -->
                         <div class="d-flex mt-2 mb-3 pb-3 border-bottom">
                             <div class="icon-shape icon-sm icon-shape-warning rounded me-3">
@@ -220,7 +221,7 @@
                                 <p class="text-sm mt-2">Smoke detected in Camera 2 - Living room</p>
                             </div>
                         </div>
-                        
+
                         <!-- Alert 3 -->
                         <div class="d-flex mt-2 mb-3 pb-3 border-bottom">
                             <div class="icon-shape icon-sm icon-shape-success rounded me-3">
@@ -238,7 +239,7 @@
                                 <p class="text-sm mt-2">Routine system check completed successfully</p>
                             </div>
                         </div>
-                        
+
                         <!-- Alert 4 -->
                         <div class="d-flex mt-2 mb-3 pb-3 border-bottom">
                             <div class="icon-shape icon-sm icon-shape-warning rounded me-3">
@@ -259,7 +260,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- System Status -->
             <div class="col-12 px-0">
                 <div class="card border-0 shadow">
@@ -275,7 +276,7 @@
                             </div>
                             <span class="badge bg-success">Active</span>
                         </div>
-                        
+
                         <!-- Camera Status -->
                         <div class="d-flex align-items-center justify-content-between mb-3">
                             <div>
@@ -284,7 +285,7 @@
                             </div>
                             <span class="badge bg-success">Active</span>
                         </div>
-                        
+
                         <!-- Camera Status -->
                         <div class="d-flex align-items-center justify-content-between mb-3">
                             <div>
@@ -293,7 +294,7 @@
                             </div>
                             <span class="badge bg-danger">Inactive</span>
                         </div>
-                        
+
                         <!-- Fire Detection Module -->
                         <div class="d-flex align-items-center justify-content-between mb-3">
                             <div>
@@ -302,7 +303,7 @@
                             </div>
                             <span class="badge bg-success">Active</span>
                         </div>
-                        
+
                         <!-- Alert System -->
                         <div class="d-flex align-items-center justify-content-between">
                             <div>
@@ -325,11 +326,11 @@
     document.addEventListener('DOMContentLoaded', function() {
         // This is a placeholder for actual camera implementation
         // In a real application, you would connect to your ESP32-CAM stream
-        
+
         // Example of fire detection simulation for demo purposes
         const fireStatus = document.querySelector('.fire-status');
         const liveFeed = document.getElementById('liveCameraFeed');
-        
+
         // Simulate status changes (remove in production)
         let statusIndex = 0;
         const statuses = [
@@ -337,45 +338,45 @@
             { class: 'status-warning', text: 'Warning: Checking', icon: 'fa-exclamation-triangle' },
             { class: 'status-danger', text: 'FIRE DETECTED!', icon: 'fa-fire' }
         ];
-        
+
         // This is just for demonstration - would be replaced with actual detection logic
         /*
         setInterval(() => {
             statusIndex = (statusIndex + 1) % statuses.length;
             const status = statuses[statusIndex];
-            
+
             // Remove all status classes and add the current one
             fireStatus.className = 'fire-status ' + status.class;
-            
+
             // Update the content
             fireStatus.innerHTML = `<h5 class="mb-0 ${statusIndex === 2 ? 'blink' : ''}">
                 <span class="fas ${status.icon} me-2"></span>
                 Fire Status: ${status.text}
             </h5>`;
-            
+
         }, 5000);
         */
-        
+
         // Button event handlers
         document.getElementById('captureImage').addEventListener('click', function() {
             alert('Image captured and saved.');
         });
-        
+
         document.getElementById('recordVideo').addEventListener('click', function() {
             this.classList.toggle('btn-danger');
             this.classList.toggle('btn-secondary');
-            this.innerHTML = this.classList.contains('btn-danger') ? 
-                '<span class="fas fa-video me-2"></span>Record' : 
+            this.innerHTML = this.classList.contains('btn-danger') ?
+                '<span class="fas fa-video me-2"></span>Record' :
                 '<span class="fas fa-stop me-2"></span>Stop';
         });
-        
+
         document.getElementById('toggleDetection').addEventListener('click', function() {
             this.classList.toggle('btn-warning');
             this.classList.toggle('btn-secondary');
-            alert('Fire detection has been ' + 
+            alert('Fire detection has been ' +
                   (this.classList.contains('btn-warning') ? 'enabled' : 'disabled'));
         });
-        
+
         document.getElementById('configureSettings').addEventListener('click', function() {
             alert('Settings configuration dialog would open here.');
         });
