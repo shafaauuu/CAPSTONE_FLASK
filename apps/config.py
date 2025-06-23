@@ -20,6 +20,9 @@ class Config(object):
 
     # Set up the App SECRET_KEY
     SECRET_KEY  = os.getenv('SECRET_KEY', 'S3cret_999')
+    
+    # API Configuration
+    API_BASE_URL = os.getenv('API_BASE_URL', 'http://127.0.0.1:3000')
 
     # Social AUTH context
     SOCIAL_AUTH_GITHUB  = False

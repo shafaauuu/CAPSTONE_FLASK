@@ -4,26 +4,33 @@ from pathlib import Path
 import time
 import requests
 import base64
-from flask import Response
+import os
+import traceback
+from flask import Response, current_app
 from ultralytics import YOLO
+from apps.config import Config
 
 class FireDetector:
     def __init__(self, model_path="models/fire_detector/best.pt", conf_threshold=0.5, 
-                 backend_url="http://localhost:3000/api/camera-detection", camera_location="Main Camera"):
+                 backend_url=None, camera_location="Main Camera"):
         """
         Initialize the Fire Detection model using YOLOv8
         
         Args:
             model_path: Path to the trained YOLO model
             conf_threshold: Confidence threshold for detections
-            backend_url: URL of the Node.js backend API endpoint
+            backend_url: URL of the Flask backend API endpoint
             camera_location: The location identifier for the camera
         """
         self.conf_threshold = conf_threshold
-        self.backend_url = backend_url
+        # Use provided backend_url or construct from API_BASE_URL
+        self.backend_url = backend_url or f"{Config.API_BASE_URL}/api/camera-detection"
         self.camera_location = camera_location
         self.last_alert_time = 0
         self.alert_cooldown = 30  # seconds between alerts to avoid flooding the backend
+        self.connection_error_count = 0
+        self.max_connection_errors = 5  # After this many errors, reduce alert frequency
+        self.connection_error_cooldown = 60  # seconds to wait after max errors reached
         
         # Load the model using ultralytics YOLO directly
         try:
@@ -70,51 +77,94 @@ class FireDetector:
         
         return annotated_frame, has_fire, confidence_score
 
-    def send_alert_to_backend(self, frame, confidence_score):
+    def send_alert_to_backend(self, frame, confidence):
         """
-        Send the fire detection alert to the Node.js backend
+        Send an alert to the backend API with the frame image
         
         Args:
-            frame: The image frame with detected fire
-            confidence_score: The confidence score of the detection
+            frame: The image frame where fire was detected
+            confidence: Detection confidence score
+            
+        Returns:
+            success: Boolean indicating if the alert was sent successfully
         """
+        # Check if we're in cooldown period
+        current_time = time.time()
+        if current_time - self.last_alert_time < self.alert_cooldown:
+            return False
+            
+        # If we've had too many connection errors, increase cooldown
+        if self.connection_error_count >= self.max_connection_errors:
+            if current_time - self.last_alert_time < self.connection_error_cooldown:
+                print(f"Too many connection errors, waiting {self.connection_error_cooldown}s before retrying")
+                return False
+            else:
+                # Reset error count after cooldown
+                self.connection_error_count = 0
+        
         try:
-            # Convert the image to base64 string
+            # Convert frame to base64 for sending
             _, buffer = cv2.imencode('.jpg', frame)
             img_base64 = base64.b64encode(buffer).decode('utf-8')
             
-            # Prepare the payload
+            # Prepare payload
             payload = {
-                'imageData': f"data:image/jpeg;base64,{img_base64}",
-                'cameraLocation': self.camera_location,
-                'confidenceScore': float(confidence_score)
+                'image': img_base64,
+                'confidence': float(confidence),
+                'location': self.camera_location,
+                'timestamp': time.strftime('%Y-%m-%d %H:%M:%S')
             }
             
-            # Send POST request to backend
-            response = requests.post(self.backend_url, json=payload)
+            # Send to backend with timeout
+            print(f"Sending alert to backend: {self.backend_url}")
+            response = requests.post(self.backend_url, json=payload, timeout=5)
             
-            # Check if the request was successful
-            if response.status_code == 201:
-                print("Alert sent successfully to MySQL database!")
-                print(f"Detection ID: {response.json().get('detectionId')}")
+            if response.status_code == 200:
+                print(f"Alert sent successfully! Response: {response.json()}")
+                self.last_alert_time = current_time
                 return True
             else:
-                print(f"Error sending alert to backend: {response.status_code}")
-                print(response.text)
+                print(f"Failed to send alert. Status code: {response.status_code}")
+                print(f"Response: {response.text}")
                 return False
-        
+                
+        except requests.exceptions.ConnectionError as e:
+            self.connection_error_count += 1
+            print(f"Connection error when sending alert to backend: {str(e)}")
+            print(f"Connection error count: {self.connection_error_count}/{self.max_connection_errors}")
+            return False
+        except requests.exceptions.Timeout as e:
+            self.connection_error_count += 1
+            print(f"Timeout error when sending alert to backend: {str(e)}")
+            print(f"Connection error count: {self.connection_error_count}/{self.max_connection_errors}")
+            return False
         except Exception as e:
             print(f"Exception while sending alert to backend: {str(e)}")
+            print(f"Error details: {traceback.format_exc()}")
             return False
 
 # Global fire detector instance
 fire_detector = None
 
 def initialize_detector(model_path="models/fire_detector/best.pt", 
-                        backend_url="http://localhost:3000/api/camera-detection",
+                        backend_url=None,
                         camera_location="Dashboard Camera"):
-    """Initialize the fire detector with the specified model path"""
+    """
+    Initialize the global fire detector instance
+    
+    Args:
+        model_path: Path to the trained YOLO model
+        backend_url: URL of the Flask backend API endpoint
+        camera_location: Location identifier for the camera
+    """
     global fire_detector
+    
+    # If backend_url is not provided, construct it from API_BASE_URL
+    if not backend_url:
+        # Use Flask app URL instead of Node.js server
+        backend_url = f"{Config.API_BASE_URL}/api/camera-detection"
+    
+    print(f"Initializing fire detector with backend URL: {backend_url}")
     fire_detector = FireDetector(
         model_path=model_path,
         backend_url=backend_url,

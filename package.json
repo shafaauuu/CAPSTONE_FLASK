@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite build --watch --mode development",
     "build": "vite build --mode production && npm run minify-css",
-    "minify-css": "postcss static/assets/css/*.css --dir static/assets/css --no-map --ext .min.css"
+    "minify-css": "postcss static/assets/css/*.css --dir static/assets/css --no-map --ext .min.css",
+    "start-api": "node server.js"
   },
   "keywords": [],
   "author": "",
@@ -20,6 +21,7 @@
     "vite": "^6.2.0"
   },
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.21.2"
   }
 }

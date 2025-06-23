@@ -10,6 +10,10 @@ import base64
 from apps.home import blueprint
 from apps.authentication.routes import login_required
 from jinja2 import TemplateNotFound
+from apps.config import Config
+
+# Use API_BASE_URL from Config class
+API_BASE_URL = Config.API_BASE_URL
 
 # Import fire detector
 from fire_detector import initialize_detector, generate_frames
@@ -89,7 +93,7 @@ def dashboard_admin():
     if admin_id:
         try:
             # Use the correct profile endpoint with type=admin query parameter
-            response = request.get(f'http://127.0.0.1:3000/api/profile?id={admin_id}&type=admin')
+            response = requests.get(f'{API_BASE_URL}/api/profile?id={admin_id}&type=admin')
             
             if response.status_code == 200:
                 admin_data = response.json()
@@ -143,7 +147,7 @@ def dashboard_admin():
         
         try:
             # Get all users count
-            all_users_response = requests.get('http://127.0.0.1:3000/api/users/count')
+            all_users_response = requests.get(f'{API_BASE_URL}/api/users/count')
             if all_users_response.status_code == 200:
                 all_users_count = all_users_response.json().get('count', 0)
                 print(f"API response for all users: {all_users_response.json()}")
@@ -152,7 +156,7 @@ def dashboard_admin():
                 all_users_count = 0
             
             # Get new users (registered this week instead of this month)
-            new_users_response = requests.get(f'http://127.0.0.1:3000/api/users/count/new?since={one_week_ago.strftime("%Y-%m-%d")}')
+            new_users_response = requests.get(f'{API_BASE_URL}/api/users/count/new?since={one_week_ago.strftime("%Y-%m-%d")}')
             if new_users_response.status_code == 200:
                 new_users_count = new_users_response.json().get('count', 0)
                 print(f"API response for new users (past week): {new_users_response.json()}")
@@ -161,7 +165,7 @@ def dashboard_admin():
                 new_users_count = 0
             
             # Get remaining users to approve
-            pending_users_response = requests.get('http://127.0.0.1:3000/api/approval/pending')
+            pending_users_response = requests.get(f'{API_BASE_URL}/api/approval/pending')
             if pending_users_response.status_code == 200:
                 pending_users = pending_users_response.json()
                 print(f"API received {len(pending_users)} pending users")
@@ -173,7 +177,7 @@ def dashboard_admin():
             # Try to get a direct count of ALL users (regardless of status)
             try:
                 # Try to get all users directly first
-                all_users_list_response = requests.get('http://127.0.0.1:3000/api/users')
+                all_users_list_response = requests.get(f'{API_BASE_URL}/api/users')
                 if all_users_list_response.status_code == 200:
                     all_users_list = all_users_list_response.json()
                     direct_all_users_count = len(all_users_list)
@@ -193,7 +197,7 @@ def dashboard_admin():
                     # Get approved users
                     try:
                         # Try the standard endpoint first
-                        approved_users_response = requests.get('http://127.0.0.1:3000/api/users/approved')
+                        approved_users_response = requests.get(f'{API_BASE_URL}/api/users/approved')
                         if approved_users_response.status_code == 200:
                             approved_users = approved_users_response.json()
                             approved_users_count = len(approved_users)
@@ -549,7 +553,7 @@ def profile():
 
         # Try to fetch profile data from API
         try:
-            api_url = 'http://127.0.0.1:3000/api/profile'
+            api_url = f'{API_BASE_URL}/api/profile'
             params = {'id': user_id, 'type': user_type}
             print(f"Requesting profile: {api_url}, params: {params}, headers: {{'Authorization': 'Bearer ***' if token else 'None'}}")
 
@@ -688,13 +692,76 @@ def history():
                            segment='history',
                            user=user_data)
 
+@blueprint.route('/detections')
+@login_required
+def detections():
+    """
+    Render the detections page for viewing all camera detection events
+    """
+    print("Checking login, session user:", session.get('user'))
+    
+    # Get user information from session
+    user = session.get('user', {})
+    
+    # Initialize variables
+    user_id = None
+    user_email = None
+    user_name = None
+    
+    # Try to get user ID from various possible keys
+    for id_key in ['id', 'user_id', 'admin_id', 'npk', 'ID']:
+        if id_key in user and user[id_key]:
+            user_id = user[id_key]
+            break
+            
+    # Try to get user email from various possible keys
+    for email_key in ['email', 'user_email', 'admin_email', 'mail']:
+        if email_key in user and user[email_key]:
+            user_email = user[email_key]
+            break
+            
+    # Try to get user name from various possible keys
+    for name_key in ['name', 'user_name', 'admin_name', 'username', 'full_name', 'display_name']:
+        if name_key in user and user[name_key]:
+            user_name = user[name_key]
+            break
+    
+    # Fallback to session values if not found in user dictionary
+    if not user_id:
+        user_id = session.get('id') or session.get('user_id') or session.get('admin_id') or 'N/A'
+    if not user_email:
+        user_email = session.get('email') or session.get('user_email') or 'N/A'
+    if not user_name:
+        user_name = session.get('name') or session.get('user_name') or session.get('username') or 'User'
+    
+    # Create a user object that matches what the template expects
+    user_obj = {
+        'id': user_id,
+        'email': user_email,
+        'name': user_name,
+        # Add any other fields that might be needed by the template
+        'role': session.get('role', 'user')
+    }
+    
+    # Prepare data for the template
+    context = {
+        'segment': 'detections',
+        'user': user_obj,  # Add the complete user object
+        'user_id': user_id,
+        'user_email': user_email,
+        'user_name': user_name,
+        'page_title': 'Camera Detections'
+    }
+    
+    return render_template('home/detections.html', **context)
+
 # API proxy routes to connect to Node.js backend
 @blueprint.route('/api/history', methods=['GET'])
 @login_required
 def api_history():
     try:
         # Your Node.js backend URL - update this with your actual backend URL
-        backend_url = 'http://127.0.0.1:3000/api/history'
+        backend_url = f'{API_BASE_URL}/api/history'
         response = requests.get(backend_url)
         return response.json(), response.status_code
     except Exception as e:
@@ -706,7 +773,7 @@ def api_history():
 def api_history_approval():
     try:
         # Node.js backend URL
-        backend_url = 'http://127.0.0.1:3000/api/history/approval'
+        backend_url = f'{API_BASE_URL}/api/history/approval'
         response = requests.get(backend_url)
         return response.json(), response.status_code
     except Exception as e:
@@ -718,7 +785,7 @@ def api_history_approval():
 def api_history_approval_admin(admin_id):
     try:
         #  Node.js backend URL
-        backend_url = f'http://127.0.0.1:3000/api/history/approval/admin/{admin_id}'
+        backend_url = f'{API_BASE_URL}/api/history/approval/admin/{admin_id}'
         response = requests.get(backend_url)
         return response.json(), response.status_code
     except Exception as e:
@@ -730,7 +797,7 @@ def api_history_approval_admin(admin_id):
 def api_history_approval_user(user_id):
     try:
         # Node.js backend URL
-        backend_url = f'http://127.0.0.1:3000/api/history/approval/user/{user_id}'
+        backend_url = f'{API_BASE_URL}/api/history/approval/user/{user_id}'
         response = requests.get(backend_url)
         return response.json(), response.status_code
     except Exception as e:
@@ -798,7 +865,7 @@ def search():
     if query:
         try:
             # Use the unified search endpoint from the Node.js backend
-            response = requests.get('http://127.0.0.1:3000/api/search', params={'q': query})
+            response = requests.get(f'{API_BASE_URL}/api/search', params={'q': query})
             
             if response.status_code == 200:
                 search_data = response.json()
@@ -906,6 +973,234 @@ def init_fire_detector():
             'status': 'error',
             'message': f'Failed to initialize fire detector: {str(e)}',
             'error': traceback.format_exc()
+        }), 500
+
+# Camera Detection API endpoints
+@blueprint.route('/api/camera-detection', methods=['POST'])
+def api_camera_detection_create():
+    """
+    Endpoint to receive fire detection data from fire_detector.py
+    and forward it to the actual backend API
+    """
+    try:
+        # Get data from request
+        data = request.json
+        
+        if not data:
+            return jsonify({
+                'success': False,
+                'message': 'No data provided'
+            }), 400
+            
+        # Extract required fields
+        image = data.get('image')
+        confidence = data.get('confidence')
+        location = data.get('location')
+        timestamp = data.get('timestamp')
+        
+        if not location:
+            return jsonify({
+                'success': False,
+                'message': 'Camera location is required'
+            }), 400
+            
+        if not image:
+            return jsonify({
+                'success': False,
+                'message': 'Image data is required'
+            }), 400
+            
+        print(f"Received fire detection from {location} with confidence {confidence}")
+        
+        # Format the payload for the backend API
+        payload = {
+            'imageData': image,  # This is already base64 encoded from fire_detector.py
+            'cameraLocation': location,
+            'confidenceScore': confidence,
+            'timestamp': timestamp or datetime.now().isoformat()
+        }
+        
+        # Forward the request to the actual backend API
+        response = requests.post(
+            f"{API_BASE_URL}/api/camera-detection",
+            json=payload,
+            headers={'Content-Type': 'application/json'},
+            timeout=10
+        )
+        
+        # Check response
+        if response.status_code == 200:
+            print('Successfully stored fire detection in database')
+            response_data = response.json()
+            return jsonify({
+                'success': True,
+                'message': 'Fire detection recorded successfully',
+                'detectionId': response_data.get('detectionId') or response_data.get('detection_id'),
+                'imagePath': response_data.get('imagePath') or response_data.get('image_path')
+            })
+        else:
+            print(f"Error from backend API: {response.status_code} - {response.text}")
+            return jsonify({
+                'success': False,
+                'error': f"Backend API error: {response.text}"
+            }), response.status_code
+            
+    except Exception as e:
+        print(f"Exception in api_camera_detection_create: {str(e)}")
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@blueprint.route('/api/camera-detection/active', methods=['GET'])
+def api_camera_detection_active():
+    """
+    Endpoint to get active camera detections
+    """
+    try:
+        # Get query parameters
+        limit = request.args.get('limit', 10, type=int)
+        
+        # Forward the request to the actual API endpoint
+        response = requests.get(
+            f"{API_BASE_URL}/api/camera-detection/active?limit={limit}",
+            timeout=10
+        )
+        
+        if response.status_code == 200:
+            # Ensure all items have detection_status set to Active
+            data = response.json()
+            if isinstance(data, list):
+                for item in data:
+                    item['detection_status'] = 'Active'
+            return jsonify(data)
+        else:
+            return jsonify({
+                'success': False,
+                'error': f"Backend API error: {response.text}"
+            }), response.status_code
+            
+    except Exception as e:
+        print(f"Exception in api_camera_detection_active: {str(e)}")
+        traceback.print_exc()
+        return jsonify([])
+
+@blueprint.route('/api/camera-detection/recent', methods=['GET'])
+def api_camera_detection_recent():
+    """
+    Endpoint to get recent camera detections
+    """
+    try:
+        # Get query parameters
+        limit = request.args.get('limit', 20, type=int)
+        
+        # Forward the request to the actual API endpoint
+        response = requests.get(
+            f"{API_BASE_URL}/api/camera-detection/recent?limit={limit}",
+            timeout=10
+        )
+        
+        if response.status_code == 200:
+            return jsonify(response.json())
+        else:
+            return jsonify({
+                'success': False,
+                'error': f"Backend API error: {response.text}"
+            }), response.status_code
+            
+    except Exception as e:
+        print(f"Exception in api_camera_detection_recent: {str(e)}")
+        traceback.print_exc()
+        return jsonify([])
+
+@blueprint.route('/api/camera-detection/locations', methods=['GET'])
+def api_camera_detection_locations():
+    """
+    Endpoint to get camera detection locations
+    """
+    try:
+        # Forward the request to get recent detections to extract locations
+        response = requests.get(
+            f"{API_BASE_URL}/api/camera-detection/recent?limit=50",
+            timeout=10
+        )
+        
+        if response.status_code == 200:
+            detections = response.json()
+            
+            # Extract unique locations
+            location_set = set()
+            if isinstance(detections, list):
+                for detection in detections:
+                    if detection.get('camera_location'):
+                        location_set.add(detection['camera_location'])
+            
+            # Convert to list
+            locations = list(location_set)
+            
+            # If no locations found, return sample ones
+            if not locations:
+                return jsonify([
+                    "Main Building",
+                    "Warehouse A",
+                    "Office Floor 1",
+                    "Office Floor 2",
+                    "Parking Lot",
+                    "Cafeteria"
+                ])
+            else:
+                return jsonify(locations)
+        else:
+            # Return sample locations as fallback
+            return jsonify([
+                "Main Building",
+                "Warehouse A",
+                "Office Floor 1",
+                "Office Floor 2",
+                "Parking Lot",
+                "Cafeteria"
+            ])
+            
+    except Exception as e:
+        print(f"Exception in api_camera_detection_locations: {str(e)}")
+        traceback.print_exc()
+        # Return sample locations as fallback
+        return jsonify([
+            "Main Building",
+            "Warehouse A",
+            "Office Floor 1",
+            "Office Floor 2",
+            "Parking Lot",
+            "Cafeteria"
+        ])
+
+@blueprint.route('/api/camera-detection/id/<detection_id>', methods=['GET'])
+def api_camera_detection_details(detection_id):
+    """
+    Endpoint to get details of a specific camera detection
+    """
+    try:
+        # Forward the request to the actual API endpoint
+        response = requests.get(
+            f"{API_BASE_URL}/api/camera-detection/id/{detection_id}",
+            timeout=10
+        )
+        
+        if response.status_code == 200:
+            return jsonify(response.json())
+        else:
+            return jsonify({
+                'success': False,
+                'error': f"Backend API error: {response.text}"
+            }), response.status_code
+            
+    except Exception as e:
+        print(f"Exception in api_camera_detection_details: {str(e)}")
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
         }), 500
 
 @blueprint.route('/<template>')

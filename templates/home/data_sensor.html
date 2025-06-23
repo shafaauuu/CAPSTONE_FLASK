@@ -22,55 +22,54 @@
             <p class="mb-0">Real-time monitoring of temperature, smoke, and flame sensors for fire detection system.</p>
         </div>
         <!-- Filter Controls -->
-        <div class="row align-items-center">
-            <div class="col-12 col-lg-8 d-flex flex-wrap">
-
-                <!-- Status Filter -->
-                <div class="dropdown me-2 mb-2">
-                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" id="statusFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                        <span class="fas fa-filter me-1"></span> <span id="current-status-filter">All Statuses</span>
-                    </button>
-                    <ul class="dropdown-menu shadow-sm" aria-labelledby="statusFilterDropdown">
-                        <li><a class="dropdown-item status-filter active" href="#" data-status=""><i class="fas fa-globe me-2"></i>All Statuses</a></li>
-                        <li><a class="dropdown-item status-filter" href="#" data-status="Normal"><i class="fas fa-check-circle text-success me-2"></i>Normal</a></li>
-                        <li><a class="dropdown-item status-filter" href="#" data-status="High Temp"><i class="fas fa-thermometer-full text-warning me-2"></i>High Temperature</a></li>
-                        <li><a class="dropdown-item status-filter" href="#" data-status="Detected"><i class="fas fa-fire text-danger me-2"></i>Detected</a></li>
-                        <li><a class="dropdown-item status-filter" href="#" data-status="Not Detected"><i class="fas fa-fire-alt text-success me-2"></i>Not Detected</a></li>
-                    </ul>
-                </div>
-
-                <!-- Location Filter -->
-                <div class="dropdown me-2 mb-2">
-                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" id="locationFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                        <span class="fas fa-map-marker-alt me-1"></span> <span id="current-location-filter">All Locations</span>
-                    </button>
-                    <ul class="dropdown-menu shadow-sm" aria-labelledby="locationFilterDropdown">
-                        <li><a class="dropdown-item location-filter active" href="#" data-location=""><i class="fas fa-globe me-2"></i>All Locations</a></li>
-                    </ul>
-                </div>
-
-                <!-- Page Size Selector -->
-                <div class="dropdown mb-2">
-                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="pageSizeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                        <span class="fas fa-list me-1"></span> <span id="current-page-size">10</span> per page
-                    </button>
-                    <ul class="dropdown-menu" aria-labelledby="pageSizeDropdown">
-                        <li><a class="dropdown-item page-size-option active" href="#" data-size="10">10 per page</a></li>
-                        <li><a class="dropdown-item page-size-option" href="#" data-size="25">25 per page</a></li>
-                        <li><a class="dropdown-item page-size-option" href="#" data-size="50">50 per page</a></li>
-                        <li><a class="dropdown-item page-size-option" href="#" data-size="100">100 per page</a></li>
-                    </ul>
+        <div class="card border-0 shadow mb-4">
+            <div class="card-header">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h2 class="fs-5 fw-bold mb-0">Sensor Data Filters</h2>
+                    </div>
                 </div>
             </div>
-
-            <div class="col-12 col-lg-4 d-flex justify-content-lg-end mt-2 mt-lg-0">
-                <div class="btn-group">
-                    <button type="button" id="export-sensor-data" class="btn btn-sm btn-outline-primary">
-                        <span class="fas fa-download me-1"></span>Export
-                    </button>
-                    <button type="button" id="refresh-sensor-data" class="btn btn-sm btn-outline-primary">
-                        <span class="fas fa-sync me-1"></span>Refresh
-                    </button>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="sensorStatusFilter">Filter by Status</label>
+                        <select class="form-select" id="sensorStatusFilter">
+                            <option value="" selected>All Statuses</option>
+                            <option value="Normal">Normal</option>
+                            <option value="High Temp">High Temperature</option>
+                            <option value="Detected">Detected</option>
+                            <option value="Not Detected">Not Detected</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="sensorLocationFilter">Filter by Location</label>
+                        <select class="form-select" id="sensorLocationFilter">
+                            <option value="" selected>All Locations</option>
+                            <!-- Will be populated by JavaScript -->
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="sensorPageSizeFilter">Show</label>
+                        <select class="form-select" id="sensorPageSizeFilter">
+                            <option value="10" selected>10 per page</option>
+                            <option value="25">25 per page</option>
+                            <option value="50">50 per page</option>
+                            <option value="100">100 per page</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-12 text-end">
+                        <div class="btn-group">
+                            <button type="button" id="export-sensor-data" class="btn btn-sm btn-outline-primary">
+                                <span class="fas fa-download me-1"></span>Export
+                            </button>
+                            <button type="button" id="refresh-sensor-data" class="btn btn-sm btn-primary">
+                                <span class="fas fa-sync me-1"></span>Refresh
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -312,63 +311,75 @@
 
             // Debug socket connection
             socket.on('connect', function() {
-                console.log('Connected to server on sensor data page');
+                console.log('Socket.IO connected, requesting sensor data');
+                
+                // Request sensor data with default values
+                requestSensorData();
+                
+                // Fetch sensor locations for the filter
+                fetch(`${API_BASE_URL}/api/sensor/sensor-data/locations`)
+                    .then(response => {
+                        console.log('Locations API response status:', response.status);
+                        return response.json();
+                    })
+                    .then(locations => {
+                        console.log('Sensor locations received:', locations);
+                        
+                        // Populate location filter dropdown
+                        const locationSelect = document.getElementById('sensorLocationFilter');
+                        if (locationSelect) {
+                            // Clear existing options except the first one (All Locations)
+                            while (locationSelect.options.length > 1) {
+                                locationSelect.remove(1);
+                            }
+                            
+                            // Add location options
+                            locations.forEach(location => {
+                                const option = document.createElement('option');
+                                option.value = location;
+                                option.textContent = location;
+                                locationSelect.appendChild(option);
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching sensor locations:', error);
+                    });
             });
-
+            
             // Initial data request
             requestSensorData();
 
             // Set up status filter event handlers
-            document.querySelectorAll('.status-filter').forEach(item => {
-                item.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const status = this.getAttribute('data-status');
-                    const statusText = status || 'All Statuses';
+            document.getElementById('sensorStatusFilter').addEventListener('change', function(e) {
+                const status = this.value;
 
-                    // Update active class
-                    document.querySelectorAll('.status-filter').forEach(el => el.classList.remove('active'));
-                    this.classList.add('active');
+                // Get current location filter and page size
+                const location = document.getElementById('sensorLocationFilter').value;
+                const pageSize = parseInt(document.getElementById('sensorPageSizeFilter').value);
 
-                    // Update button text
-                    document.getElementById('current-status-filter').textContent = statusText;
-
-                    // Get current location filter and page size
-                    const location = document.getElementById('current-location-filter').textContent === 'All Locations' ? '' : document.getElementById('current-location-filter').textContent;
-                    const pageSize = parseInt(document.getElementById('current-page-size').textContent);
-
-                    console.log('Filtering by status:', status);
-                    requestSensorData(1, pageSize, location, status);
-                });
+                console.log('Filtering by status:', status);
+                requestSensorData(1, pageSize, location, status);
             });
 
             // Set up page size selector event handlers
-            document.querySelectorAll('.page-size-option').forEach(item => {
-                item.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const pageSize = parseInt(this.getAttribute('data-size'));
+            document.getElementById('sensorPageSizeFilter').addEventListener('change', function(e) {
+                const pageSize = parseInt(this.value);
 
-                    // Update active class
-                    document.querySelectorAll('.page-size-option').forEach(el => el.classList.remove('active'));
-                    this.classList.add('active');
+                // Get current filters
+                const location = document.getElementById('sensorLocationFilter').value;
+                const status = document.getElementById('sensorStatusFilter').value;
 
-                    // Update button text
-                    document.getElementById('current-page-size').textContent = pageSize;
-
-                    // Get current filters
-                    const location = document.getElementById('current-location-filter').textContent === 'All Locations' ? '' : document.getElementById('current-location-filter').textContent;
-                    const status = document.getElementById('current-status-filter').textContent === 'All Statuses' ? '' : document.getElementById('current-status-filter').textContent;
-
-                    console.log('Changing page size to:', pageSize);
-                    requestSensorData(1, pageSize, location, status);
-                });
+                console.log('Changing page size to:', pageSize);
+                requestSensorData(1, pageSize, location, status);
             });
 
             // Set up refresh button
             document.getElementById('refresh-sensor-data').addEventListener('click', function() {
                 // Get current filters and page size
-                const location = document.getElementById('current-location-filter').textContent === 'All Locations' ? '' : document.getElementById('current-location-filter').textContent;
-                const status = document.getElementById('current-status-filter').textContent === 'All Statuses' ? '' : document.getElementById('current-status-filter').textContent;
-                const pageSize = parseInt(document.getElementById('current-page-size').textContent);
+                const location = document.getElementById('sensorLocationFilter').value;
+                const status = document.getElementById('sensorStatusFilter').value;
+                const pageSize = parseInt(document.getElementById('sensorPageSizeFilter').value);
 
                 console.log('Refreshing sensor data with filters:', { location, status, pageSize });
                 requestSensorData(1, pageSize, location, status);
@@ -377,8 +388,8 @@
             // Set up export button
             document.getElementById('export-sensor-data').addEventListener('click', function() {
                 // Get current filters
-                const location = document.getElementById('current-location-filter').textContent === 'All Locations' ? '' : document.getElementById('current-location-filter').textContent;
-                const status = document.getElementById('current-status-filter').textContent === 'All Statuses' ? '' : document.getElementById('current-status-filter').textContent;
+                const location = document.getElementById('sensorLocationFilter').value;
+                const status = document.getElementById('sensorStatusFilter').value;
 
                 console.log('Exporting sensor data with filters:', { location, status });
                 
@@ -503,26 +514,15 @@
             });
 
             // Set up location filter event handlers
-            document.querySelectorAll('.location-filter').forEach(item => {
-                item.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const location = this.getAttribute('data-location');
-                    const locationText = location || 'All Locations';
+            document.getElementById('sensorLocationFilter').addEventListener('change', function(e) {
+                const location = this.value;
 
-                    // Update active class
-                    document.querySelectorAll('.location-filter').forEach(el => el.classList.remove('active'));
-                    this.classList.add('active');
+                // Get current status filter and page size
+                const status = document.getElementById('sensorStatusFilter').value;
+                const pageSize = parseInt(document.getElementById('sensorPageSizeFilter').value);
 
-                    // Update button text
-                    document.getElementById('current-location-filter').textContent = locationText;
-
-                    // Get current status filter and page size
-                    const status = document.getElementById('current-status-filter').textContent === 'All Statuses' ? '' : document.getElementById('current-status-filter').textContent;
-                    const pageSize = parseInt(document.getElementById('current-page-size').textContent);
-
-                    console.log('Filtering by location:', location);
-                    requestSensorData(1, pageSize, location, status);
-                });
+                console.log('Filtering by location:', location);
+                requestSensorData(1, pageSize, location, status);
             });
 
             // Function to update sensor overview cards with real-time data

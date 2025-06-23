@@ -125,12 +125,6 @@
                                         <button class="btn btn-sm btn-danger" id="recordVideo">
                                             Record
                                         </button>
-                                        <button class="btn btn-sm btn-warning" id="toggleDetection">
-                                            Toggle Detection
-                                        </button>
-                                        <button class="btn btn-sm btn-info" id="configureSettings">
-                                            Settings
-                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -147,7 +141,7 @@
                                     <h2 class="fs-5 fw-bold mb-0">Additional Camera Feeds</h2>
                                 </div>
                                 <div class="col text-end">
-                                    <a href="#" class="btn btn-sm btn-primary">View All</a>
+                                    <a href="/detections" target="_blank" class="btn btn-sm btn-primary">View All</a>
                                 </div>
                             </div>
                         </div>
@@ -182,80 +176,15 @@
             <div class="col-12 px-0 mb-4">
                 <div class="card border-0 shadow">
                     <div class="card-header border-bottom d-flex align-items-center justify-content-between">
-                        <h2 class="fs-5 fw-bold mb-0">Recent Alerts</h2>
-                        <a href="/alert-logs" class="btn btn-sm btn-primary">View All</a>
+                        <h2 class="fs-5 fw-bold mb-0">Recent Detections</h2>
+                        <a href="/detections" target="_blank" class="btn btn-sm btn-primary">View All</a>
                     </div>
                     <div class="card-body alert-history">
-                        <!-- Alert 1 -->
-                        <div class="d-flex mt-2 mb-3 pb-3 border-bottom">
-                            <div class="icon-shape icon-sm icon-shape-danger rounded me-3">
-                                <span class="fas fa-fire"></span>
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
                             </div>
-                            <div class="d-block">
-                                <div class="d-flex align-items-center mb-1">
-                                    <h5 class="mb-0">Fire Detected</h5>
-                                    <span class="badge bg-danger text-white">High</span>
-                                </div>
-                                <div class="small text-gray">
-                                    <span class="fas fa-clock me-1"></span>
-                                    Today at 12:34 PM
-                                </div>
-                                <p class="text-sm mt-2">Fire detected in Camera 1 - Kitchen area</p>
-                            </div>
-                        </div>
-
-                        <!-- Alert 2 -->
-                        <div class="d-flex mt-2 mb-3 pb-3 border-bottom">
-                            <div class="icon-shape icon-sm icon-shape-warning rounded me-3">
-                                <span class="fas fa-exclamation-triangle"></span>
-                            </div>
-                            <div class="d-block">
-                                <div class="d-flex align-items-center mb-1">
-                                    <h5 class="mb-0">Smoke Detected</h5>
-                                    <span class="badge bg-warning text-white">Medium</span>
-                                </div>
-                                <div class="small text-gray">
-                                    <span class="fas fa-clock me-1"></span>
-                                    Yesterday at 18:12 PM
-                                </div>
-                                <p class="text-sm mt-2">Smoke detected in Camera 2 - Living room</p>
-                            </div>
-                        </div>
-
-                        <!-- Alert 3 -->
-                        <div class="d-flex mt-2 mb-3 pb-3 border-bottom">
-                            <div class="icon-shape icon-sm icon-shape-success rounded me-3">
-                                <span class="fas fa-check"></span>
-                            </div>
-                            <div class="d-block">
-                                <div class="d-flex align-items-center mb-1">
-                                    <h5 class="mb-0">System Check</h5>
-                                    <span class="badge bg-success text-white">Info</span>
-                                </div>
-                                <div class="small text-gray">
-                                    <span class="fas fa-clock me-1"></span>
-                                    2 days ago at 09:30 AM
-                                </div>
-                                <p class="text-sm mt-2">Routine system check completed successfully</p>
-                            </div>
-                        </div>
-
-                        <!-- Alert 4 -->
-                        <div class="d-flex mt-2 mb-3 pb-3 border-bottom">
-                            <div class="icon-shape icon-sm icon-shape-warning rounded me-3">
-                                <span class="fas fa-exclamation-triangle"></span>
-                            </div>
-                            <div class="d-block">
-                                <div class="d-flex align-items-center mb-1">
-                                    <h5 class="mb-0">High Temperature</h5>
-                                    <span class="badge bg-warning text-white">Medium</span>
-                                </div>
-                                <div class="small text-gray">
-                                    <span class="fas fa-clock me-1"></span>
-                                    3 days ago at 15:45 PM
-                                </div>
-                                <p class="text-sm mt-2">Abnormal temperature in Camera 3 - Garage</p>
-                            </div>
+                            <p class="mt-2">Loading detection data...</p>
                         </div>
                     </div>
                 </div>
@@ -322,64 +251,328 @@
 <!-- Specific Page JS goes HERE  -->
 {% block javascripts %}
 <script>
-    // Simulating a live camera feed update
+    // Document ready event handler
     document.addEventListener('DOMContentLoaded', function() {
-        // This is a placeholder for actual camera implementation
-        // In a real application, you would connect to your ESP32-CAM stream
-
-        // Example of fire detection simulation for demo purposes
-        const fireStatus = document.querySelector('.fire-status');
-        const liveFeed = document.getElementById('liveCameraFeed');
-
-        // Simulate status changes (remove in production)
-        let statusIndex = 0;
-        const statuses = [
-            { class: 'status-safe', text: 'Normal', icon: 'fa-fire-extinguisher' },
-            { class: 'status-warning', text: 'Warning: Checking', icon: 'fa-exclamation-triangle' },
-            { class: 'status-danger', text: 'FIRE DETECTED!', icon: 'fa-fire' }
-        ];
-
-        // This is just for demonstration - would be replaced with actual detection logic
-        /*
-        setInterval(() => {
-            statusIndex = (statusIndex + 1) % statuses.length;
-            const status = statuses[statusIndex];
-
-            // Remove all status classes and add the current one
-            fireStatus.className = 'fire-status ' + status.class;
-
-            // Update the content
-            fireStatus.innerHTML = `<h5 class="mb-0 ${statusIndex === 2 ? 'blink' : ''}">
-                <span class="fas ${status.icon} me-2"></span>
-                Fire Status: ${status.text}
-            </h5>`;
-
-        }, 5000);
-        */
-
         // Button event handlers
         document.getElementById('captureImage').addEventListener('click', function() {
-            alert('Image captured and saved.');
+            captureImage();
         });
 
         document.getElementById('recordVideo').addEventListener('click', function() {
             this.classList.toggle('btn-danger');
             this.classList.toggle('btn-secondary');
             this.innerHTML = this.classList.contains('btn-danger') ?
-                '<span class="fas fa-video me-2"></span>Record' :
-                '<span class="fas fa-stop me-2"></span>Stop';
-        });
-
-        document.getElementById('toggleDetection').addEventListener('click', function() {
-            this.classList.toggle('btn-warning');
-            this.classList.toggle('btn-secondary');
-            alert('Fire detection has been ' +
-                  (this.classList.contains('btn-warning') ? 'enabled' : 'disabled'));
-        });
-
-        document.getElementById('configureSettings').addEventListener('click', function() {
-            alert('Settings configuration dialog would open here.');
+                '<span class="fas fa-stop me-2"></span>Stop' :
+                '<span class="fas fa-video me-2"></span>Record';
+            toggleRecording();
         });
     });
+
+    // Capture image from camera feed
+    function captureImage() {
+        // Get the image from the video feed
+        const videoElement = document.getElementById('liveCameraFeed');
+        
+        // Create a notification
+        const notification = document.createElement('div');
+        notification.className = 'alert alert-success alert-dismissible fade show';
+        notification.innerHTML = `
+            <span class="fas fa-check-circle me-2"></span>
+            Image captured successfully!
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        // Add notification to the page
+        document.querySelector('.col-12.mb-4').prepend(notification);
+        
+        // Remove notification after 3 seconds
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+    
+    // Toggle video recording
+    function toggleRecording() {
+        // Implementation for recording video
+        console.log('Recording toggled');
+    }
+
+    // Fire status simulation
+    const fireStatusElement = document.querySelector('.fire-status');
+    if (fireStatusElement) {
+        // Fire status will be updated by socket-client.js
+    }
+
+    // Direct API fallback for camera detections
+    document.addEventListener('DOMContentLoaded', function() {
+        // Wait a bit to see if socket.io loads the data
+        setTimeout(function() {
+            const alertHistoryContainer = document.querySelector('.alert-history');
+            if (alertHistoryContainer && alertHistoryContainer.innerHTML.includes('Loading detection data')) {
+                console.log('Socket.IO not loading camera detections, trying direct API call');
+                fetchCameraDetectionsDirectly();
+            }
+        }, 8000); // Wait 8 seconds before trying direct API call
+    });
+
+    // Fallback function to fetch camera detections directly from API
+    function fetchCameraDetectionsDirectly() {
+        const url = 'http://localhost:3000/api/camera-detection/recent?limit=5';
+        
+        fetch(url)
+            .then(response => response.json())
+            .then(detections => {
+                console.log('Received detections directly from API:', detections);
+                updateCameraDetectionsUI(detections);
+            })
+            .catch(error => {
+                console.error('Error fetching camera detections directly:', error);
+                const alertHistoryContainer = document.querySelector('.alert-history');
+                if (alertHistoryContainer) {
+                    alertHistoryContainer.innerHTML = `
+                        <div class="alert alert-danger">
+                            <span class="fas fa-exclamation-circle me-2"></span>
+                            Error loading detection data: ${error.message || 'Failed to connect to API'}
+                        </div>
+                    `;
+                }
+            });
+    }
+
+    // Function to update camera detections UI (fallback version)
+    function updateCameraDetectionsUI(detections) {
+        const alertHistoryContainer = document.querySelector('.alert-history');
+        if (!alertHistoryContainer) return;
+        
+        if (!detections || detections.length === 0) {
+            alertHistoryContainer.innerHTML = '<div class="text-center py-3">No recent detections</div>';
+            return;
+        }
+        
+        alertHistoryContainer.innerHTML = '';
+        
+        detections.forEach(detection => {
+            const confidenceScore = parseFloat(detection.confidence_score) || 0;
+            const confidenceClass = confidenceScore > 0.7 ? 'danger' : (confidenceScore > 0.4 ? 'warning' : 'success');
+            const confidenceText = confidenceScore > 0.7 ? 'High' : (confidenceScore > 0.4 ? 'Medium' : 'Low');
+            
+            // Format timestamp
+            let formattedTime = detection.formatted_time;
+            if (!formattedTime && detection.detection_timestamp) {
+                const date = new Date(detection.detection_timestamp);
+                formattedTime = date.toLocaleString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    hour: 'numeric',
+                    minute: 'numeric',
+                    second: 'numeric'
+                });
+            }
+            
+            // Handle image path
+            let imagePath = detection.image_path || '';
+            if (imagePath.startsWith('/uploads')) {
+                imagePath = 'http://localhost:3000' + imagePath;
+            }
+            
+            const alertItem = document.createElement('div');
+            alertItem.className = 'd-flex mt-2 mb-3 pb-3 border-bottom';
+            alertItem.innerHTML = `
+                <div class="icon-shape icon-sm icon-shape-${confidenceClass} rounded me-3">
+                    <span class="fas fa-fire"></span>
+                </div>
+                <div class="d-block">
+                    <div class="d-flex align-items-center mb-1">
+                        <h5 class="mb-0 me-2">Fire Detected</h5>
+                        <span class="badge bg-${confidenceClass} text-white">${confidenceText}</span>
+                    </div>
+                    <div class="small text-gray">
+                        <span class="fas fa-clock me-1"></span>
+                        ${formattedTime || 'Unknown time'}
+                    </div>
+                    <div class="small text-gray">
+                        <span class="fas fa-map-marker-alt me-1"></span>
+                        ${detection.camera_location || 'Unknown location'}
+                    </div>
+                    ${imagePath ? `<div class="mt-2">
+                        <a href="#" class="view-detection" data-id="${detection.detection_id}">
+                            <img src="${imagePath}" class="img-fluid rounded" style="max-height: 80px;" alt="Detection Image">
+                        </a>
+                    </div>` : ''}
+                </div>
+            `;
+            
+            alertHistoryContainer.appendChild(alertItem);
+        });
+        
+        // Add event listeners for detection image clicks
+        document.querySelectorAll('.view-detection').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const detectionId = this.getAttribute('data-id');
+                window.location.href = `/detection/${detectionId}`;
+            });
+        });
+        
+        // Update fire status indicator
+        updateFireStatusIndicator(detections);
+    }
+    
+    // Function to update fire status indicator (fallback version)
+    function updateFireStatusIndicator(detections) {
+        const fireStatus = document.querySelector('.fire-status');
+        if (!fireStatus || !detections || detections.length === 0) return;
+        
+        // Find active detections
+        const activeDetections = detections.filter(d => d.detection_status === 'Active');
+        
+        if (activeDetections.length === 0) {
+            fireStatus.className = 'fire-status text-success';
+            fireStatus.innerHTML = '<span class="fas fa-check-circle me-2"></span>No Active Fire';
+            return;
+        }
+        
+        // Find highest confidence score
+        let highestConfidence = 0;
+        activeDetections.forEach(detection => {
+            const confidence = parseFloat(detection.confidence_score) || 0;
+            if (confidence > highestConfidence) {
+                highestConfidence = confidence;
+            }
+        });
+        
+        // Set status based on confidence
+        if (highestConfidence > 0.7) {
+            fireStatus.className = 'fire-status text-danger';
+            fireStatus.innerHTML = '<span class="fas fa-fire me-2"></span>High Risk Fire Detected';
+        } else if (highestConfidence > 0.4) {
+            fireStatus.className = 'fire-status text-warning';
+            fireStatus.innerHTML = '<span class="fas fa-exclamation-triangle me-2"></span>Medium Risk Fire Detected';
+        } else {
+            fireStatus.className = 'fire-status text-info';
+            fireStatus.innerHTML = '<span class="fas fa-info-circle me-2"></span>Low Risk Fire Detected';
+        }
+    }
 </script>
 {% endblock javascripts %}
+
+<!-- Camera Detections Modal -->
+<div class="modal fade" id="allDetectionsModal" tabindex="-1" role="dialog" aria-labelledby="allDetectionsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="allDetectionsModalLabel">All Recent Detections</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex justify-content-between mb-3">
+                    <div class="form-group">
+                        <label for="detectionStatusFilter">Filter by Status</label>
+                        <select class="form-select" id="detectionStatusFilter">
+                            <option value="">All Detections</option>
+                            <option value="Active">Active</option>
+                            <option value="Resolved">Resolved</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="detectionLimitFilter">Show</label>
+                        <select class="form-select" id="detectionLimitFilter">
+                            <option value="10">10 Detections</option>
+                            <option value="20">20 Detections</option>
+                            <option value="50">50 Detections</option>
+                            <option value="100">100 Detections</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-centered table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Image</th>
+                                <th>Location</th>
+                                <th>Confidence</th>
+                                <th>Time</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="allDetectionsTableBody">
+                            <tr>
+                                <td colspan="6" class="text-center">Loading detection data...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detection Details Modal -->
+<div class="modal fade" id="detectionDetailsModal" tabindex="-1" role="dialog" aria-labelledby="detectionDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detectionDetailsModalLabel">Detection Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-4" id="detectionImageContainer">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading detection image...</p>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="fw-bold">Detection Information</h6>
+                        <table class="table">
+                            <tbody>
+                                <tr>
+                                    <th>Detection ID</th>
+                                    <td id="detailDetectionId">-</td>
+                                </tr>
+                                <tr>
+                                    <th>Location</th>
+                                    <td id="detailLocation">-</td>
+                                </tr>
+                                <tr>
+                                    <th>Time</th>
+                                    <td id="detailTime">-</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="fw-bold">Analysis</h6>
+                        <table class="table">
+                            <tbody>
+                                <tr>
+                                    <th>Confidence</th>
+                                    <td id="detailConfidence">-</td>
+                                </tr>
+                                <tr>
+                                    <th>Status</th>
+                                    <td id="detailStatus">-</td>
+                                </tr>
+                                <tr>
+                                    <th>Risk Level</th>
+                                    <td id="detailRiskLevel">-</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="markAsResolvedBtn">Mark as Resolved</button>
+            </div>
+        </div>
+    </div>
+</div>

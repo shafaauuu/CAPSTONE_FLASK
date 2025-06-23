@@ -18,6 +18,8 @@ from apps.authentication.models import Users
 from apps.config import Config
 from apps.authentication.util import verify_pass
 
+API_BASE_URL = Config.API_BASE_URL
+
 @blueprint.route('/')
 def route_default():
     return redirect(url_for('authentication_blueprint.login'))
@@ -62,15 +64,15 @@ def login():
                 'password': password
             }
 
-            response = requests.post('http://127.0.0.1:3000/api/login', json=payload)
+            response = requests.post(f'{API_BASE_URL}/api/login', json=payload)
 
             # Check for approval status - 403 response
             if response.status_code == 403:
                 error_data = response.json()
                 return render_template('accounts/login.html',
-                                   msg=error_data.get('message', 'Account pending approval. Please contact administrator.'),
-                                   form=login_form)
-                                   
+                               msg=error_data.get('message', 'Account pending approval. Please contact administrator.'),
+                               form=login_form)
+                               
             response.raise_for_status()
             data = response.json()
             
@@ -152,19 +154,19 @@ def register():
     # Fetch dropdown data from API for form population
     try:
         # Get plants
-        plants_response = requests.get('http://127.0.0.1:3000/api/lookup/plants')
+        plants_response = requests.get(f'{API_BASE_URL}/api/lookup/plants')
         plants_data = plants_response.json().get('data', []) if plants_response.status_code == 200 else []
         
         # Get departments
-        departments_response = requests.get('http://127.0.0.1:3000/api/lookup/departments')
+        departments_response = requests.get(f'{API_BASE_URL}/api/lookup/departments')
         departments_data = departments_response.json().get('data', []) if departments_response.status_code == 200 else []
         
         # Get divisions
-        divisions_response = requests.get('http://127.0.0.1:3000/api/lookup/divisions')
+        divisions_response = requests.get(f'{API_BASE_URL}/api/lookup/divisions')
         divisions_data = divisions_response.json().get('data', []) if divisions_response.status_code == 200 else []
         
         # Get roles
-        roles_response = requests.get('http://127.0.0.1:3000/api/lookup/roles')
+        roles_response = requests.get(f'{API_BASE_URL}/api/lookup/roles')
         roles_data = roles_response.json().get('data', []) if roles_response.status_code == 200 else []
         
         # Populate form choices
@@ -218,7 +220,7 @@ def register():
                     'division_id': division_id,
                     'role_id': role_id
                 }
-                endpoint = 'http://127.0.0.1:3000/api/register/admin'
+                endpoint = f'{API_BASE_URL}/api/register/admin'
             else:
                 payload = {
                     'user_id': npk,
@@ -230,7 +232,7 @@ def register():
                     'division_id': division_id,
                     'role_id': role_id
                 }
-                endpoint = 'http://127.0.0.1:3000/api/register/user'
+                endpoint = f'{API_BASE_URL}/api/register/user'
             
             # Make API call
             response = requests.post(endpoint, json=payload)

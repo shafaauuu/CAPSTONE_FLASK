@@ -1,12 +1,22 @@
-from flask import session, send_file
+from flask import session, request
+from flask_socketio import emit
 import requests
+import json
+import traceback
 from datetime import datetime, timedelta
 import os
-import json
-import pandas as pd
-from io import BytesIO
+import time
+import io
 import base64
-import traceback
+from apps.config import Config
+
+try:
+    import pandas as pd
+except ImportError:
+    print("WARNING: pandas not installed. Export functionality will not work.")
+
+# API configuration - use centralized config
+API_BASE_URL = Config.API_BASE_URL
 
 def register_socket_events(socketio):
     @socketio.on('connect')
@@ -25,7 +35,7 @@ def register_socket_events(socketio):
         if admin_id:
             try:
                 # Use the correct profile endpoint with type=admin query parameter
-                response = requests.get(f'http://localhost:3000/api/profile?id={admin_id}&type=admin')
+                response = requests.get(f'{API_BASE_URL}/api/profile?id={admin_id}&type=admin')
                 
                 if response.status_code == 200:
                     admin_data = response.json()
@@ -81,31 +91,37 @@ def register_socket_events(socketio):
             
             try:
                 # Get all users count
-                all_users_response = requests.get('http://localhost:3000/api/users/count')
+                all_users_response = requests.get(f'{API_BASE_URL}/api/users/count')
                 if all_users_response.status_code == 200:
                     all_users_count = all_users_response.json().get('count', 0)
             except Exception as e:
                 print(f"Error fetching all users count: {str(e)}")
+                print(f"Error type: {type(e).__name__}")
+                print(f"Error details: {traceback.format_exc()}")
             
             try:
                 # Get new users (registered this week)
-                new_users_response = requests.get(f'http://localhost:3000/api/users/count/new?since={one_week_ago.strftime("%Y-%m-%d")}')
+                new_users_response = requests.get(f'{API_BASE_URL}/api/users/count/new?since={one_week_ago.strftime("%Y-%m-%d")}')
                 if new_users_response.status_code == 200:
                     new_users_count = new_users_response.json().get('count', 0)
             except Exception as e:
                 print(f"Error fetching new users count: {str(e)}")
+                print(f"Error type: {type(e).__name__}")
+                print(f"Error details: {traceback.format_exc()}")
             
             try:
                 # Get pending users
-                pending_users_response = requests.get('http://localhost:3000/api/approval/pending')
+                pending_users_response = requests.get(f'{API_BASE_URL}/api/approval/pending')
                 if pending_users_response.status_code == 200:
                     pending_users = pending_users_response.json()
             except Exception as e:
                 print(f"Error fetching pending users: {str(e)}")
+                print(f"Error type: {type(e).__name__}")
+                print(f"Error details: {traceback.format_exc()}")
             
             try:
                 # Get all users to count approved users
-                all_users_list_response = requests.get('http://localhost:3000/api/users')
+                all_users_list_response = requests.get(f'{API_BASE_URL}/api/users')
                 if all_users_list_response.status_code == 200:
                     all_users_list = all_users_list_response.json()
                     all_users_count = len(all_users_list)
@@ -113,15 +129,19 @@ def register_socket_events(socketio):
                     approved_users_count = len(approved_users)
             except Exception as e:
                 print(f"Error fetching all users list: {str(e)}")
+                print(f"Error type: {type(e).__name__}")
+                print(f"Error details: {traceback.format_exc()}")
                 
                 # Try alternate endpoint for approved users
                 try:
-                    approved_users_response = requests.get('http://localhost:3000/api/users/approved')
+                    approved_users_response = requests.get(f'{API_BASE_URL}/api/users/approved')
                     if approved_users_response.status_code == 200:
                         approved_users = approved_users_response.json()
                         approved_users_count = len(approved_users)
                 except Exception as e:
                     print(f"Error fetching approved users: {str(e)}")
+                    print(f"Error type: {type(e).__name__}")
+                    print(f"Error details: {traceback.format_exc()}")
             
             # Emit dashboard stats to the client
             socketio.emit('dashboard_stats', {
@@ -158,24 +178,28 @@ def register_socket_events(socketio):
                 # Admin history view - all approvals or filtered by admin ID
                 try:
                     if user_id:
-                        response = requests.get(f'http://localhost:3000/api/history/approval/admin/{user_id}')
+                        response = requests.get(f'{API_BASE_URL}/api/history/approval/admin/{user_id}')
                     else:
-                        response = requests.get('http://localhost:3000/api/history/approval')
+                        response = requests.get(f'{API_BASE_URL}/api/history/approval')
                     
                     if response.status_code == 200:
                         history_data = response.json()
                 except Exception as e:
                     print(f"Error fetching admin history data: {str(e)}")
+                    print(f"Error type: {type(e).__name__}")
+                    print(f"Error details: {traceback.format_exc()}")
             else:
                 # Regular user history view - filtered by user ID
                 try:
                     if user_id:
-                        response = requests.get(f'http://localhost:3000/api/history/approval/user/{user_id}')
+                        response = requests.get(f'{API_BASE_URL}/api/history/approval/user/{user_id}')
                         
                         if response.status_code == 200:
                             history_data = response.json()
                 except Exception as e:
                     print(f"Error fetching user history data: {str(e)}")
+                    print(f"Error type: {type(e).__name__}")
+                    print(f"Error details: {traceback.format_exc()}")
             
             # Emit history data to the client
             socketio.emit('history_data', {
@@ -203,7 +227,8 @@ def register_socket_events(socketio):
             
             # Test if the Node.js server is accessible
             try:
-                test_response = requests.get('http://localhost:3000/api/sensor/sensor-data/fire', timeout=5)
+                # Try with direct IP instead of localhost
+                test_response = requests.get(f'{API_BASE_URL}/api/sensor/sensor-data/fire', timeout=10)
                 print(f"Test API connection status: {test_response.status_code}")
                 if test_response.status_code == 200:
                     print("Node.js API server is accessible")
@@ -211,10 +236,12 @@ def register_socket_events(socketio):
                     print(f"Node.js API server returned error: {test_response.text}")
             except Exception as e:
                 print(f"Error connecting to Node.js API server: {str(e)}")
+                print(f"Error type: {type(e).__name__}")
+                print(f"Error details: {traceback.format_exc()}")
             
             # Fetch fire sensor data
             try:
-                fire_api_url = f'http://localhost:3000/api/sensor/sensor-data/fire/paginated?page={page}&pageSize={pageSize}' + \
+                fire_api_url = f'{API_BASE_URL}/api/sensor/sensor-data/fire/paginated?page={page}&pageSize={pageSize}' + \
                               (f'&location={location}' if location else '') + \
                               (f'&status={status}' if status else '')
                 print(f"Requesting fire sensor data from: {fire_api_url}")
@@ -227,7 +254,7 @@ def register_socket_events(socketio):
                 else:
                     print(f"Fire sensor API error: {fire_response.text}")
                     # Try the non-paginated endpoint as fallback
-                    fallback_url = 'http://localhost:3000/api/sensor/sensor-data/fire'
+                    fallback_url = f'{API_BASE_URL}/api/sensor/sensor-data/fire'
                     print(f"Trying fallback URL: {fallback_url}")
                     fallback_response = requests.get(fallback_url, timeout=5)
                     
@@ -253,6 +280,8 @@ def register_socket_events(socketio):
                         }
             except Exception as e:
                 print(f"Error fetching fire sensor data: {str(e)}")
+                print(f"Error type: {type(e).__name__}")
+                print(f"Error details: {traceback.format_exc()}")
                 sensor_data['fireSensorData'] = {
                     'data': [],
                     'pagination': {'total': 0, 'page': page, 'pageSize': pageSize, 'totalPages': 0},
@@ -261,7 +290,7 @@ def register_socket_events(socketio):
             
             # Fetch smoke sensor data
             try:
-                smoke_api_url = f'http://localhost:3000/api/sensor/sensor-data/smoke/paginated?page={page}&pageSize={pageSize}' + \
+                smoke_api_url = f'{API_BASE_URL}/api/sensor/sensor-data/smoke/paginated?page={page}&pageSize={pageSize}' + \
                                (f'&location={location}' if location else '') + \
                                (f'&status={status}' if status else '')
                 print(f"Requesting smoke sensor data from: {smoke_api_url}")
@@ -274,7 +303,7 @@ def register_socket_events(socketio):
                 else:
                     print(f"Smoke sensor API error: {smoke_response.text}")
                     # Try the non-paginated endpoint as fallback
-                    fallback_url = 'http://localhost:3000/api/sensor/sensor-data/smoke'
+                    fallback_url = f'{API_BASE_URL}/api/sensor/sensor-data/smoke'
                     print(f"Trying fallback URL: {fallback_url}")
                     fallback_response = requests.get(fallback_url, timeout=5)
                     
@@ -300,6 +329,8 @@ def register_socket_events(socketio):
                         }
             except Exception as e:
                 print(f"Error fetching smoke sensor data: {str(e)}")
+                print(f"Error type: {type(e).__name__}")
+                print(f"Error details: {traceback.format_exc()}")
                 sensor_data['smokeSensorData'] = {
                     'data': [],
                     'pagination': {'total': 0, 'page': page, 'pageSize': pageSize, 'totalPages': 0},
@@ -308,7 +339,7 @@ def register_socket_events(socketio):
             
             # Fetch DHT11 sensor data
             try:
-                dht11_api_url = f'http://localhost:3000/api/sensor/sensor-data/dht11/paginated?page={page}&pageSize={pageSize}' + \
+                dht11_api_url = f'{API_BASE_URL}/api/sensor/sensor-data/dht11/paginated?page={page}&pageSize={pageSize}' + \
                                (f'&location={location}' if location else '') + \
                                (f'&status={status}' if status else '')
                 print(f"Requesting DHT11 sensor data from: {dht11_api_url}")
@@ -321,7 +352,7 @@ def register_socket_events(socketio):
                 else:
                     print(f"DHT11 sensor API error: {dht11_response.text}")
                     # Try the non-paginated endpoint as fallback
-                    fallback_url = 'http://localhost:3000/api/sensor/sensor-data/dht11'
+                    fallback_url = f'{API_BASE_URL}/api/sensor/sensor-data/dht11'
                     print(f"Trying fallback URL: {fallback_url}")
                     fallback_response = requests.get(fallback_url, timeout=5)
                     
@@ -347,6 +378,8 @@ def register_socket_events(socketio):
                         }
             except Exception as e:
                 print(f"Error fetching DHT11 sensor data: {str(e)}")
+                print(f"Error type: {type(e).__name__}")
+                print(f"Error details: {traceback.format_exc()}")
                 sensor_data['dht11Data'] = {
                     'data': [],
                     'pagination': {'total': 0, 'page': page, 'pageSize': pageSize, 'totalPages': 0},
@@ -355,14 +388,28 @@ def register_socket_events(socketio):
             
             # Fetch sensor locations for filtering
             try:
-                locations_api_url = 'http://localhost:3000/api/sensor/sensor-data/locations'
+                locations_api_url = f'{API_BASE_URL}/api/sensor/sensor-data/locations'
                 print(f"Requesting sensor locations from: {locations_api_url}")
                 locations_response = requests.get(locations_api_url, timeout=5)
                 print(f"Locations API response status: {locations_response.status_code}")
                 
                 if locations_response.status_code == 200:
-                    sensor_data['locations'] = locations_response.json()
-                    print(f"Sensor locations received")
+                    locations_data = locations_response.json()
+                    print(f"Sensor locations received: {locations_data}")
+                    
+                    # Handle both array and object formats
+                    if isinstance(locations_data, list):
+                        # If API returns a simple array of locations, convert to the expected format
+                        sensor_data['locations'] = {
+                            'fireLocations': locations_data,
+                            'smokeLocations': locations_data,
+                            'dht11Locations': locations_data
+                        }
+                        print(f"Converted array of locations to object format")
+                    else:
+                        # Use the object format as is
+                        sensor_data['locations'] = locations_data
+                        print(f"Using object format for locations")
                 else:
                     print(f"Locations API error: {locations_response.text}")
                     # Try to get locations from the individual sensor data endpoints
@@ -375,14 +422,21 @@ def register_socket_events(socketio):
                         smoke_locations = list(set([item.get('smoke_loc') for item in smoke_data if item.get('smoke_loc')]))
                         dht11_locations = list(set([item.get('dht11_loc') for item in dht11_data if item.get('dht11_loc')]))
                         
+                        # Combine all locations into a single list to ensure we have all unique locations
+                        all_locations = list(set(fire_locations + smoke_locations + dht11_locations))
+                        
                         sensor_data['locations'] = {
                             'fireLocations': fire_locations,
                             'smokeLocations': smoke_locations,
-                            'dht11Locations': dht11_locations
+                            'dht11Locations': dht11_locations,
+                            # Add the combined list for compatibility with array format
+                            'allLocations': all_locations
                         }
-                        print(f"Generated locations from sensor data")
+                        print(f"Generated locations from sensor data: {all_locations}")
                     except Exception as e:
                         print(f"Error generating locations from sensor data: {str(e)}")
+                        print(f"Error type: {type(e).__name__}")
+                        print(f"Error details: {traceback.format_exc()}")
                         sensor_data['locations'] = {
                             'fireLocations': [],
                             'smokeLocations': [],
@@ -390,6 +444,8 @@ def register_socket_events(socketio):
                         }
             except Exception as e:
                 print(f"Error fetching sensor locations: {str(e)}")
+                print(f"Error type: {type(e).__name__}")
+                print(f"Error details: {traceback.format_exc()}")
                 sensor_data['locations'] = {
                     'fireLocations': [],
                     'smokeLocations': [],
@@ -405,6 +461,8 @@ def register_socket_events(socketio):
             print(f"Sensor data emitted successfully")
         except Exception as e:
             print(f"Error in handle_sensor_data_request: {str(e)}")
+            print(f"Error type: {type(e).__name__}")
+            print(f"Error details: {traceback.format_exc()}")
             socketio.emit('sensor_data', {
                 'success': False,
                 'error': f"Error fetching sensor data: {str(e)}"
@@ -413,258 +471,350 @@ def register_socket_events(socketio):
     @socketio.on('export_sensor_data')
     def handle_export_sensor_data(data):
         try:
-            print(f"Received export sensor data request with parameters: {data}")
-            # Get parameters from request data
-            location = data.get('location')
-            status = data.get('status')
+            # Check if pandas is available
+            if 'pd' not in globals():
+                import pandas as pd
             
-            # Initialize response data
-            sensor_data = {}
+            location = data.get('location', '')
+            status = data.get('status', '')
             
-            # Fetch fire sensor data
-            try:
-                fire_url = 'http://localhost:3000/api/sensor/sensor-data/fire'
-                if location:
-                    fire_url += f'?location={location}'
-                if status:
-                    fire_url += f'{"&" if location else "?"}status={status}'
+            # Construct API URL with query parameters
+            api_url = f'{API_BASE_URL}/api/sensor/sensor-data?pageSize=1000'
+            if location:
+                api_url += f'&location={location}'
+            if status:
+                api_url += f'&status={status}'
+            
+            print(f"Fetching sensor data for export from: {api_url}")
+            
+            # Get sensor data from Node.js backend
+            response = requests.get(api_url)
+            if response.status_code == 200:
+                sensor_data = response.json()
                 
-                print(f"Fetching fire sensor data from: {fire_url}")
-                fire_response = requests.get(fire_url)
-                if fire_response.status_code == 200:
-                    fire_data = fire_response.json()
-                    print(f"Fire sensor data sample (first item): {fire_data[0] if fire_data else 'No data'}")
-                    sensor_data['fireSensorData'] = {
-                        'data': fire_data,
-                        'pagination': {
-                            'total': len(fire_data),
-                            'page': 1,
-                            'pageSize': len(fire_data),
-                            'totalPages': 1
-                        }
-                    }
-            except Exception as e:
-                print(f"Error fetching fire sensor data for export: {str(e)}")
-                traceback.print_exc()
-                sensor_data['fireSensorData'] = {'data': [], 'pagination': {'total': 0, 'page': 1, 'pageSize': 0, 'totalPages': 0}}
-            
-            # Fetch smoke sensor data
-            try:
-                smoke_url = 'http://localhost:3000/api/sensor/sensor-data/smoke'
-                if location:
-                    smoke_url += f'?location={location}'
-                if status:
-                    smoke_url += f'{"&" if location else "?"}status={status}'
-                
-                print(f"Fetching smoke sensor data from: {smoke_url}")
-                smoke_response = requests.get(smoke_url)
-                if smoke_response.status_code == 200:
-                    smoke_data = smoke_response.json()
-                    print(f"Smoke sensor data sample (first item): {smoke_data[0] if smoke_data else 'No data'}")
-                    sensor_data['smokeSensorData'] = {
-                        'data': smoke_data,
-                        'pagination': {
-                            'total': len(smoke_data),
-                            'page': 1,
-                            'pageSize': len(smoke_data),
-                            'totalPages': 1
-                        }
-                    }
-            except Exception as e:
-                print(f"Error fetching smoke sensor data for export: {str(e)}")
-                traceback.print_exc()
-                sensor_data['smokeSensorData'] = {'data': [], 'pagination': {'total': 0, 'page': 1, 'pageSize': 0, 'totalPages': 0}}
-            
-            # Fetch DHT11 sensor data
-            try:
-                dht11_url = 'http://localhost:3000/api/sensor/sensor-data/dht11'
-                if location:
-                    dht11_url += f'?location={location}'
-                if status:
-                    dht11_url += f'{"&" if location else "?"}status={status}'
-                
-                print(f"Fetching DHT11 sensor data from: {dht11_url}")
-                dht11_response = requests.get(dht11_url)
-                if dht11_response.status_code == 200:
-                    dht11_data = dht11_response.json()
-                    print(f"DHT11 sensor data sample (first item): {dht11_data[0] if dht11_data else 'No data'}")
-                    sensor_data['dht11Data'] = {
-                        'data': dht11_data,
-                        'pagination': {
-                            'total': len(dht11_data),
-                            'page': 1,
-                            'pageSize': len(dht11_data),
-                            'totalPages': 1
-                        }
-                    }
-            except Exception as e:
-                print(f"Error fetching DHT11 sensor data for export: {str(e)}")
-                traceback.print_exc()
-                sensor_data['dht11Data'] = {'data': [], 'pagination': {'total': 0, 'page': 1, 'pageSize': 0, 'totalPages': 0}}
-            
-            try:
-                # Extract data for each sensor type
+                # Extract the data we need
                 fire_data = sensor_data.get('fireSensorData', {}).get('data', [])
                 smoke_data = sensor_data.get('smokeSensorData', {}).get('data', [])
-                dht11_data = sensor_data.get('dht11Data', {}).get('data', [])
+                dht11_data = sensor_data.get('dht11SensorData', {}).get('data', [])
                 
-                # Debug the structure of the first item in each data set
-                if fire_data:
-                    print(f"Fire data keys: {fire_data[0].keys()}")
-                if smoke_data:
-                    print(f"Smoke data keys: {smoke_data[0].keys()}")
-                if dht11_data:
-                    print(f"DHT11 data keys: {dht11_data[0].keys()}")
-                
-                # Create simple DataFrames with only the data we need
-                fire_rows = []
-                for item in fire_data:
-                    # Debug each item's structure
-                    print(f"Processing fire item: {item}")
-                    fire_rows.append({
-                        'Sensor ID': item.get('fire_id', ''),
-                        'Location': item.get('fire_loc', ''),
-                        'Status': item.get('fire_status', ''),
-                        'Timestamp': item.get('fire_timestamp', '')
-                    })
-                
-                smoke_rows = []
-                for item in smoke_data:
-                    # Debug each item's structure
-                    print(f"Processing smoke item: {item}")
-                    smoke_rows.append({
-                        'Sensor ID': item.get('smoke_id', ''),
-                        'Location': item.get('smoke_loc', ''),
-                        'Status': item.get('smoke_status', ''),
-                        'Timestamp': item.get('smoke_timestamp', '')
-                    })
-                
-                dht11_rows = []
-                for item in dht11_data:
-                    # Debug each item's structure
-                    print(f"Processing DHT11 item: {item}")
-                    # Check if temperature and humidity fields exist in the API response
-                    temperature = ''
-                    humidity = ''
-                    # Try to find temperature and humidity fields with different possible names
-                    if 'temperature' in item:
-                        temperature = item['temperature']
-                    elif 'dht11_temperature' in item:
-                        temperature = item['dht11_temperature']
-                    
-                    if 'humidity' in item:
-                        humidity = item['humidity']
-                    elif 'dht11_humidity' in item:
-                        humidity = item['dht11_humidity']
-                    
-                    dht11_rows.append({
-                        'Sensor ID': item.get('dht11_id', ''),
-                        'Location': item.get('dht11_loc', ''),
-                        'Status': item.get('dht11_status', ''),
-                        'Timestamp': item.get('dht11_timestamp', '')
-                    })
-                
-                # Create DataFrames from the extracted data
-                fire_df = pd.DataFrame(fire_rows)
-                smoke_df = pd.DataFrame(smoke_rows)
-                dht11_df = pd.DataFrame(dht11_rows)
-                
-                # Debug the DataFrames
-                print(f"Fire DataFrame columns: {fire_df.columns.tolist()}")
-                print(f"Fire DataFrame sample:\n{fire_df.head()}")
-                
-                print(f"Smoke DataFrame columns: {smoke_df.columns.tolist()}")
-                print(f"Smoke DataFrame sample:\n{smoke_df.head()}")
-                
-                print(f"DHT11 DataFrame columns: {dht11_df.columns.tolist()}")
-                print(f"DHT11 DataFrame sample:\n{dht11_df.head()}")
-                
-                # Generate filename with timestamp
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                filename = f"sensor_data_export_{timestamp}.xlsx"
+                # Create DataFrames for each sensor type
+                fire_df = pd.DataFrame(fire_data) if fire_data else pd.DataFrame()
+                smoke_df = pd.DataFrame(smoke_data) if smoke_data else pd.DataFrame()
+                dht11_df = pd.DataFrame(dht11_data) if dht11_data else pd.DataFrame()
                 
                 # Create a BytesIO object to save the Excel file
-                excel_file = BytesIO()
+                output = io.BytesIO()
                 
                 # Create Excel writer
-                with pd.ExcelWriter(excel_file, engine='xlsxwriter') as writer:
+                with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
                     # Write each DataFrame to a different sheet
                     if not fire_df.empty:
-                        fire_df.to_excel(writer, sheet_name='Flame Detectors', index=False)
-                    else:
-                        pd.DataFrame(columns=['Sensor ID', 'Location', 'Status', 'Timestamp']).to_excel(
-                            writer, sheet_name='Flame Detectors', index=False)
-                    
+                        fire_df.to_excel(writer, sheet_name='Fire Sensors', index=False)
                     if not smoke_df.empty:
-                        smoke_df.to_excel(writer, sheet_name='Smoke Detectors', index=False)
-                    else:
-                        pd.DataFrame(columns=['Sensor ID', 'Location', 'Status', 'Timestamp']).to_excel(
-                            writer, sheet_name='Smoke Detectors', index=False)
-                    
+                        smoke_df.to_excel(writer, sheet_name='Smoke Sensors', index=False)
                     if not dht11_df.empty:
                         dht11_df.to_excel(writer, sheet_name='Temperature Sensors', index=False)
-                    else:
-                        pd.DataFrame(columns=['Sensor ID', 'Location', 'Temperature', 'Humidity', 'Status', 'Timestamp']).to_excel(
-                            writer, sheet_name='Temperature Sensors', index=False)
                 
-                # Get the Excel data
-                excel_file.seek(0)
+                # Get the value of the BytesIO buffer
+                excel_data = output.getvalue()
                 
-                # Convert to base64 for direct download
-                excel_base64 = base64.b64encode(excel_file.getvalue()).decode('utf-8')
-                data_url = f"data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{excel_base64}"
+                # Encode the Excel file as base64
+                encoded_excel = base64.b64encode(excel_data).decode('utf-8')
                 
-                # Emit success response with data URL
+                # Create a data URL for the Excel file
+                data_url = f"data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{encoded_excel}"
+                
+                # Generate filename with timestamp
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                filename = f"sensor_data_export_{timestamp}.xlsx"
+                
+                print(f"Excel export successful, sending response with filename: {filename}")
+                
+                # Send the data URL back to the client
                 socketio.emit('export_sensor_data_response', {
                     'success': True,
                     'filename': filename,
                     'data_url': data_url
                 })
-                
-            except Exception as e:
-                print(f"Error creating Excel file: {str(e)}")
-                traceback.print_exc()
+            else:
+                print(f"API request failed with status code: {response.status_code}")
                 socketio.emit('export_sensor_data_response', {
                     'success': False,
-                    'error': f"Error creating Excel file: {str(e)}"
+                    'error': f"Failed to fetch sensor data: {response.status_code}"
                 })
-                
+        except ImportError:
+            print("Error: pandas or xlsxwriter not installed")
+            socketio.emit('export_sensor_data_response', {
+                'success': False,
+                'error': "Required libraries not installed. Please install pandas and xlsxwriter."
+            })
         except Exception as e:
-            print(f"Error exporting sensor data: {str(e)}")
+            print(f"Error in export sensor data: {str(e)}")
             traceback.print_exc()
             socketio.emit('export_sensor_data_response', {
                 'success': False,
-                'error': f"Error exporting sensor data: {str(e)}"
+                'error': f"Error creating Excel file: {str(e)}"
             })
 
     @socketio.on('request_alert_logs')
-    def handle_alert_logs_request(data):
+    def handle_request_alert_logs(data):
         try:
-            # Mock alert logs for now - in a real application, you would fetch this from a database
-            alert_logs = [
-                {
-                    'id': 1,
-                    'type': 'fire',
-                    'level': 'high',
-                    'message': 'Potential fire detected in Area A',
-                    'timestamp': (datetime.now() - timedelta(minutes=30)).strftime('%Y-%m-%d %H:%M:%S')
-                },
-                {
-                    'id': 2,
-                    'type': 'smoke',
-                    'level': 'medium',
-                    'message': 'Elevated smoke levels in Area B',
-                    'timestamp': (datetime.now() - timedelta(hours=2)).strftime('%Y-%m-%d %H:%M:%S')
-                }
-            ]
+            # Get dashboard data which includes latest alerts
+            api_url = f'{API_BASE_URL}/api/fire-alert/dashboard'
             
-            # Emit alert logs to the client
-            socketio.emit('alert_logs', {
-                'success': True,
-                'logs': alert_logs
-            })
+            print(f"Fetching fire alert logs from: {api_url}")
+            
+            # Get fire alert logs from Node.js backend
+            response = requests.get(api_url)
+            if response.status_code == 200:
+                dashboard_data = response.json()
+                alert_logs = dashboard_data.get('latestAlerts', [])
+                
+                # Format timestamps for better display
+                for alert in alert_logs:
+                    if 'alert_timestamp' in alert and alert['alert_timestamp']:
+                        try:
+                            # Parse timestamp
+                            dt = datetime.fromisoformat(alert['alert_timestamp'].replace('Z', '+00:00'))
+                            # Format for display
+                            alert['formatted_time'] = dt.strftime('%H:%M:%S')
+                            alert['formatted_date'] = dt.strftime('%d/%m/%Y')
+                        except Exception as e:
+                            print(f"Error formatting timestamp: {str(e)}")
+                            alert['formatted_time'] = ''
+                            alert['formatted_date'] = ''
+                    
+                    # Ensure fire status is properly formatted
+                    if 'fire_status' not in alert or alert['fire_status'] is None:
+                        alert['fire_status'] = 'Unknown'
+                    
+                    # Ensure smoke status is properly formatted
+                    if 'smoke_status' not in alert or alert['smoke_status'] is None:
+                        alert['smoke_status'] = 'Unknown'
+                    
+                    # Ensure temperature status is properly formatted
+                    if 'dht11_status' not in alert or alert['dht11_status'] is None:
+                        alert['dht11_status'] = 'Unknown'
+                
+                # Create pagination info
+                total_items = len(alert_logs)
+                pagination = {
+                    'total': total_items,
+                    'page': 1,
+                    'pageSize': total_items,
+                    'totalPages': 1
+                }
+                
+                socketio.emit('fire_alert_logs', {
+                    'success': True, 
+                    'logs': alert_logs,
+                    'pagination': pagination
+                })
+                
+                print(f"Emitted {len(alert_logs)} fire alert logs")
+            else:
+                print(f"Failed to fetch fire alert logs: {response.status_code}")
+                socketio.emit('fire_alert_logs', {
+                    'success': False, 
+                    'error': f"Failed to fetch fire alert logs: {response.status_code}"
+                })
         except Exception as e:
-            socketio.emit('alert_logs', {
+            print(f"Error in fire alert logs request: {str(e)}")
+            traceback.print_exc()
+            socketio.emit('fire_alert_logs', {
+                'success': False, 
+                'error': str(e)
+            })
+
+    @socketio.on('check_active_fire_alerts')
+    def handle_check_active_fire_alerts():
+        try:
+            # Get dashboard data which includes active alerts count
+            api_url = f'{API_BASE_URL}/api/fire-alert/dashboard'
+            
+            response = requests.get(api_url)
+            if response.status_code == 200:
+                dashboard_data = response.json()
+                active_alerts = dashboard_data.get('activeAlerts', 0)
+                latest_alerts = dashboard_data.get('latestAlerts', [])
+                
+                # If there are active alerts, send them to the client
+                if active_alerts > 0 and latest_alerts:
+                    # Format the latest active alert for display
+                    latest_alert = latest_alerts[0]
+                    
+                    # Get location information
+                    location = ''
+                    if latest_alert.get('fire_loc'):
+                        location = latest_alert.get('fire_loc')
+                    elif latest_alert.get('smoke_loc'):
+                        location = latest_alert.get('smoke_loc')
+                    elif latest_alert.get('dht11_loc'):
+                        location = latest_alert.get('dht11_loc')
+                    
+                    socketio.emit('active_fire_alert', {
+                        'active': True,
+                        'count': active_alerts,
+                        'alert_id': latest_alert.get('alert_log_id', ''),
+                        'location': location,
+                        'message': f"FIRE IS DETECTED! Fire detected in {location}. Immediate action required."
+                    })
+                else:
+                    socketio.emit('active_fire_alert', {
+                        'active': False,
+                        'count': 0
+                    })
+            else:
+                print(f"Failed to fetch fire alert dashboard: {response.status_code}")
+        except Exception as e:
+            print(f"Error checking active fire alerts: {str(e)}")
+            traceback.print_exc()
+
+    @socketio.on('request_camera_detections')
+    def handle_camera_detections_request(data):
+        try:
+            print(f"Received camera detection request with parameters: {data}")
+            # Get parameters from request data
+            limit = data.get('limit', 20)
+            status = data.get('status')
+            
+            # Convert empty string status to None for proper handling
+            if status == "":
+                status = None
+                
+            # Initialize response data
+            detections = []
+            
+            try:
+                # Determine which endpoint to use based on status
+                if status == 'Active':
+                    # For Active status, use the active endpoint
+                    api_url = f'{API_BASE_URL}/api/camera-detection/active?limit={limit}'
+                else:
+                    # For All or Resolved, use the recent endpoint
+                    api_url = f'{API_BASE_URL}/api/camera-detection/recent?limit={limit}'
+                
+                print(f"Making API request to: {api_url}")
+                
+                # Add timeout to prevent long waits
+                response = requests.get(api_url, timeout=5)
+                print(f"API response status: {response.status_code}")
+                
+                if response.status_code == 200:
+                    # Get the response data
+                    detections = response.json()
+                    
+                    # If the response is not a list, check if it's in a data property
+                    if not isinstance(detections, list) and isinstance(detections, dict):
+                        detections = detections.get('data', [])
+                    
+                    # Ensure detections is a list
+                    if not isinstance(detections, list):
+                        detections = []
+                    
+                    # Format the data for the client
+                    for detection in detections:
+                        # Ensure detection_timestamp exists
+                        if 'detection_timestamp' not in detection and 'created_at' in detection:
+                            detection['detection_timestamp'] = detection['created_at']
+                        
+                        # Ensure detection_status exists and set correctly
+                        if 'detection_status' not in detection:
+                            # For active endpoint, all items are Active
+                            if status == 'Active' or api_url.endswith('/active'):
+                                detection['detection_status'] = 'Active'
+                            else:
+                                detection['detection_status'] = 'Resolved'
+                        
+                        # Ensure image_path is properly formatted
+                        if 'image_path' in detection and detection['image_path']:
+                            if detection['image_path'].startswith('/uploads'):
+                                detection['image_path'] = f"http://127.0.0.1:3000{detection['image_path']}"
+                    
+                    # Apply server-side filtering for Resolved status
+                    if status == 'Resolved':
+                        detections = [d for d in detections if d.get('detection_status') == 'Resolved']
+                    
+                    print(f"Successfully retrieved {len(detections)} camera detections")
+                else:
+                    print(f"API returned non-200 status: {response.status_code}")
+                    print(f"Response content: {response.text[:100]}...")
+                    socketio.emit('camera_detections', [])
+                    return
+                    
+            except requests.exceptions.RequestException as e:
+                print(f"Request exception: {str(e)}")
+                socketio.emit('camera_detections', [])
+                return
+            
+            # Emit the data to the client
+            socketio.emit('camera_detections', detections)
+            
+        except Exception as e:
+            print(f"Error in handle_camera_detections_request: {str(e)}")
+            socketio.emit('camera_detections', [])
+
+    @socketio.on('resolve_fire_alert')
+    def handle_resolve_fire_alert(data):
+        try:
+            alert_id = data.get('alertId')
+            
+            if not alert_id:
+                socketio.emit('fire_alert_resolved', {
+                    'success': False,
+                    'alertId': alert_id,
+                    'error': 'Alert ID is required'
+                })
+                return
+            
+            print(f"Resolving fire alert with ID: {alert_id}")
+            
+            # Call the API to update the alert status
+            api_url = f'{API_BASE_URL}/api/fire-alert/logs/{alert_id}/status'
+            print(f"Making PUT request to: {api_url}")
+            
+            # Log the request payload for debugging
+            request_payload = {'status': 'Resolve'}
+            print(f"Request payload: {request_payload}")
+            
+            response = requests.put(
+                api_url, 
+                json=request_payload,
+                headers={'Content-Type': 'application/json'}
+            )
+            
+            print(f"Response status code: {response.status_code}")
+            print(f"Response content: {response.text}")
+            
+            if response.status_code == 200:
+                result = response.json()
+                print(f"Alert {alert_id} successfully resolved: {result}")
+                
+                socketio.emit('fire_alert_resolved', {
+                    'success': True,
+                    'alertId': alert_id,
+                    'message': f"Alert #{alert_id} has been resolved"
+                })
+                
+                # Also emit an event to update active fire alerts count
+                socketio.emit('active_fire_alert', {
+                    'hasActiveAlert': False,
+                    'count': 0
+                })
+            else:
+                error_message = f"Failed to resolve alert: HTTP {response.status_code}"
+                print(error_message)
+                print(f"Response content: {response.text}")
+                socketio.emit('fire_alert_resolved', {
+                    'success': False,
+                    'alertId': alert_id,
+                    'error': error_message
+                })
+        except Exception as e:
+            print(f"Error resolving fire alert: {str(e)}")
+            traceback.print_exc()
+            socketio.emit('fire_alert_resolved', {
                 'success': False,
-                'error': f"Error fetching alert logs: {str(e)}"
+                'alertId': data.get('alertId'),
+                'error': str(e)
             })

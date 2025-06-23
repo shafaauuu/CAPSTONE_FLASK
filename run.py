@@ -7,11 +7,16 @@ from flask_socketio import SocketIO
 from flask_minify import Minify
 from sys import exit
 
-from apps.config import config_dict
+from apps.config import config_dict, Config
 from apps import create_app
 
 # WARNING: Don't run with debug turned on in production!
 DEBUG = (os.getenv('DEBUG', 'False') == 'True')
+
+# Set API base URL environment variable for compatibility with existing code
+# This ensures any code still using os.environ.get('API_BASE_URL') will work
+if not os.environ.get('API_BASE_URL'):
+    os.environ['API_BASE_URL'] = Config.API_BASE_URL
 
 # The configuration
 get_config_mode = 'Debug' if DEBUG else 'Production'
@@ -34,6 +39,7 @@ if DEBUG:
     app.logger.info(f'DEBUG            = {DEBUG}')
     app.logger.info(f'Page Compression = {("FALSE" if DEBUG else "TRUE")}')
     app.logger.info(f'DBMS             = {app_config.SQLALCHEMY_DATABASE_URI}')
+    app.logger.info(f'API Base URL     = {Config.API_BASE_URL}')
 
 # Import Socket.IO event handlers after app and socketio are created to avoid circular imports
 from apps.home.socket_events import register_socket_events
