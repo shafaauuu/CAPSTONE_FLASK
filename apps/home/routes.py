@@ -1456,3 +1456,54 @@ def get_segment(request):
 
     except:
         return None
+
+@blueprint.route('/page-lock')
+def page_lock():
+    # Get user data from session
+    user = session.get('user', {})
+    
+    # If no user in session, redirect to login
+    if not user:
+        return redirect(url_for('authentication_blueprint.login'))
+    
+    return render_template('home/page-lock.html', user=user)
+
+@blueprint.route('/unlock', methods=['POST'])
+def unlock():
+    password = request.form.get('password', '')
+    
+    # Get user data from session
+    user = session.get('user', {})
+    
+    # If no user in session, redirect to login
+    if not user:
+        return redirect(url_for('authentication_blueprint.login'))
+    
+    try:
+        # Get user ID and type
+        user_id = user.get('id')
+        user_type = user.get('type', 'user')
+        
+        # Prepare payload for authentication
+        payload = {
+            'login_id': user_id,
+            'password': password
+        }
+        
+        # Call the API to verify credentials
+        response = requests.post(f'{API_BASE_URL}/api/login', json=payload)
+        
+        if response.status_code == 200 and response.json().get('success'):
+            # Password is correct, redirect to dashboard based on role
+            if user_type == 'admin':
+                return redirect(url_for('home_blueprint.dashboard_admin'))
+            else:
+                return redirect(url_for('home_blueprint.index'))
+        else:
+            # Password is incorrect, stay on lock screen with error
+            flash('Incorrect password. Please try again.', 'danger')
+            return render_template('home/page-lock.html', user=user, error=True)
+            
+    except Exception as e:
+        flash(f'Error during unlock: {str(e)}', 'danger')
+        return render_template('home/page-lock.html', user=user, error=True)

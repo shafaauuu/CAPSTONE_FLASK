@@ -124,7 +124,7 @@
                                 <input class="form-control" type="text" value="{{ profile.role_name or 'N/A' }}" readonly>
                             </div>
                             <!-- Role is not editable, so we keep it as a hidden input instead of a dropdown -->
-                            <input type="hidden" id="role_id" name="role_id" value="{{ profile.role_id|default(0) }}">
+                            <input type="hidden" id="role_id" name="role_id" value="{{ profile.role_id }}">
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="data-label">Plant</label>
@@ -276,11 +276,18 @@
                 user_name: document.getElementById('name').value,
                 user_email: document.getElementById('email').value,
                 // Include IDs as integers, not strings
-                plant_id: parseInt(document.getElementById('plant_id').value),
-                department_id: parseInt(document.getElementById('department_id').value),
-                division_id: parseInt(document.getElementById('division_id').value),
+                plant_id: parseInt(document.getElementById('plant_id').value) || 0,
+                department_id: parseInt(document.getElementById('department_id').value) || 0,
+                division_id: parseInt(document.getElementById('division_id').value) || 0,
                 role_id: parseInt(document.getElementById('role_id').value)
             };
+            
+            // Ensure role_id is never 0 (which might be invalid)
+            if (formData.role_id === 0) {
+                // Check if we can get the role from the profile data
+                const userType = "{{ session['role'] }}";
+                formData.role_id = userType === 'admin' ? 2 : 1; // Default: 1 for user, 2 for admin
+            }
             
             console.log("Sending update to:", apiUrl);
             console.log("Payload:", formData);
