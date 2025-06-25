@@ -569,35 +569,44 @@ def profile():
                         profile_data = {**default_profile, **api_profile}
                         print("Using API profile data")
                     else:
-                        print(f"API returned non-dict data: {type(api_profile)}")
-                except Exception as e:
-                    print(f"Error parsing JSON: {e}")
+                        print("API returned non-dict profile data:", api_profile)
+                except Exception as json_error:
+                    print("Error parsing API response:", str(json_error))
             else:
-                print(f"API returned error status: {response.status_code}")
-        except Exception as e:
-            print(f"Error contacting API: {e}")
-            traceback.print_exc(file=sys.stdout)
+                print("API returned error status:", response.status_code)
+        except Exception as api_error:
+            print("Error fetching profile from API:", str(api_error))
+            
+        # Fetch dropdown data from API for form population
+        try:
+            # Get plants
+            plants_response = requests.get(f'{API_BASE_URL}/api/lookup/plants')
+            plants_data = plants_response.json().get('data', []) if plants_response.status_code == 200 else []
+            
+            # Get departments
+            departments_response = requests.get(f'{API_BASE_URL}/api/lookup/departments')
+            departments_data = departments_response.json().get('data', []) if departments_response.status_code == 200 else []
+            
+            # Get divisions
+            divisions_response = requests.get(f'{API_BASE_URL}/api/lookup/divisions')
+            divisions_data = divisions_response.json().get('data', []) if divisions_response.status_code == 200 else []
+            
+            # Get roles
+            roles_response = requests.get(f'{API_BASE_URL}/api/lookup/roles')
+            roles_data = roles_response.json().get('data', []) if roles_response.status_code == 200 else []
+            
+            # Add dropdown data to profile data
+            profile_data['plants'] = plants_data
+            profile_data['departments'] = departments_data
+            profile_data['divisions'] = divisions_data
+            profile_data['roles'] = roles_data
+            
+        except requests.exceptions.RequestException as e:
+            print("Error fetching dropdown data:", str(e))
+            # Continue without dropdown data
 
-        # Ensure all required fields exist
-        required_fields = {
-            'department_name': 'N/A',
-            'division_name': 'N/A',
-            'role_name': 'N/A',
-            'plant_name': 'N/A',
-            'created_at': 'N/A',
-            'npk': user_id or 'N/A',
-            'name': user_name or 'N/A',
-            'email': user_email or 'N/A'
-        }
-
-        for key, default_value in required_fields.items():
-            if key not in profile_data or not profile_data[key]:
-                profile_data[key] = default_value
-
-        print("Final profile data for template:", profile_data)
-        
-        # IMPORTANT: Make sure user dictionary also has the name value
-        # This ensures both user.name and profile.name work in templates
+        # Prepare user data for the template
+        user = {}
         user['name'] = profile_data['name']
         user['npk'] = profile_data['npk']
         user['email'] = profile_data['email']
@@ -625,6 +634,66 @@ def profile():
         traceback.print_exc(file=sys.stdout)
         error_msg = f"Unexpected error: {str(e)}"
         return render_template('home/page-500.html', msg=error_msg), 500
+
+@blueprint.route('/reset-password')
+@login_required
+def reset_password():
+    # Get user info from session - use the same approach as in the profile route
+    user_session = session.get('user', {})
+    
+    # Initialize user dictionary
+    user = {}
+    
+    # Try to get user name from various possible keys in the user dictionary
+    user_name = None
+    for name_key in ['name', 'user_name', 'admin_name', 'username', 'full_name', 'display_name']:
+        if name_key in user_session and user_session[name_key]:
+            user_name = user_session[name_key]
+            break
+    
+    # Fallback to direct session values if not found in user dictionary
+    if not user_name:
+        user_name = session.get('name') or session.get('user_name') or session.get('username') or 'User'
+    
+    # Set user data
+    user['name'] = user_name
+    user['role'] = user_session.get('type') or session.get('role', 'user')
+    user['npk'] = user_session.get('id') or session.get('npk') or session.get('user_id') or session.get('admin_id', 'N/A')
+    user['email'] = user_session.get('email') or session.get('email') or session.get('user_email', 'N/A')
+
+    # Get profile data from API
+    api_url = API_BASE_URL + '/api/profile'
+    if user['role'] == 'admin':
+        api_url += '/admin/' + str(user['npk'])
+    else:
+        api_url += '/user/' + str(user['npk'])
+
+    params = {}
+    headers = {}
+    token = user_session.get('token') or session.get('token')
+    if token:
+        headers = {'Authorization': f'Bearer {token}'}
+
+    try:
+        response = requests.get(api_url, params=params, headers=headers, timeout=3)
+        if response.status_code == 200:
+            profile_data = response.json().get('data', {})
+        else:
+            profile_data = {}
+    except Exception as e:
+        print(f"Error fetching profile data: {str(e)}")
+        profile_data = {}
+
+    # Ensure we have the user data in profile_data
+    profile_data['name'] = user['name']
+    profile_data['npk'] = user['npk']
+    profile_data['email'] = user['email']
+    profile_data['role'] = user['role']
+
+    return render_template('home/page-reset-password.html', 
+                          segment='reset-password',
+                          user=user,
+                          profile=profile_data)
 
 # Admin routes for user approval management
 @blueprint.route('/admin/users/pending')
@@ -975,6 +1044,58 @@ def init_fire_detector():
             'error': traceback.format_exc()
         }), 500
 
+# API proxy for profile update
+@blueprint.route('/api/profile/user/<user_id>', methods=['PUT'])
+@login_required
+def api_profile_update_user(user_id):
+    try:
+        # Get the request data
+        data = request.json
+        
+        # Get token from session
+        token = session.get('token')
+        headers = {'Authorization': f'Bearer {token}'} if token else {}
+        headers['Content-Type'] = 'application/json'
+        
+        # Forward the request to the backend API
+        api_url = f'{API_BASE_URL}/api/profile/user/{user_id}'
+        print(f"Forwarding profile update to: {api_url}")
+        print(f"Request data: {data}")
+        
+        response = requests.put(api_url, json=data, headers=headers)
+        
+        # Return the response from the backend API
+        return jsonify(response.json()), response.status_code
+    except Exception as e:
+        print("Error in profile update:", str(e))
+        return jsonify({"error": str(e)}), 500
+
+# API proxy for admin profile update
+@blueprint.route('/api/profile/admin/<admin_id>', methods=['PUT'])
+@login_required
+def api_profile_update_admin(admin_id):
+    try:
+        # Get the request data
+        data = request.json
+        
+        # Get token from session
+        token = session.get('token')
+        headers = {'Authorization': f'Bearer {token}'} if token else {}
+        headers['Content-Type'] = 'application/json'
+        
+        # Forward the request to the backend API
+        api_url = f'{API_BASE_URL}/api/profile/admin/{admin_id}'
+        print(f"Forwarding admin profile update to: {api_url}")
+        print(f"Request data: {data}")
+        
+        response = requests.put(api_url, json=data, headers=headers)
+        
+        # Return the response from the backend API
+        return jsonify(response.json()), response.status_code
+    except Exception as e:
+        print("Error in admin profile update:", str(e))
+        return jsonify({"error": str(e)}), 500
+
 # Camera Detection API endpoints
 @blueprint.route('/api/camera-detection', methods=['POST'])
 def api_camera_detection_create():
@@ -1202,6 +1323,66 @@ def api_camera_detection_details(detection_id):
             'success': False,
             'error': str(e)
         }), 500
+
+@blueprint.route('/api/profile/user/<user_id>/reset-password', methods=['PUT'])
+@login_required
+def api_profile_reset_password_user(user_id):
+    """
+    Proxy endpoint to forward password reset requests to the backend API
+    """
+    try:
+        # Get the request data
+        data = request.json
+        
+        # Get token from session
+        token = session.get('token')
+        headers = {'Authorization': f'Bearer {token}'} if token else {}
+        headers['Content-Type'] = 'application/json'
+        
+        # Forward the request to the actual backend API
+        api_url = f"{API_BASE_URL}/api/profile/user/{user_id}/reset-password"
+        print(f"Forwarding password reset to: {api_url}")
+        print(f"Request data: {data}")
+        
+        # Make the request to the backend API
+        response = requests.put(api_url, json=data, headers=headers)
+        
+        # Return the response from the backend API
+        return jsonify(response.json()), response.status_code
+        
+    except Exception as e:
+        print(f"Error in password reset proxy: {str(e)}")
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+@blueprint.route('/api/profile/admin/<admin_id>/reset-password', methods=['PUT'])
+@login_required
+def api_profile_reset_password_admin(admin_id):
+    """
+    Proxy endpoint to forward admin password reset requests to the backend API
+    """
+    try:
+        # Get the request data
+        data = request.json
+        
+        # Get token from session
+        token = session.get('token')
+        headers = {'Authorization': f'Bearer {token}'} if token else {}
+        headers['Content-Type'] = 'application/json'
+        
+        # Forward the request to the actual backend API
+        api_url = f"{API_BASE_URL}/api/profile/admin/{admin_id}/reset-password"
+        print(f"Forwarding admin password reset to: {api_url}")
+        print(f"Request data: {data}")
+        
+        # Make the request to the backend API
+        response = requests.put(api_url, json=data, headers=headers)
+        
+        # Return the response from the backend API
+        return jsonify(response.json()), response.status_code
+        
+    except Exception as e:
+        print(f"Error in admin password reset proxy: {str(e)}")
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
 
 @blueprint.route('/<template>')
 @login_required

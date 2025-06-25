@@ -5,7 +5,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <!-- Primary Meta Tags -->
     <title>
-        CAPSTONE
+        CAPSTONE PROJECT
     </title>
 
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -315,67 +315,15 @@
                 <div class="col-12">
                     <div class="card border-0 shadow">
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            <h2 class="fs-5 fw-bold mb-0">Live Camera Monitoring</h2>
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" id="cameraSelector" data-bs-toggle="dropdown" aria-expanded="false">
-                                    Camera 1
-                                </button>
-                                <ul class="dropdown-menu" aria-labelledby="cameraSelector">
-                                    <li><a class="dropdown-item active" href="#">Camera 1</a></li>
-                                    <li><a class="dropdown-item" href="#">Camera 2</a></li>
-                                    <li><a class="dropdown-item" href="#">Camera 3</a></li>
-                                </ul>
-                            </div>
+                            <h2 class="fs-5 fw-bold mb-0">Recent Detections</h2>
+                            <a href="/detections" class="btn btn-sm btn-primary">View All</a>
                         </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-8">
-                                    <div class="camera-feed">
-{#                                        <img src="{{ url_for('static', filename='assets/img/flade_beside.png') }}" id="cameraFeed" alt="Camera Feed">#}
-                                        <div class="status">
-                                            <span class="status-dot"></span> Live Feed
-                                        </div>
-                                    </div>
+                        <div class="card-body alert-history" style="max-height: 400px; overflow-y: auto;">
+                            <div class="text-center py-3">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
                                 </div>
-                                <div class="col-md-4">
-                                    <div class="card border-0 shadow">
-                                        <div class="card-header">
-                                            <h5 class="card-title mb-0">Detection Results</h5>
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="alert alert-success mb-3">
-                                                <div class="d-flex">
-                                                    <div>
-                                                        <svg class="icon icon-xs" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                                    </div>
-                                                    <div class="ms-2">
-                                                        <span class="d-block">No fire detected</span>
-                                                        <small class="text-muted">Last updated: 1 min ago</small>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="d-flex justify-content-between mb-3">
-                                                <span>Fire detection confidence:</span>
-                                                <span class="text-success">0.2%</span>
-                                            </div>
-                                            <div class="progress mb-3">
-                                                <div class="progress-bar bg-success" role="progressbar" style="width: 2%" aria-valuenow="2" aria-valuemin="0" aria-valuemax="100"></div>
-                                            </div>
-                                            <hr>
-                                            <p class="small text-muted mb-0">Detected objects:</p>
-                                            <ul class="list-group list-group-flush small">
-                                                <li class="list-group-item d-flex justify-content-between px-0">
-                                                    <span>Smoke</span>
-                                                    <span>97%</span>
-                                                </li>
-                                                <li class="list-group-item d-flex justify-content-between px-0">
-                                                    <span>Fire</span>
-                                                    <span>85%</span>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
+                                <p class="mt-2">Loading detection data...</p>
                             </div>
                         </div>
                     </div>
@@ -391,135 +339,103 @@
                     <div class="card border-0 shadow">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h2 class="fs-5 fw-bold mb-0">Sensor Data Monitoring</h2>
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" id="timeframeSelector" data-bs-toggle="dropdown" aria-expanded="false">
-                                    Last 24 Hours
-                                </button>
-                                <ul class="dropdown-menu" aria-labelledby="timeframeSelector">
-                                    <li><a class="dropdown-item active" href="#">Last 24 Hours</a></li>
-                                    <li><a class="dropdown-item" href="#">Last 7 Days</a></li>
-                                    <li><a class="dropdown-item" href="#">Last 30 Days</a></li>
-                                </ul>
-                            </div>
+                            <a href="/data_sensor" class="btn btn-sm btn-primary">View Full Data</a>
                         </div>
                         <div class="card-body">
+                            <!-- Sensor Overview Cards -->
                             <div class="row">
-                                <div class="col-md-3 mb-4">
-                                    <div class="sensor-card">
-                                        <h6 class="sensor-label">Temperature Sensors</h6>
-                                        <div class="sensor-value">36.5<small>°C</small></div>
-                                        <div class="progress mb-2" style="height: 6px;">
-                                            <div class="progress-bar bg-warning" role="progressbar" style="width: 45%;" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100"></div>
-                                        </div>
-                                        <div class="d-flex justify-content-between">
-                                            <span class="text-muted small">Active: 10</span>
-                                            <span class="text-warning small">Warning: 2</span>
-                                        </div>
-                                        <div class="sensor-timestamp">Last updated: 2 mins ago</div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 mb-4">
-                                    <div class="sensor-card">
-                                        <h6 class="sensor-label">Smoke Detectors</h6>
-                                        <div class="sensor-value">8<small> active</small></div>
-                                        <div class="progress mb-2" style="height: 6px;">
-                                            <div class="progress-bar bg-success" role="progressbar" style="width: 95%;" aria-valuenow="95" aria-valuemin="0" aria-valuemax="100"></div>
-                                        </div>
-                                        <div class="d-flex justify-content-between">
-                                            <span class="text-muted small">Battery</span>
-                                            <span class="text-success small">Excellent</span>
-                                        </div>
-                                        <div class="sensor-timestamp">Last checked: 2 mins ago</div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 mb-4">
-                                    <div class="sensor-card">
-                                        <h6 class="sensor-label">Flame Detectors</h6>
-                                        <div class="sensor-value">4<small> active</small></div>
-                                        <div class="progress mb-2" style="height: 6px;">
-                                            <div class="progress-bar bg-success" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
-                                        </div>
-                                        <div class="d-flex justify-content-between">
-                                            <span class="text-muted small">Status</span>
-                                            <span class="text-success small">All Operational</span>
-                                        </div>
-                                        <div class="sensor-timestamp">Last checked: 2 mins ago</div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 mb-4">
-                                    <div class="sensor-card">
-                                        <h6 class="sensor-label">Humidity Sensors</h6>
-                                        <div class="sensor-value">58<small>%</small></div>
-                                        <div class="progress mb-2" style="height: 6px;">
-                                            <div class="progress-bar bg-success" role="progressbar" style="width: 58%;" aria-valuenow="58" aria-valuemin="0" aria-valuemax="100"></div>
-                                        </div>
-                                        <div class="d-flex justify-content-between">
-                                            <span class="text-muted small">Active: 6</span>
-                                            <span class="text-success small">Normal</span>
-                                        </div>
-                                        <div class="sensor-timestamp">Last updated: 2 mins ago</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-8">
+                                <!-- Flame Detector Card -->
+                                <div class="col-12 col-md-4 mb-4">
                                     <div class="card border-0 shadow">
-                                        <div class="card-header">
-                                            <h5 class="card-title mb-0">Temperature & Humidity History</h5>
-                                        </div>
                                         <div class="card-body">
-                                            <div id="temperatureChart" style="height: 300px;"></div>
+                                            <div class="row d-block d-xl-flex align-items-center">
+                                                <div class="col-12 col-xl-5 text-xl-center mb-3 mb-xl-0 d-flex align-items-center justify-content-xl-center">
+                                                    <div class="icon-shape icon-shape-tertiary rounded me-4 me-sm-0">
+                                                        <svg class="icon" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clip-rule="evenodd"></path></svg>
+                                                    </div>
+                                                    <div class="d-sm-none">
+                                                        <h2 class="h5">Flame Detectors</h2>
+                                                        <h3 class="fw-extrabold mb-1" id="fire-sensor-count-mobile">0</h3>
+                                                    </div>
+                                                </div>
+                                                <div class="col-12 col-xl-7 px-xl-0">
+                                                    <div class="d-none d-sm-block">
+                                                        <h2 class="h5">Flame Detectors</h2>
+                                                        <h3 class="fw-extrabold mb-1" id="fire-sensor-count">0</h3>
+                                                    </div>
+                                                    <small>
+                                                        Active <span class="fw-bold text-success" id="fire-sensor-normal">0</span> |
+                                                        Warning <span class="fw-bold text-warning" id="fire-sensor-warning">0</span> |
+                                                        Danger <span class="fw-bold text-danger" id="fire-sensor-danger">0</span>
+                                                    </small>
+                                                    <div class="small d-flex mt-1">
+                                                        <div>Last check <span class="fw-bold" id="fire-sensor-last-check">-</span></div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
-                                    <div class="card border-0 shadow h-100">
-                                        <div class="card-header d-flex justify-content-between align-items-center">
-                                            <h5 class="card-title mb-0">Recent Alerts</h5>
-                                            <a href="/alert-logs" class="btn btn-sm btn-primary">View All</a>
+
+                                <!-- Smoke Detector Card -->
+                                <div class="col-12 col-md-4 mb-4">
+                                    <div class="card border-0 shadow">
+                                        <div class="card-body">
+                                            <div class="row d-block d-xl-flex align-items-center">
+                                                <div class="col-12 col-xl-5 text-xl-center mb-3 mb-xl-0 d-flex align-items-center justify-content-xl-center">
+                                                    <div class="icon-shape icon-shape-secondary rounded me-4 me-sm-0">
+                                                        <svg class="icon" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 2a8 8 0 00-8 8c0 3.038 1.68 5.858 4.376 7.305a1 1 0 001.212-.21l3.162-3.568a1 1 0 00.076-1.266A4 4 0 0110 6a4 4 0 013.533 5.89 1 1 0 00.248 1.156l2.872 2.621a1 1 0 001.223.088A7.967 7.967 0 0018 10a8 8 0 00-8-8zm4 5a1 1 0 10-2 0 1 1 0 002 0z" clip-rule="evenodd"></path></svg>
+                                                    </div>
+                                                    <div class="d-sm-none">
+                                                        <h2 class="h5">Smoke Detectors</h2>
+                                                        <h3 class="fw-extrabold mb-1" id="smoke-sensor-count-mobile">0</h3>
+                                                    </div>
+                                                </div>
+                                                <div class="col-12 col-xl-7 px-xl-0">
+                                                    <div class="d-none d-sm-block">
+                                                        <h2 class="h5">Smoke Detectors</h2>
+                                                        <h3 class="fw-extrabold mb-1" id="smoke-sensor-count">0</h3>
+                                                    </div>
+                                                    <small>
+                                                        Active <span class="fw-bold text-success" id="smoke-sensor-normal">0</span> |
+                                                        Warning <span class="fw-bold text-warning" id="smoke-sensor-warning">0</span> |
+                                                        Danger <span class="fw-bold text-danger" id="smoke-sensor-danger">0</span>
+                                                    </small>
+                                                    <div class="small d-flex mt-1">
+                                                        <div>Last check <span class="fw-bold" id="smoke-sensor-last-check">-</span></div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div class="card-body p-0">
-                                            <div class="list-group list-group-flush">
-                                                <div class="list-group-item border-bottom">
-                                                    <div class="row align-items-center">
-                                                        <div class="col-auto">
-                                                            <div class="icon-shape icon-shape-warning rounded-circle">
-                                                                <svg class="icon icon-xs" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 11a1 1 0 11-2 0v-3a1 1 0 012 0v3zm-1-8a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd"></path></svg>
-                                                            </div>
-                                                        </div>
-                                                        <div class="col ms-n2">
-                                                            <h5 class="mb-1">Temperature Warning</h5>
-                                                            <p class="small text-muted mb-0">Sensor T-3 reached 39.2°C</p>
-                                                            <span class="text-warning small">10 mins ago</span>
-                                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- DHT11 Sensor Card -->
+                                <div class="col-12 col-md-4 mb-4">
+                                    <div class="card border-0 shadow">
+                                        <div class="card-body">
+                                            <div class="row d-block d-xl-flex align-items-center">
+                                                <div class="col-12 col-xl-5 text-xl-center mb-3 mb-xl-0 d-flex align-items-center justify-content-xl-center">
+                                                    <div class="icon-shape icon-shape-primary rounded me-4 me-sm-0">
+                                                        <svg class="icon" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M5 4a3 3 0 00-3 3v6a3 3 0 003 3h10a3 3 0 003-3V7a3 3 0 00-3-3H5zm-1 9v-1h5v2H5a1 1 0 01-1-1zm7 1h4a1 1 0 001-1v-1h-5v2zm0-4h5V8h-5v2zM9 8H4v2h5V8z" clip-rule="evenodd"></path></svg>
+                                                    </div>
+                                                    <div class="d-sm-none">
+                                                        <h2 class="h5">DHT11 Sensors</h2>
+                                                        <h3 class="fw-extrabold mb-1" id="dht11-sensor-count-mobile">0</h3>
                                                     </div>
                                                 </div>
-                                                <div class="list-group-item border-bottom">
-                                                    <div class="row align-items-center">
-                                                        <div class="col-auto">
-                                                            <div class="icon-shape icon-shape-success rounded-circle">
-                                                                <svg class="icon icon-md" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="bell" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentColor" d="M224 512c35.32 0 63.97-28.65 63.97-64H160.03c0 35.35 28.65 64 63.97 64zm215.39-149.71c-19.32-20.76-55.47-51.99-55.47-154.29 0-77.7-54.48-139.9-127.94-155.16V32c0-17.67-14.32-32-31.98-32s-31.98 14.33-31.98 32v20.84C118.56 68.1 64.08 130.3 64.08 208c0 102.3-36.15 133.53-55.47 154.29-6 6.45-8.66 14.16-8.61 21.71.11 16.4 12.98 32 32.1 32h383.8c19.12 0 32-15.6 32.1-32 .05-7.55-2.61-15.27-8.61-21.71z"></path></svg>
-                                                            </div>
-                                                        </div>
-                                                        <div class="col ms-n2">
-                                                            <h5 class="mb-1">Smoke Detector Check</h5>
-                                                            <p class="small text-muted mb-0">All detectors operating normally</p>
-                                                            <span class="text-success small">1 hour ago</span>
-                                                        </div>
+                                                <div class="col-12 col-xl-7 px-xl-0">
+                                                    <div class="d-none d-sm-block">
+                                                        <h2 class="h5">DHT11 Sensors</h2>
+                                                        <h3 class="fw-extrabold mb-1" id="dht11-sensor-count">0</h3>
                                                     </div>
-                                                </div>
-                                                <div class="list-group-item border-bottom">
-                                                    <div class="row align-items-center">
-                                                        <div class="col-auto">
-                                                            <div class="icon-shape icon-shape-info rounded-circle">
-                                                                <svg class="icon icon-xs" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M5 3a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 004 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 007 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V5zM5 11a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V11zM14 11a1 1 0 011 1v1h1a1 1 0 110 2h-1v1a1 1 0 11-2 0v-1h-1a1 1 0 110-2h1v-1a1 1 0 011-1z"></path></svg>
-                                                            </div>
-                                                        </div>
-                                                        <div class="col ms-n2">
-                                                            <h5 class="mb-1">Battery Replacement</h5>
-                                                            <p class="small text-muted mb-0">Smoke detector S-5 battery replaced</p>
-                                                            <span class="text-info small">6 hours ago</span>
-                                                        </div>
+                                                    <small>
+                                                        Active <span class="fw-bold text-success" id="dht11-sensor-normal">0</span> |
+                                                        Warning <span class="fw-bold text-warning" id="dht11-sensor-warning">0</span> |
+                                                        Danger <span class="fw-bold text-danger" id="dht11-sensor-danger">0</span>
+                                                    </small>
+                                                    <div class="small d-flex mt-1">
+                                                        <div>Avg. Temperature <span class="fw-bold" id="dht11-avg-temp">-</span></div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -601,7 +517,567 @@
   </div>
 </div>
 
+<!-- Detection Details Modal -->
+<div class="modal fade" id="detectionModal" tabindex="-1" role="dialog" aria-labelledby="detectionModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="detectionModalLabel">Fire Detection Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Detection details will be inserted here dynamically -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-sm btn-success mark-resolved-btn" style="display: none;">Mark as Resolved</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% include 'includes/scripts.html' %}
+
+<script>
+    "use strict";
+    const d = document;
+    d.addEventListener("DOMContentLoaded", function() {
+        // Define API base URL
+        const API_BASE_URL = window.location.origin;
+        
+        // Initialize socket connection
+        if (typeof io !== 'undefined') {
+            const socket = io();
+            
+            // Socket connection event
+            socket.on('connect', function() {
+                console.log('Socket connected successfully with ID:', socket.id);
+                
+                // Request camera detections data
+                requestCameraDetections();
+                
+                // Request sensor data
+                requestSensorData();
+            });
+            
+            // Handle camera detection data response
+            socket.on('camera_detections', function(data) {
+                console.log('Received camera detections:', data);
+                if (data && data.success && data.detections) {
+                    updateCameraDetectionsUI(data.detections);
+                } else if (Array.isArray(data)) {
+                    // Handle legacy format where data is just an array
+                    updateCameraDetectionsUI(data);
+                } else {
+                    console.error('Invalid camera detections data format:', data);
+                    // Fallback to API if socket data has error
+                    fetchCameraDetectionsFromAPI();
+                }
+            });
+            
+            // Handle sensor data response - fix the event name to match backend
+            socket.on('sensor_data', function(data) {
+                console.log('Received sensor data:', data);
+                if (data && data.success && data.data) {
+                    updateSensorDataUI(data.data);
+                } else {
+                    console.error('Invalid sensor data format:', data);
+                    // Fallback to API if socket data has error
+                    fetchSensorDataFromAPI();
+                }
+            });
+            
+            // Function to request camera detections
+            function requestCameraDetections() {
+                console.log('Requesting camera detections');
+                socket.emit('request_camera_detections', {
+                    endpoint: 'recent',
+                    limit: 5
+                });
+            }
+            
+            // Function to request sensor data
+            function requestSensorData() {
+                console.log('Requesting sensor data');
+                socket.emit('request_sensor_data', {
+                    page: 1,
+                    pageSize: 5
+                });
+            }
+            
+            // Function to update camera detections UI
+            function updateCameraDetectionsUI(detections) {
+                const alertHistoryContainer = document.querySelector('.alert-history');
+                if (!alertHistoryContainer) return;
+                
+                alertHistoryContainer.innerHTML = '';
+                
+                if (!detections || detections.length === 0) {
+                    alertHistoryContainer.innerHTML = '<div class="text-center py-3">No recent detections</div>';
+                    return;
+                }
+                
+                detections.forEach(detection => {
+                    const confidenceScore = parseFloat(detection.confidence_score) || 0;
+                    const confidenceClass = confidenceScore > 0.7 ? 'danger' : (confidenceScore > 0.4 ? 'warning' : 'success');
+                    const confidenceText = confidenceScore > 0.7 ? 'High' : (confidenceScore > 0.4 ? 'Medium' : 'Low');
+                    
+                    let imagePath = detection.image_path || '';
+                    if (imagePath && imagePath.startsWith('/uploads')) {
+                        imagePath = `${API_BASE_URL}${imagePath}`;
+                    }
+                    
+                    // Format the timestamp
+                    let formattedTime = 'Unknown time';
+                    let formattedDate = 'Unknown date';
+                    if (detection.detection_timestamp || detection.created_at) {
+                        try {
+                            const timestamp = detection.detection_timestamp || detection.created_at;
+                            const dt = new Date(timestamp);
+                            formattedTime = dt.toLocaleTimeString();
+                            formattedDate = dt.toLocaleDateString();
+                        } catch (e) {
+                            console.error('Error formatting timestamp:', e);
+                        }
+                    }
+                    
+                    const location = detection.camera_location || 'Unknown location';
+                    const detectionId = detection.detection_id || '';
+                    
+                    const alertItem = document.createElement('div');
+                    alertItem.className = 'd-flex mt-2 mb-3 pb-3 border-bottom';
+                    alertItem.innerHTML = `
+                        <div class="icon-shape icon-sm icon-shape-${confidenceClass} rounded me-3">
+                            <span class="fas fa-fire"></span>
+                        </div>
+                        <div class="d-block">
+                            <div class="d-flex align-items-center mb-1">
+                                <h5 class="mb-0 me-2">Fire Detected</h5>
+                                <span class="badge bg-${confidenceClass} text-white">${confidenceText}</span>
+                            </div>
+                            <div class="small text-gray">
+                                <span class="fas fa-clock me-1"></span>
+                                ${formattedTime}
+                            </div>
+                            <div class="small text-gray">
+                                <span class="fas fa-map-marker-alt me-1"></span>
+                                ${location}
+                            </div>
+                            ${imagePath ? `<div class="mt-2">
+                                <a href="#" class="view-detection" data-id="${detectionId}">
+                                    <img src="${imagePath}" class="img-fluid rounded" style="max-height: 80px;" alt="Detection Image">
+                                </a>
+                            </div>` : ''}
+                        </div>
+                    `;
+                    
+                    alertHistoryContainer.appendChild(alertItem);
+                });
+                
+                // Add click event listeners to view detection details
+                document.querySelectorAll('.view-detection').forEach(link => {
+                    link.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const detectionId = this.getAttribute('data-id');
+                        viewDetectionDetails(detectionId);
+                    });
+                });
+            }
+            
+            // Function to view detection details
+            function viewDetectionDetails(detectionId) {
+                console.log('Viewing detection details for ID:', detectionId);
+                
+                // Fetch detection details from API
+                fetch(`${API_BASE_URL}/api/camera-detection/id/${detectionId}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`API error: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Detection details:', data);
+                        
+                        // Get the detection data
+                        const detection = Array.isArray(data) ? data[0] : data;
+                        
+                        // Format the detection data for display
+                        const confidenceScore = parseFloat(detection.confidence_score) || 0;
+                        const confidenceClass = confidenceScore > 0.7 ? 'danger' : (confidenceScore > 0.4 ? 'warning' : 'success');
+                        const confidenceText = confidenceScore > 0.7 ? 'High' : (confidenceScore > 0.4 ? 'Medium' : 'Low');
+                        
+                        let imagePath = detection.image_path || '';
+                        if (imagePath && imagePath.startsWith('/uploads')) {
+                            imagePath = `${API_BASE_URL}${imagePath}`;
+                        }
+                        
+                        // Format the timestamp
+                        let formattedTime = 'Unknown time';
+                        let formattedDate = 'Unknown date';
+                        if (detection.detection_timestamp || detection.created_at) {
+                            try {
+                                const timestamp = detection.detection_timestamp || detection.created_at;
+                                const dt = new Date(timestamp);
+                                formattedTime = dt.toLocaleTimeString();
+                                formattedDate = dt.toLocaleDateString();
+                            } catch (e) {
+                                console.error('Error formatting timestamp:', e);
+                            }
+                        }
+                        
+                        const location = detection.camera_location || 'Unknown location';
+                        const detectionId = detection.detection_id || '';
+                        const status = detection.detection_status || 'Unknown';
+                        
+                        // Get the modal elements
+                        const modal = document.getElementById('detectionModal');
+                        const modalTitle = modal.querySelector('.modal-title');
+                        const modalBody = modal.querySelector('.modal-body');
+                        const resolveBtn = modal.querySelector('.mark-resolved-btn');
+                        
+                        // Update the modal content
+                        modalTitle.textContent = 'Fire Detection Details';
+                        modalBody.innerHTML = `
+                            <div class="text-center mb-3">
+                                ${imagePath ? `<img src="${imagePath}" class="img-fluid rounded" style="max-height: 300px;" alt="Detection Image">` : 
+                                '<div class="alert alert-warning">No image available</div>'}
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Detection ID:</strong> ${detectionId}</p>
+                                    <p><strong>Location:</strong> ${location}</p>
+                                    <p><strong>Date:</strong> ${formattedDate}</p>
+                                    <p><strong>Time:</strong> ${formattedTime}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Confidence:</strong> <span class="badge bg-${confidenceClass}">${confidenceText} (${(confidenceScore * 100).toFixed(1)}%)</span></p>
+                                    <p><strong>Status:</strong> <span class="detection-status">${status}</span></p>
+                                    <p><strong>Camera ID:</strong> ${detection.camera_id || 'N/A'}</p>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Show or hide the resolve button based on status
+                        if (status === 'Active') {
+                            resolveBtn.style.display = 'inline-block';
+                            resolveBtn.onclick = function() {
+                                markDetectionAsResolved(detectionId);
+                            };
+                        } else {
+                            resolveBtn.style.display = 'none';
+                        }
+                        
+                        // Show the modal
+                        const modalInstance = new bootstrap.Modal(modal);
+                        modalInstance.show();
+                    })
+                    .catch(error => {
+                        console.error('Error fetching detection details:', error);
+                        alert('Failed to load detection details. Please try again.');
+                    });
+            }
+            
+            // Function to mark a detection as resolved
+            function markDetectionAsResolved(detectionId) {
+                console.log('Marking detection as resolved:', detectionId);
+                
+                // Show loading state
+                const resolveBtn = document.querySelector('.mark-resolved-btn');
+                const originalText = resolveBtn.textContent;
+                resolveBtn.disabled = true;
+                resolveBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+                
+                // Call the API to mark as resolved
+                fetch(`${API_BASE_URL}/api/camera-detection/resolve/${detectionId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ status: 'Resolved' })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`API error: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Detection resolved:', data);
+                    
+                    // Update the status in the modal
+                    const statusElement = document.querySelector('.detection-status');
+                    if (statusElement) {
+                        statusElement.textContent = 'Resolved';
+                    }
+                    
+                    // Hide the resolve button
+                    resolveBtn.style.display = 'none';
+                    
+                    // Refresh the camera detections
+                    requestCameraDetections();
+                    
+                    // Show success message
+                    alert('Detection marked as resolved successfully.');
+                })
+                .catch(error => {
+                    console.error('Error resolving detection:', error);
+                    alert('Failed to mark detection as resolved. Please try again.');
+                    
+                    // Reset button state
+                    resolveBtn.disabled = false;
+                    resolveBtn.textContent = originalText;
+                });
+            }
+            
+            // Function to update sensor data UI
+            function updateSensorDataUI(sensorData) {
+                console.log('Updating sensor data UI with:', sensorData);
+                
+                // Update flame sensor data
+                if (sensorData.fireSensorData) {
+                    const fireData = sensorData.fireSensorData;
+                    const total = fireData.pagination ? fireData.pagination.total : 0;
+                    const data = fireData.data || [];
+                    
+                    // Count by status
+                    const detected = data.filter(s => s.fire_status === 'Detected').length;
+                    const normal = data.filter(s => s.fire_status === 'Not Detected').length;
+                    
+                    // Update UI elements
+                    document.getElementById('fire-sensor-count').textContent = total;
+                    document.getElementById('fire-sensor-count-mobile').textContent = total;
+                    document.getElementById('fire-sensor-normal').textContent = normal;
+                    document.getElementById('fire-sensor-warning').textContent = 0; // Not used in fire sensors
+                    document.getElementById('fire-sensor-danger').textContent = detected;
+                    
+                    // Last check time
+                    if (data.length > 0 && data[0].created_at) {
+                        const date = new Date(data[0].created_at);
+                        document.getElementById('fire-sensor-last-check').textContent = date.toLocaleTimeString();
+                    } else {
+                        document.getElementById('fire-sensor-last-check').textContent = '-';
+                    }
+                }
+                
+                // Update smoke sensor data
+                if (sensorData.smokeSensorData) {
+                    const smokeData = sensorData.smokeSensorData;
+                    const total = smokeData.pagination ? smokeData.pagination.total : 0;
+                    const data = smokeData.data || [];
+                    
+                    // Count by status
+                    const detected = data.filter(s => s.smoke_status === 'Detected').length;
+                    const normal = data.filter(s => s.smoke_status === 'Not Detected').length;
+                    
+                    // Update UI elements
+                    document.getElementById('smoke-sensor-count').textContent = total;
+                    document.getElementById('smoke-sensor-count-mobile').textContent = total;
+                    document.getElementById('smoke-sensor-normal').textContent = normal;
+                    document.getElementById('smoke-sensor-warning').textContent = 0; // Not used in smoke sensors
+                    document.getElementById('smoke-sensor-danger').textContent = detected;
+                    
+                    // Last check time
+                    if (data.length > 0 && data[0].created_at) {
+                        const date = new Date(data[0].created_at);
+                        document.getElementById('smoke-sensor-last-check').textContent = date.toLocaleTimeString();
+                    } else {
+                        document.getElementById('smoke-sensor-last-check').textContent = '-';
+                    }
+                }
+                
+                // Update DHT11 sensor data
+                if (sensorData.dht11Data) {
+                    const dht11Data = sensorData.dht11Data;
+                    const total = dht11Data.pagination ? dht11Data.pagination.total : 0;
+                    const data = dht11Data.data || [];
+                    
+                    // Count by status
+                    const highTemp = data.filter(s => s.dht11_status === 'High Temp').length;
+                    const warning = data.filter(s => s.dht11_status === 'Warning').length;
+                    const normal = data.filter(s => s.dht11_status === 'Normal').length;
+                    
+                    // Calculate average temperature
+                    let avgTemp = '-';
+                    if (data.length > 0) {
+                        const temps = data.map(s => parseFloat(s.temperature)).filter(t => !isNaN(t));
+                        if (temps.length > 0) {
+                            const sum = temps.reduce((a, b) => a + b, 0);
+                            avgTemp = (sum / temps.length).toFixed(1) + '°C';
+                        }
+                    }
+                    
+                    // Update UI elements
+                    document.getElementById('dht11-sensor-count').textContent = total;
+                    document.getElementById('dht11-sensor-count-mobile').textContent = total;
+                    document.getElementById('dht11-sensor-normal').textContent = normal;
+                    document.getElementById('dht11-sensor-warning').textContent = warning;
+                    document.getElementById('dht11-sensor-danger').textContent = highTemp;
+                    document.getElementById('dht11-avg-temp').textContent = avgTemp;
+                }
+            }
+            
+            // Function to fetch camera detections from API as fallback
+            function fetchCameraDetectionsFromAPI() {
+                console.log('Fetching camera detections from API');
+                const alertHistoryContainer = document.querySelector('.alert-history');
+                
+                if (alertHistoryContainer) {
+                    alertHistoryContainer.innerHTML = '<div class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div> Loading detection data...</div>';
+                    
+                    fetch(`${API_BASE_URL}/api/camera-detection/recent?limit=5`)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`API error: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            console.log('Camera detections API response:', data);
+                            
+                            // Handle different response formats
+                            let detections = [];
+                            if (Array.isArray(data)) {
+                                detections = data;
+                            } else if (data.detections) {
+                                detections = data.detections;
+                            } else if (data.data) {
+                                detections = data.data;
+                            }
+                            
+                            // Format timestamps for display
+                            detections.forEach(detection => {
+                                if (detection.detection_timestamp || detection.created_at) {
+                                    const timestamp = detection.detection_timestamp || detection.created_at;
+                                    try {
+                                        const dt = new Date(timestamp);
+                                        detection.formatted_time = dt.toLocaleTimeString();
+                                        detection.formatted_date = dt.toLocaleDateString();
+                                    } catch (e) {
+                                        console.error('Error formatting timestamp:', e);
+                                        detection.formatted_time = '';
+                                        detection.formatted_date = '';
+                                    }
+                                }
+                                
+                                // Ensure image path is properly formatted
+                                if (detection.image_path && detection.image_path.startsWith('/uploads')) {
+                                    detection.image_path = `${API_BASE_URL}${detection.image_path}`;
+                                }
+                            });
+                            
+                            updateCameraDetectionsUI(detections);
+                        })
+                        .catch(error => {
+                            console.error('Error fetching camera detections:', error);
+                            alertHistoryContainer.innerHTML = '<div class="text-center py-3">Failed to load detection data</div>';
+                        });
+                }
+            }
+            
+            // Function to fetch sensor data from API as fallback
+            function fetchSensorDataFromAPI() {
+                console.log('Fetching sensor data from API');
+                
+                // Create a combined promise for all sensor data
+                Promise.all([
+                    // Fetch fire sensor data
+                    fetch(`${API_BASE_URL}/api/sensor/sensor-data/fire/paginated?page=1&pageSize=5`)
+                        .then(response => response.ok ? response.json() : { data: [], pagination: { total: 0 } }),
+                    
+                    // Fetch smoke sensor data
+                    fetch(`${API_BASE_URL}/api/sensor/sensor-data/smoke/paginated?page=1&pageSize=5`)
+                        .then(response => response.ok ? response.json() : { data: [], pagination: { total: 0 } }),
+                    
+                    // Fetch DHT11 sensor data
+                    fetch(`${API_BASE_URL}/api/sensor/sensor-data/dht11/paginated?page=1&pageSize=5`)
+                        .then(response => response.ok ? response.json() : { data: [], pagination: { total: 0 } })
+                ])
+                .then(([fireData, smokeData, dht11Data]) => {
+                    console.log('Sensor data API responses:', { fire: fireData, smoke: smokeData, dht11: dht11Data });
+                    
+                    // Combine all data
+                    const sensorData = {
+                        fireSensorData: fireData,
+                        smokeSensorData: smokeData,
+                        dht11Data: dht11Data
+                    };
+                    
+                    // Update UI with combined data
+                    updateSensorDataUI(sensorData);
+                })
+                .catch(error => {
+                    console.error('Error fetching sensor data:', error);
+                    
+                    // Try non-paginated endpoints as last resort
+                    Promise.all([
+                        fetch(`${API_BASE_URL}/api/sensor/sensor-data/fire`)
+                            .then(response => response.ok ? response.json() : [])
+                            .then(data => ({
+                                data: data.slice(0, 5),
+                                pagination: { total: data.length }
+                            })),
+                        
+                        fetch(`${API_BASE_URL}/api/sensor/sensor-data/smoke`)
+                            .then(response => response.ok ? response.json() : [])
+                            .then(data => ({
+                                data: data.slice(0, 5),
+                                pagination: { total: data.length }
+                            })),
+                        
+                        fetch(`${API_BASE_URL}/api/sensor/sensor-data/dht11`)
+                            .then(response => response.ok ? response.json() : [])
+                            .then(data => ({
+                                data: data.slice(0, 5),
+                                pagination: { total: data.length }
+                            }))
+                    ])
+                    .then(([fireData, smokeData, dht11Data]) => {
+                        const sensorData = {
+                            fireSensorData: fireData,
+                            smokeSensorData: smokeData,
+                            dht11Data: dht11Data
+                        };
+                        updateSensorDataUI(sensorData);
+                    })
+                    .catch(err => {
+                        console.error('Error fetching from non-paginated endpoints:', err);
+                    });
+                });
+            }
+            
+            // Fallback API fetch if socket fails
+            setTimeout(() => {
+                // Check if camera detections need fallback
+                const alertHistoryContainer = document.querySelector('.alert-history');
+                if (alertHistoryContainer && alertHistoryContainer.innerHTML.includes('Loading detection data')) {
+                    console.log('No camera detections received from socket after timeout, falling back to API');
+                    fetchCameraDetectionsFromAPI();
+                }
+                
+                // Check if sensor data needs fallback
+                const fireSensorCount = document.getElementById('fire-sensor-count');
+                const smokeSensorCount = document.getElementById('smoke-sensor-count');
+                const dht11SensorCount = document.getElementById('dht11-sensor-count');
+                
+                if ((fireSensorCount && fireSensorCount.textContent === '0') &&
+                    (smokeSensorCount && smokeSensorCount.textContent === '0') &&
+                    (dht11SensorCount && dht11SensorCount.textContent === '0')) {
+                    console.log('No sensor data received from socket after timeout, falling back to API');
+                    fetchSensorDataFromAPI();
+                }
+            }, 5000); // Wait 5 seconds before trying fallback
+        } else {
+            console.error('Socket.IO not loaded');
+            
+            // Fallback message if Socket.IO is not available
+            const alertHistoryContainer = document.querySelector('.alert-history');
+            if (alertHistoryContainer) {
+                alertHistoryContainer.innerHTML = '<div class="text-center py-3">Real-time updates not available</div>';
+            }
+        }
+    });
+</script>
 
 </body>
 </html>

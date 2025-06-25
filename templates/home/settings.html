@@ -28,55 +28,136 @@
                 <li class="breadcrumb-item active" aria-current="page">Profile</li>
             </ol>
         </nav>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <button id="editProfileBtn" class="btn btn-sm btn-primary">
+                <svg class="icon icon-xs me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                </svg>
+                Edit Profile
+            </button>
+            <button id="saveProfileBtn" class="btn btn-sm btn-success ms-2" style="display: none;">
+                <svg class="icon icon-xs me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                Save Changes
+            </button>
+            <button id="cancelEditBtn" class="btn btn-sm btn-secondary ms-2" style="display: none;">
+                <svg class="icon icon-xs me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+                Cancel
+            </button>
+        </div>
     </div>
+    
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+    
     <div class="row">
         <div class="col-12 col-xl-8">
             <div class="card card-body border-0 shadow mb-4">
                 <h2 class="h5 mb-4">Account Information</h2>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="data-label">NPK</label>
-                        <input class="form-control" id="npk" type="text" value="{{ profile.npk or 'N/A' }}" readonly>
+                <form id="profileForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="data-label">NPK</label>
+                            <input class="form-control" id="npk" type="text" value="{{ profile.npk or 'N/A' }}" readonly>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="data-label">Name</label>
+                            <input class="form-control profile-field" id="name" name="name" type="text" value="{{ profile.name or 'N/A' }}" readonly>
+                        </div>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="data-label">Name</label>
-                        <input class="form-control" id="name" type="text" value="{{ profile.name or 'N/A' }}" readonly>
-                    </div>
-                </div>
 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="data-label">Department</label>
-                        <input class="form-control" id="department" type="text" value="{{ profile.department_name or 'N/A' }}" readonly>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="data-label">Department</label>
+                            <div id="department-display">
+                                <input class="form-control" type="text" value="{{ profile.department_name or 'N/A' }}" readonly>
+                            </div>
+                            <div id="department-edit" style="display: none;">
+                                <select class="form-control" id="department_id" name="department_id">
+                                    {% if profile.departments %}
+                                        {% for dept in profile.departments %}
+                                            <option value="{{ dept.department_id }}" {% if dept.department_id|string == profile.department_id|string %}selected{% endif %}>
+                                                {{ dept.department_name }}
+                                            </option>
+                                        {% endfor %}
+                                    {% else %}
+                                        <option value="{{ profile.department_id|default(0) }}">{{ profile.department_name or 'N/A' }}</option>
+                                    {% endif %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="data-label">Division</label>
+                            <div id="division-display">
+                                <input class="form-control" type="text" value="{{ profile.division_name or 'N/A' }}" readonly>
+                            </div>
+                            <div id="division-edit" style="display: none;">
+                                <select class="form-control" id="division_id" name="division_id">
+                                    {% if profile.divisions %}
+                                        {% for div in profile.divisions %}
+                                            <option value="{{ div.division_id }}" {% if div.division_id|string == profile.division_id|string %}selected{% endif %}>
+                                                {{ div.division_name }}
+                                            </option>
+                                        {% endfor %}
+                                    {% else %}
+                                        <option value="{{ profile.division_id|default(0) }}">{{ profile.division_name or 'N/A' }}</option>
+                                    {% endif %}
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="data-label">Division</label>
-                        <input class="form-control" id="division" type="text" value="{{ profile.division_name or 'N/A' }}" readonly>
-                    </div>
-                </div>
 
 
-                <div class="row align-items-center">
-                    <div class="col-md-6 mb-3">
-                        <label class="data-label">Role</label>
-                        <input class="form-control" id="role" type="text" value="{{ profile.role_name or 'N/A' }}" readonly>
+                    <div class="row align-items-center">
+                        <div class="col-md-6 mb-3">
+                            <label class="data-label">Role</label>
+                            <div id="role-display">
+                                <input class="form-control" type="text" value="{{ profile.role_name or 'N/A' }}" readonly>
+                            </div>
+                            <!-- Role is not editable, so we keep it as a hidden input instead of a dropdown -->
+                            <input type="hidden" id="role_id" name="role_id" value="{{ profile.role_id|default(0) }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="data-label">Plant</label>
+                            <div id="plant-display">
+                                <input class="form-control" type="text" value="{{ profile.plant_name or 'N/A' }}" readonly>
+                            </div>
+                            <div id="plant-edit" style="display: none;">
+                                <select class="form-control" id="plant_id" name="plant_id">
+                                    {% if profile.plants %}
+                                        {% for plant in profile.plants %}
+                                            <option value="{{ plant.plant_id }}" {% if plant.plant_id|string == profile.plant_id|string %}selected{% endif %}>
+                                                {{ plant.plant_name }}
+                                            </option>
+                                        {% endfor %}
+                                    {% else %}
+                                        <option value="{{ profile.plant_id|default(0) }}">{{ profile.plant_name or 'N/A' }}</option>
+                                    {% endif %}
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="data-label">Plant</label>
-                        <input class="form-control" id="plant" type="text" value="{{ profile.plant_name or 'N/A' }}" readonly>
-                    </div>
-                </div>
 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="data-label">Email</label>
-                        <input class="form-control" id="email" type="text" value="{{ profile.email or 'N/A' }}" readonly>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="data-label">Email</label>
+                            <input class="form-control profile-field" id="email" name="email" type="email" value="{{ profile.email or 'N/A' }}" readonly>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="data-label">Creation Date</label>
+                            <input class="form-control" id="created_at" type="text" value="{{ profile.created_at or 'N/A' }}" readonly>
+                        </div>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="data-label">Creation Date</label>
-                        <input class="form-control" id="crated_at" type="text" value="{{ profile.created_at or 'N/A' }}" readonly>
-                    </div>
-                </div>
+                </form>
             </div>
         </div>
         <div class="col-12 col-xl-4">
@@ -105,4 +186,188 @@
 {% endblock content %}
 
 <!-- Specific Page JS goes HERE  -->
-{% block javascripts %}{% endblock javascripts %}
+{% block javascripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const editBtn = document.getElementById('editProfileBtn');
+        const saveBtn = document.getElementById('saveProfileBtn');
+        const cancelBtn = document.getElementById('cancelEditBtn');
+        const profileFields = document.querySelectorAll('.profile-field');
+        const departmentDisplay = document.getElementById('department-display');
+        const departmentEdit = document.getElementById('department-edit');
+        const divisionDisplay = document.getElementById('division-display');
+        const divisionEdit = document.getElementById('division-edit');
+        const roleDisplay = document.getElementById('role-display');
+        const plantDisplay = document.getElementById('plant-display');
+        const plantEdit = document.getElementById('plant-edit');
+        const profileForm = document.getElementById('profileForm');
+        
+        // Store original values for cancel functionality
+        let originalValues = {};
+        
+        // Edit button click handler
+        editBtn.addEventListener('click', function() {
+            // Store original values
+            profileFields.forEach(field => {
+                originalValues[field.id] = field.value;
+                field.readOnly = false;
+            });
+            
+            // Show/hide buttons
+            editBtn.style.display = 'none';
+            saveBtn.style.display = 'inline-block';
+            cancelBtn.style.display = 'inline-block';
+            
+            // Show/hide department fields
+            departmentDisplay.style.display = 'none';
+            departmentEdit.style.display = 'block';
+            
+            // Show/hide division fields
+            divisionDisplay.style.display = 'none';
+            divisionEdit.style.display = 'block';
+            
+            // Show/hide plant fields
+            plantDisplay.style.display = 'none';
+            plantEdit.style.display = 'block';
+        });
+        
+        // Cancel button click handler
+        cancelBtn.addEventListener('click', function() {
+            // Restore original values
+            profileFields.forEach(field => {
+                field.value = originalValues[field.id];
+                field.readOnly = true;
+            });
+            
+            // Show/hide buttons
+            editBtn.style.display = 'inline-block';
+            saveBtn.style.display = 'none';
+            cancelBtn.style.display = 'none';
+            
+            // Show/hide department fields
+            departmentDisplay.style.display = 'block';
+            departmentEdit.style.display = 'none';
+            
+            // Show/hide division fields
+            divisionDisplay.style.display = 'block';
+            divisionEdit.style.display = 'none';
+            
+            // Show/hide plant fields
+            plantDisplay.style.display = 'block';
+            plantEdit.style.display = 'none';
+        });
+        
+        // Save button click handler
+        saveBtn.addEventListener('click', function() {
+            // Get user type and ID from session
+            const userId = "{{ profile.npk }}";
+            const userType = "{{ session['role'] }}";
+            
+            // API endpoint - use relative URL for the Flask proxy
+            let apiUrl = `/api/profile`;
+            if (userType === 'admin') {
+                apiUrl += `/admin/${userId}`;
+            } else {
+                apiUrl += `/user/${userId}`;
+            }
+            
+            // Collect form data
+            const formData = {
+                user_name: document.getElementById('name').value,
+                user_email: document.getElementById('email').value,
+                // Include IDs as integers, not strings
+                plant_id: parseInt(document.getElementById('plant_id').value),
+                department_id: parseInt(document.getElementById('department_id').value),
+                division_id: parseInt(document.getElementById('division_id').value),
+                role_id: parseInt(document.getElementById('role_id').value)
+            };
+            
+            console.log("Sending update to:", apiUrl);
+            console.log("Payload:", formData);
+            
+            // Send update request
+            fetch(apiUrl, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to update profile');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Remove any existing alerts
+                const existingAlerts = document.querySelectorAll('.alert');
+                existingAlerts.forEach(alert => alert.remove());
+                
+                // Show success message
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                alertDiv.innerHTML = `
+                    Profile updated successfully!
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                `;
+                profileForm.parentNode.insertBefore(alertDiv, profileForm);
+                
+                // Reset UI to view-only mode
+                profileFields.forEach(field => {
+                    field.readOnly = true;
+                });
+                
+                // Reset dropdown displays
+                departmentDisplay.style.display = 'block';
+                departmentEdit.style.display = 'none';
+                divisionDisplay.style.display = 'block';
+                divisionEdit.style.display = 'none';
+                plantDisplay.style.display = 'block';
+                plantEdit.style.display = 'none';
+                
+                // Update the displayed values with new values
+                // This ensures the displayed text reflects the selected dropdown values
+                const departmentSelect = document.getElementById('department_id');
+                const divisionSelect = document.getElementById('division_id');
+                const plantSelect = document.getElementById('plant_id');
+                
+                if (departmentSelect.selectedIndex >= 0) {
+                    departmentDisplay.querySelector('input').value = departmentSelect.options[departmentSelect.selectedIndex].text;
+                }
+                if (divisionSelect.selectedIndex >= 0) {
+                    divisionDisplay.querySelector('input').value = divisionSelect.options[divisionSelect.selectedIndex].text;
+                }
+                if (plantSelect.selectedIndex >= 0) {
+                    plantDisplay.querySelector('input').value = plantSelect.options[plantSelect.selectedIndex].text;
+                }
+                
+                // Reset buttons
+                editBtn.style.display = 'inline-block';
+                saveBtn.style.display = 'none';
+                cancelBtn.style.display = 'none';
+                
+                // Auto-dismiss alert after 3 seconds
+                setTimeout(() => {
+                    alertDiv.classList.remove('show');
+                    setTimeout(() => alertDiv.remove(), 150);
+                }, 3000);
+            })
+            .catch(error => {
+                // Remove any existing alerts
+                const existingAlerts = document.querySelectorAll('.alert');
+                existingAlerts.forEach(alert => alert.remove());
+                
+                // Show error message
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+                alertDiv.innerHTML = `
+                    Failed to update profile
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                `;
+                profileForm.parentNode.insertBefore(alertDiv, profileForm);
+            });
+        });
+    });
+</script>
+{% endblock javascripts %}
