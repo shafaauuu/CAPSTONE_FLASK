@@ -3,15 +3,62 @@
  * Shows fire alerts on any page and provides navigation to alert logs
  */
 
-// Initialize socket connection if not already initialized
-let globalSocket;
-if (typeof socket === 'undefined') {
-    console.log('Initializing global socket connection for alerts');
-    globalSocket = io();
-} else {
-    console.log('Using existing socket connection for global alerts');
-    globalSocket = socket;
+// Check if user is authenticated and has role 'user' (1) before initializing alerts
+let shouldShowAlerts = false;
+
+// Function to check if user is authenticated and has the correct role
+function checkUserAuthAndRole() {
+    // Try to get user info from the page
+    const userRoleElement = document.getElementById('user-role-data');
+    if (userRoleElement) {
+        const userRole = userRoleElement.getAttribute('data-role');
+        const isAuthenticated = userRoleElement.getAttribute('data-authenticated') === 'true';
+        
+        // Only show alerts if user is authenticated and has role 'user' (1)
+        shouldShowAlerts = isAuthenticated && userRole === 'user';
+        console.log('ALERT DEBUG: User authentication status:', isAuthenticated, 'User role:', userRole, 'Show alerts:', shouldShowAlerts);
+        console.log('ALERT DEBUG: Current page:', window.location.pathname);
+    } else {
+        // If element not found, default to not showing alerts
+        shouldShowAlerts = false;
+        console.log('ALERT DEBUG: User role element not found, alerts disabled');
+        console.log('ALERT DEBUG: Document body:', document.body.innerHTML.substring(0, 500));
+    }
+    return shouldShowAlerts;
 }
+
+// Initialize socket connection for global alerts
+let globalSocket;
+
+// Check if there's already a socket connection from socket-client.js
+if (typeof socket !== 'undefined' && socket) {
+    console.log('ALERT DEBUG: Using existing socket connection for global alerts on page:', window.location.pathname, 'Socket ID:', socket.id);
+    globalSocket = socket;
+} else {
+    // Create a new socket connection if one doesn't exist
+    console.log('ALERT DEBUG: Creating new socket connection for global alerts on page:', window.location.pathname);
+    try {
+        globalSocket = io();
+        console.log('ALERT DEBUG: New socket connection created successfully with ID:', globalSocket.id);
+    } catch (error) {
+        console.error('ALERT DEBUG: Error creating socket connection:', error);
+    }
+}
+
+// Add connection event handlers for debugging
+globalSocket.on('connect', function() {
+    console.log('ALERT DEBUG: Global socket connected with ID:', globalSocket.id);
+    
+    // Check for active fire alerts immediately after connecting
+    if (shouldShowAlerts) {
+        console.log('ALERT DEBUG: Checking for active fire alerts after connection');
+        setTimeout(checkGlobalFireAlerts, 1000); // Small delay to ensure connection is fully established
+    }
+});
+
+globalSocket.on('connect_error', function(error) {
+    console.error('ALERT DEBUG: Global socket connection error:', error);
+});
 
 const globalNotyf = new Notyf({
     duration: 3000,
@@ -119,12 +166,30 @@ let activeAlerts = [];
 
 // Function to check for active fire alerts
 function checkGlobalFireAlerts() {
-    globalSocket.emit('check_active_fire_alerts');
+    // Only check for alerts if user is authenticated and has the correct role
+    if (shouldShowAlerts) {
+        // Special handling for index page which might have multiple socket connections
+        const isIndexPage = window.location.pathname === '/index' || window.location.pathname === '/';
+        
+        console.log('ALERT DEBUG: Checking for active fire alerts on page:', window.location.pathname, 
+                    'Is index page:', isIndexPage);
+        
+        // Ensure we're using the right socket for the current page
+        if (isIndexPage && typeof socket !== 'undefined' && socket) {
+            console.log('ALERT DEBUG: Using main socket for index page alert check');
+            socket.emit('check_active_fire_alerts');
+        } else {
+            console.log('ALERT DEBUG: Using global socket for alert check');
+            globalSocket.emit('check_active_fire_alerts');
+        }
+    } else {
+        console.log('ALERT DEBUG: Not checking for alerts, shouldShowAlerts is false');
+    }
 }
 
 // Function to create alert message with or without button based on current page
 function createAlertMessage(location, cameraId) {
-    const isOnAlertLogsPage = window.location.pathname.includes('/alert-logs');
+    const isOnAlertLogsPage = window.location.pathname.includes('/alert-log');
 
     let alertMessage = `
         <div class="d-flex align-items-center justify-content-between">
@@ -146,6 +211,12 @@ function createAlertMessage(location, cameraId) {
 
 // Function to show a new alert and manage the flow
 function showAlert(message) {
+    // Only show alerts if user is authenticated and has the correct role
+    if (!shouldShowAlerts) {
+        console.log('Alert suppressed - user not authenticated or not a regular user');
+        return;
+    }
+    
     // Create the new alert
     const alertId = globalNotyf.open({
         type: 'critical',
@@ -178,6 +249,12 @@ function showAlert(message) {
 
 // Function to show success notifications (separate from fire alerts)
 function showSuccessNotification(message) {
+    // Only show notifications if user is authenticated and has the correct role
+    if (!shouldShowAlerts) {
+        console.log('Success notification suppressed - user not authenticated or not a regular user');
+        return;
+    }
+    
     successNotyf.open({
         type: 'success',
         message: message
@@ -198,9 +275,38 @@ if (originalMarkAlertAsResolved) {
 
 // Handle active fire alert notifications globally
 globalSocket.on('active_fire_alert', function(data) {
-    console.log('Global active fire alert status:', data);
+    console.log('ALERT DEBUG: Received active_fire_alert event on globalSocket:', data, 'on page:', window.location.pathname);
+    handleFireAlertEvent(data);
+});
+
+// If we're on the index page, also listen for events on the main socket
+if (window.location.pathname === '/index' || window.location.pathname === '/') {
+    if (typeof socket !== 'undefined' && socket) {
+        console.log('ALERT DEBUG: Adding fire alert event handlers to main socket on index page');
+        
+        // Add event handlers to the main socket as well
+        socket.on('active_fire_alert', function(data) {
+            console.log('ALERT DEBUG: Received active_fire_alert event on main socket:', data);
+            handleFireAlertEvent(data);
+        });
+        
+        socket.on('fire_detection_alert', function(data) {
+            console.log('ALERT DEBUG: Received fire_detection_alert event on main socket:', data);
+            handleFireDetectionEvent(data);
+        });
+    }
+}
+
+// Common handler function for fire alert events
+function handleFireAlertEvent(data) {
+    // Only process alerts if user is authenticated and has the correct role
+    if (!shouldShowAlerts) {
+        console.log('ALERT DEBUG: Active fire alert suppressed - user not authenticated or not a regular user');
+        return;
+    }
     
-    if (data.active) {
+    // Check if there's an active alert to display
+    if (data.active && data.count > 0) {
         // Get the most recent active alert from the data
         const activeAlert = data.alert || {};
         
@@ -234,11 +340,21 @@ globalSocket.on('active_fire_alert', function(data) {
         // Show the alert with our new flow management
         showAlert(alertMessage);
     }
-});
+}
 
 // Handle fire detection alerts (new detections) globally
 globalSocket.on('fire_detection_alert', function(data) {
-    console.log('Global fire detection alert:', data);
+    console.log('ALERT DEBUG: Received fire_detection_alert event on globalSocket:', data, 'on page:', window.location.pathname);
+    handleFireDetectionEvent(data);
+});
+
+// Common handler function for fire detection events
+function handleFireDetectionEvent(data) {
+    // Only process alerts if user is authenticated and has the correct role
+    if (!shouldShowAlerts) {
+        console.log('ALERT DEBUG: Fire detection alert suppressed - user not authenticated or not a regular user');
+        return;
+    }
     
     // Extract location information
     let location = 'Unknown';
@@ -264,12 +380,33 @@ globalSocket.on('fire_detection_alert', function(data) {
     
     // Show the alert with our new flow management
     showAlert(alertMessage);
-});
+}
 
 // Check for active fire alerts when the page loads
 document.addEventListener('DOMContentLoaded', function() {
-    checkGlobalFireAlerts();
+    console.log('ALERT DEBUG: DOMContentLoaded event fired on page:', window.location.pathname);
     
-    // Check for new fire alerts every 1 second
-    setInterval(checkGlobalFireAlerts, 1000);
+    // Check if user is authenticated and has the correct role
+    const shouldShow = checkUserAuthAndRole();
+    console.log('ALERT DEBUG: Initial shouldShowAlerts value:', shouldShow);
+    
+    // Only proceed with alert checks if user is authenticated and has the correct role
+    if (shouldShow) {
+        console.log('ALERT DEBUG: Setting up alert checking interval');
+        
+        // Initial check with a slight delay to ensure everything is loaded
+        setTimeout(function() {
+            console.log('ALERT DEBUG: Running initial alert check');
+            checkGlobalFireAlerts();
+            
+            // Check for new fire alerts every 3 seconds
+            // Use a named interval so we can clear it if needed
+            window.globalAlertInterval = setInterval(function() {
+                console.log('ALERT DEBUG: Running scheduled alert check on page:', window.location.pathname);
+                checkGlobalFireAlerts();
+            }, 3000);
+        }, 2000); // Longer delay to ensure socket is fully established
+    } else {
+        console.log('ALERT DEBUG: Global alerts disabled - user not authenticated or not a regular user');
+    }
 });

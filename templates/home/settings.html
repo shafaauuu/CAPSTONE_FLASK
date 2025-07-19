@@ -123,8 +123,7 @@
                             <div id="role-display">
                                 <input class="form-control" type="text" value="{{ profile.role_name or 'N/A' }}" readonly>
                             </div>
-                            <!-- Role is not editable, so we keep it as a hidden input instead of a dropdown -->
-                            <input type="hidden" id="role_id" name="role_id" value="{{ profile.role_id }}">
+                            <input type="hidden" id="role_id" name="role_id" value="{{ profile.role_id or (2 if session['role'] == 'admin' else 1) }}">
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="data-label">Plant</label>
@@ -271,26 +270,63 @@
                 apiUrl += `/user/${userId}`;
             }
             
-            // Collect form data
-            const formData = {
-                user_name: document.getElementById('name').value,
-                user_email: document.getElementById('email').value,
-                // Include IDs as integers, not strings
-                plant_id: parseInt(document.getElementById('plant_id').value) || 0,
-                department_id: parseInt(document.getElementById('department_id').value) || 0,
-                division_id: parseInt(document.getElementById('division_id').value) || 0,
-                role_id: parseInt(document.getElementById('role_id').value)
-            };
+            // Collect form data based on user type
+            let formData = {};
             
-            // Ensure role_id is never 0 (which might be invalid)
-            if (formData.role_id === 0) {
-                // Check if we can get the role from the profile data
-                const userType = "{{ session['role'] }}";
-                formData.role_id = userType === 'admin' ? 2 : 1; // Default: 1 for user, 2 for admin
+            if (userType === 'admin') {
+                formData = {
+                    admin_name: document.getElementById('name').value || '',
+                    admin_email: document.getElementById('email').value || '',
+                    plant_id: parseInt(document.getElementById('plant_id').value) || 0,
+                    department_id: parseInt(document.getElementById('department_id').value) || 0,
+                    division_id: parseInt(document.getElementById('division_id').value) || 0,
+                    role_id: parseInt(document.getElementById('role_id').value) || 2  // Default admin role_id is 2
+                };
+            } else {
+                formData = {
+                    user_name: document.getElementById('name').value || '',
+                    user_email: document.getElementById('email').value || '',
+                    plant_id: parseInt(document.getElementById('plant_id').value) || 0,
+                    department_id: parseInt(document.getElementById('department_id').value) || 0,
+                    division_id: parseInt(document.getElementById('division_id').value) || 0,
+                    role_id: parseInt(document.getElementById('role_id').value) || 1  // Default user role_id is 1
+                };
             }
             
+            // Debug: Log raw values before conversion
+            console.log('Raw values:', {
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                plant_id: document.getElementById('plant_id').value,
+                department_id: document.getElementById('department_id').value,
+                division_id: document.getElementById('division_id').value,
+                role_id: document.getElementById('role_id').value,
+                userType: userType
+            });
+            
+            // Ensure all numeric fields are valid integers
+            Object.keys(formData).forEach(key => {
+                if (key.includes('_id')) {
+                    formData[key] = Number.isInteger(formData[key]) ? formData[key] : 0;
+                }
+            });
+            
+            // Make sure role_id is set correctly
+            formData.role_id = Number.isInteger(formData.role_id) ? formData.role_id : (userType === 'admin' ? 2 : 1);
+            
+            // Ensure all fields have valid values (not undefined or null)
+            Object.keys(formData).forEach(key => {
+                if (formData[key] === undefined || formData[key] === null) {
+                    if (key.includes('_id')) {
+                        formData[key] = 0; // Default IDs to 0 if undefined or null
+                    } else {
+                        formData[key] = ''; // Default strings to empty string if undefined or null
+                    }
+                }
+            });
+            
             console.log("Sending update to:", apiUrl);
-            console.log("Payload:", formData);
+            console.log("Final payload:", formData);
             
             // Send update request
             fetch(apiUrl, {

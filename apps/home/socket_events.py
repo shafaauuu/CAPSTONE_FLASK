@@ -1,5 +1,5 @@
 from flask import session, request
-from flask_socketio import emit
+from flask_socketio import emit, SocketIO
 import requests
 import json
 import traceback
@@ -10,10 +10,21 @@ import io
 import base64
 from apps.config import Config
 
+# Try to import pandas with proper error handling
 try:
     import pandas as pd
+    HAS_PANDAS = True
 except ImportError:
+    HAS_PANDAS = False
     print("WARNING: pandas not installed. Export functionality will not work.")
+
+# Try to import xlsxwriter with proper error handling
+try:
+    import xlsxwriter
+    HAS_XLSXWRITER = True
+except ImportError:
+    HAS_XLSXWRITER = False
+    print("WARNING: xlsxwriter not installed. Excel export functionality will not work.")
 
 # API configuration - use centralized config
 API_BASE_URL = Config.API_BASE_URL
@@ -471,32 +482,172 @@ def register_socket_events(socketio):
     @socketio.on('export_sensor_data')
     def handle_export_sensor_data(data):
         try:
-            # Check if pandas is available
-            if 'pd' not in globals():
-                import pandas as pd
+            # Check if pandas and xlsxwriter are installed
+            if not HAS_PANDAS or not HAS_XLSXWRITER:
+                socketio.emit('export_sensor_data_response', {
+                    'success': False,
+                    'error': "Required libraries not installed: pandas and/or xlsxwriter. Please install them using 'pip install pandas xlsxwriter'."
+                })
+                return
             
             location = data.get('location', '')
             status = data.get('status', '')
             
-            # Construct API URL with query parameters
-            api_url = f'{API_BASE_URL}/api/sensor/sensor-data?pageSize=1000'
-            if location:
-                api_url += f'&location={location}'
-            if status:
-                api_url += f'&status={status}'
+            # Instead of using the combined endpoint, directly fetch from individual endpoints
+            # This bypasses the issue with the combined endpoint returning empty data
             
-            print(f"Fetching sensor data for export from: {api_url}")
+            # Initialize data containers
+            fire_data = []
+            smoke_data = []
+            dht11_data = []
             
-            # Get sensor data from Node.js backend
-            response = requests.get(api_url)
-            if response.status_code == 200:
-                sensor_data = response.json()
+            # Fetch fire sensor data directly
+            try:
+                # Try non-paginated endpoint first for exports
+                fire_api_url = f'{API_BASE_URL}/api/sensor/sensor-data/fire'
+                print(f"Fetching fire sensor data from: {fire_api_url}")
+                fire_response = requests.get(fire_api_url, timeout=10)
                 
-                # Extract the data we need
-                fire_data = sensor_data.get('fireSensorData', {}).get('data', [])
-                smoke_data = sensor_data.get('smokeSensorData', {}).get('data', [])
-                dht11_data = sensor_data.get('dht11SensorData', {}).get('data', [])
+                if fire_response.status_code == 200:
+                    fire_data = fire_response.json()
+                    if not fire_data and (location or status):
+                        # If filters are applied and no data, try paginated endpoint
+                        paginated_url = f'{API_BASE_URL}/api/sensor/sensor-data/fire/paginated?pageSize=1000'
+                        if location:
+                            paginated_url += f'&location={location}'
+                        if status:
+                            paginated_url += f'&status={status}'
+                        
+                        print(f"No data from non-paginated endpoint, trying: {paginated_url}")
+                        paginated_response = requests.get(paginated_url, timeout=10)
+                        
+                        if paginated_response.status_code == 200:
+                            paginated_data = paginated_response.json()
+                            if isinstance(paginated_data, dict) and 'data' in paginated_data:
+                                fire_data = paginated_data['data']
+                    
+                    # Apply filters manually if needed
+                    if fire_data and (location or status):
+                        filtered_data = []
+                        for item in fire_data:
+                            matches_location = True
+                            matches_status = True
+                            
+                            if location and 'fire_loc' in item:
+                                matches_location = item['fire_loc'] == location
+                            
+                            if status and 'fire_status' in item:
+                                matches_status = item['fire_status'] == status
+                            
+                            if matches_location and matches_status:
+                                filtered_data.append(item)
+                        
+                        fire_data = filtered_data
                 
+                print(f"Retrieved {len(fire_data)} fire sensor records for export")
+            except Exception as e:
+                print(f"Error fetching fire sensor data: {str(e)}")
+                fire_data = []
+            
+            # Fetch smoke sensor data directly
+            try:
+                # Try non-paginated endpoint first for exports
+                smoke_api_url = f'{API_BASE_URL}/api/sensor/sensor-data/smoke'
+                print(f"Fetching smoke sensor data from: {smoke_api_url}")
+                smoke_response = requests.get(smoke_api_url, timeout=10)
+                
+                if smoke_response.status_code == 200:
+                    smoke_data = smoke_response.json()
+                    if not smoke_data and (location or status):
+                        # If filters are applied and no data, try paginated endpoint
+                        paginated_url = f'{API_BASE_URL}/api/sensor/sensor-data/smoke/paginated?pageSize=1000'
+                        if location:
+                            paginated_url += f'&location={location}'
+                        if status:
+                            paginated_url += f'&status={status}'
+                        
+                        print(f"No data from non-paginated endpoint, trying: {paginated_url}")
+                        paginated_response = requests.get(paginated_url, timeout=10)
+                        
+                        if paginated_response.status_code == 200:
+                            paginated_data = paginated_response.json()
+                            if isinstance(paginated_data, dict) and 'data' in paginated_data:
+                                smoke_data = paginated_data['data']
+                    
+                    # Apply filters manually if needed
+                    if smoke_data and (location or status):
+                        filtered_data = []
+                        for item in smoke_data:
+                            matches_location = True
+                            matches_status = True
+                            
+                            if location and 'smoke_loc' in item:
+                                matches_location = item['smoke_loc'] == location
+                            
+                            if status and 'smoke_status' in item:
+                                matches_status = item['smoke_status'] == status
+                            
+                            if matches_location and matches_status:
+                                filtered_data.append(item)
+                        
+                        smoke_data = filtered_data
+                
+                print(f"Retrieved {len(smoke_data)} smoke sensor records for export")
+            except Exception as e:
+                print(f"Error fetching smoke sensor data: {str(e)}")
+                smoke_data = []
+            
+            # Fetch DHT11 sensor data directly
+            try:
+                # Try non-paginated endpoint first for exports
+                dht11_api_url = f'{API_BASE_URL}/api/sensor/sensor-data/dht11'
+                print(f"Fetching DHT11 sensor data from: {dht11_api_url}")
+                dht11_response = requests.get(dht11_api_url, timeout=10)
+                
+                if dht11_response.status_code == 200:
+                    dht11_data = dht11_response.json()
+                    if not dht11_data and (location or status):
+                        # If filters are applied and no data, try paginated endpoint
+                        paginated_url = f'{API_BASE_URL}/api/sensor/sensor-data/dht11/paginated?pageSize=1000'
+                        if location:
+                            paginated_url += f'&location={location}'
+                        if status:
+                            paginated_url += f'&status={status}'
+                        
+                        print(f"No data from non-paginated endpoint, trying: {paginated_url}")
+                        paginated_response = requests.get(paginated_url, timeout=10)
+                        
+                        if paginated_response.status_code == 200:
+                            paginated_data = paginated_response.json()
+                            if isinstance(paginated_data, dict) and 'data' in paginated_data:
+                                dht11_data = paginated_data['data']
+                    
+                    # Apply filters manually if needed
+                    if dht11_data and (location or status):
+                        filtered_data = []
+                        for item in dht11_data:
+                            matches_location = True
+                            matches_status = True
+                            
+                            if location and 'dht11_loc' in item:
+                                matches_location = item['dht11_loc'] == location
+                            
+                            if status and 'dht11_status' in item:
+                                matches_status = item['dht11_status'] == status
+                            
+                            if matches_location and matches_status:
+                                filtered_data.append(item)
+                        
+                        dht11_data = filtered_data
+                
+                print(f"Retrieved {len(dht11_data)} DHT11 sensor records for export")
+            except Exception as e:
+                print(f"Error fetching DHT11 sensor data: {str(e)}")
+                dht11_data = []
+            
+            print(f"Total data for export: {len(fire_data)} fire records, {len(smoke_data)} smoke records, {len(dht11_data)} temperature records")
+            
+            try:
                 # Create DataFrames for each sensor type
                 fire_df = pd.DataFrame(fire_data) if fire_data else pd.DataFrame()
                 smoke_df = pd.DataFrame(smoke_data) if smoke_data else pd.DataFrame()
@@ -510,10 +661,27 @@ def register_socket_events(socketio):
                     # Write each DataFrame to a different sheet
                     if not fire_df.empty:
                         fire_df.to_excel(writer, sheet_name='Fire Sensors', index=False)
+                    else:
+                        # Create empty sheet with headers
+                        pd.DataFrame(columns=['id', 'fire_id', 'fire_loc', 'fire_status', 'fire_value', 'created_at']).to_excel(
+                            writer, sheet_name='Fire Sensors', index=False
+                        )
+                    
                     if not smoke_df.empty:
                         smoke_df.to_excel(writer, sheet_name='Smoke Sensors', index=False)
+                    else:
+                        # Create empty sheet with headers
+                        pd.DataFrame(columns=['id', 'smoke_id', 'smoke_loc', 'smoke_status', 'smoke_value', 'created_at']).to_excel(
+                            writer, sheet_name='Smoke Sensors', index=False
+                        )
+                    
                     if not dht11_df.empty:
                         dht11_df.to_excel(writer, sheet_name='Temperature Sensors', index=False)
+                    else:
+                        # Create empty sheet with headers
+                        pd.DataFrame(columns=['id', 'dht11_id', 'dht11_loc', 'dht11_status', 'temperature', 'humidity', 'created_at']).to_excel(
+                            writer, sheet_name='Temperature Sensors', index=False
+                        )
                 
                 # Get the value of the BytesIO buffer
                 excel_data = output.getvalue()
@@ -536,18 +704,13 @@ def register_socket_events(socketio):
                     'filename': filename,
                     'data_url': data_url
                 })
-            else:
-                print(f"API request failed with status code: {response.status_code}")
+            except Exception as e:
+                print(f"Error creating Excel file: {str(e)}")
+                traceback.print_exc()
                 socketio.emit('export_sensor_data_response', {
                     'success': False,
-                    'error': f"Failed to fetch sensor data: {response.status_code}"
+                    'error': f"Error creating Excel file: {str(e)}"
                 })
-        except ImportError:
-            print("Error: pandas or xlsxwriter not installed")
-            socketio.emit('export_sensor_data_response', {
-                'success': False,
-                'error': "Required libraries not installed. Please install pandas and xlsxwriter."
-            })
         except Exception as e:
             print(f"Error in export sensor data: {str(e)}")
             traceback.print_exc()

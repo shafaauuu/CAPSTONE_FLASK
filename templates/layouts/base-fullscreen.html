@@ -55,8 +55,20 @@
 <!-- Specific Page JS goes HERE  -->    
 {% block stylesheets %}{% endblock stylesheets %}
 
+<script type="text/javascript">
+    // This will be used by JavaScript to determine if alerts should be shown
+    window.userInfo = {
+        isAuthenticated: {{ 'true' if session.get('user') else 'false' }},
+        role: "{{ session.get('role', '') }}"
+    };
+</script>
+
 </head>
 <body>
+    <div id="user-role-data" 
+         data-authenticated="{{ 'true' if session.get('user') else 'false' }}" 
+         data-role="{{ session.get('role', '') }}" 
+         style="display: none;"></div>
 
     {% block content %}{% endblock content %}
 

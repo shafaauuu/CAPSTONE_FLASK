@@ -1384,6 +1384,170 @@ def api_profile_reset_password_admin(admin_id):
         print(f"Error in admin password reset proxy: {str(e)}")
         return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
 
+@blueprint.route('/api/sensor/sensor-data/all')
+def api_sensor_data_all():
+    """
+    Endpoint to get all sensor data (fire, smoke, dht11) for export
+    """
+    try:
+        # Get query parameters
+        page_size = request.args.get('pageSize', '1000')  # Default to 1000 for exports
+        location = request.args.get('location', '')
+        status = request.args.get('status', '')
+        
+        print(f"Fetching all sensor data for export with pageSize={page_size}, location={location}, status={status}")
+        
+        # Initialize response data
+        all_sensor_data = {}
+        
+        # Fetch fire sensor data - try non-paginated endpoint first for exports
+        try:
+            # For exports, try to get all data without pagination first
+            fire_api_url = f'{API_BASE_URL}/api/sensor/sensor-data/fire'
+            if location or status:
+                # If filters are applied, use the paginated endpoint with filters
+                fire_api_url = f'{API_BASE_URL}/api/sensor/sensor-data/fire/paginated?pageSize={page_size}'
+                if location:
+                    fire_api_url += f'&location={location}'
+                if status:
+                    fire_api_url += f'&status={status}'
+            
+            print(f"Fetching fire sensor data from: {fire_api_url}")
+            fire_response = requests.get(fire_api_url, timeout=10)
+            
+            if fire_response.status_code == 200:
+                fire_data = fire_response.json()
+                
+                # Handle both paginated and non-paginated responses
+                if isinstance(fire_data, dict) and 'data' in fire_data:
+                    # Paginated response
+                    all_sensor_data['fireSensorData'] = fire_data
+                else:
+                    # Non-paginated response (array)
+                    all_sensor_data['fireSensorData'] = {
+                        'data': fire_data,
+                        'pagination': {
+                            'total': len(fire_data),
+                            'page': 1,
+                            'pageSize': int(page_size),
+                            'totalPages': 1
+                        }
+                    }
+                print(f"Retrieved {len(all_sensor_data['fireSensorData']['data'])} fire sensor records")
+            else:
+                print(f"Fire sensor API request failed with status code: {fire_response.status_code}")
+                all_sensor_data['fireSensorData'] = {
+                    'data': [],
+                    'pagination': {'total': 0, 'page': 1, 'pageSize': int(page_size), 'totalPages': 0}
+                }
+        except Exception as e:
+            print(f"Error fetching fire sensor data: {str(e)}")
+            all_sensor_data['fireSensorData'] = {
+                'data': [],
+                'pagination': {'total': 0, 'page': 1, 'pageSize': int(page_size), 'totalPages': 0}
+            }
+        
+        # Fetch smoke sensor data - try non-paginated endpoint first for exports
+        try:
+            # For exports, try to get all data without pagination first
+            smoke_api_url = f'{API_BASE_URL}/api/sensor/sensor-data/smoke'
+            if location or status:
+                # If filters are applied, use the paginated endpoint with filters
+                smoke_api_url = f'{API_BASE_URL}/api/sensor/sensor-data/smoke/paginated?pageSize={page_size}'
+                if location:
+                    smoke_api_url += f'&location={location}'
+                if status:
+                    smoke_api_url += f'&status={status}'
+            
+            print(f"Fetching smoke sensor data from: {smoke_api_url}")
+            smoke_response = requests.get(smoke_api_url, timeout=10)
+            
+            if smoke_response.status_code == 200:
+                smoke_data = smoke_response.json()
+                
+                # Handle both paginated and non-paginated responses
+                if isinstance(smoke_data, dict) and 'data' in smoke_data:
+                    # Paginated response
+                    all_sensor_data['smokeSensorData'] = smoke_data
+                else:
+                    # Non-paginated response (array)
+                    all_sensor_data['smokeSensorData'] = {
+                        'data': smoke_data,
+                        'pagination': {
+                            'total': len(smoke_data),
+                            'page': 1,
+                            'pageSize': int(page_size),
+                            'totalPages': 1
+                        }
+                    }
+                print(f"Retrieved {len(all_sensor_data['smokeSensorData']['data'])} smoke sensor records")
+            else:
+                print(f"Smoke sensor API request failed with status code: {smoke_response.status_code}")
+                all_sensor_data['smokeSensorData'] = {
+                    'data': [],
+                    'pagination': {'total': 0, 'page': 1, 'pageSize': int(page_size), 'totalPages': 0}
+                }
+        except Exception as e:
+            print(f"Error fetching smoke sensor data: {str(e)}")
+            all_sensor_data['smokeSensorData'] = {
+                'data': [],
+                'pagination': {'total': 0, 'page': 1, 'pageSize': int(page_size), 'totalPages': 0}
+            }
+        
+        # Fetch DHT11 sensor data - try non-paginated endpoint first for exports
+        try:
+            # For exports, try to get all data without pagination first
+            dht11_api_url = f'{API_BASE_URL}/api/sensor/sensor-data/dht11'
+            if location or status:
+                # If filters are applied, use the paginated endpoint with filters
+                dht11_api_url = f'{API_BASE_URL}/api/sensor/sensor-data/dht11/paginated?pageSize={page_size}'
+                if location:
+                    dht11_api_url += f'&location={location}'
+                if status:
+                    dht11_api_url += f'&status={status}'
+            
+            print(f"Fetching DHT11 sensor data from: {dht11_api_url}")
+            dht11_response = requests.get(dht11_api_url, timeout=10)
+            
+            if dht11_response.status_code == 200:
+                dht11_data = dht11_response.json()
+                
+                # Handle both paginated and non-paginated responses
+                if isinstance(dht11_data, dict) and 'data' in dht11_data:
+                    # Paginated response
+                    all_sensor_data['dht11Data'] = dht11_data
+                else:
+                    # Non-paginated response (array)
+                    all_sensor_data['dht11Data'] = {
+                        'data': dht11_data,
+                        'pagination': {
+                            'total': len(dht11_data),
+                            'page': 1,
+                            'pageSize': int(page_size),
+                            'totalPages': 1
+                        }
+                    }
+                print(f"Retrieved {len(all_sensor_data['dht11Data']['data'])} DHT11 sensor records")
+            else:
+                print(f"DHT11 sensor API request failed with status code: {dht11_response.status_code}")
+                all_sensor_data['dht11Data'] = {
+                    'data': [],
+                    'pagination': {'total': 0, 'page': 1, 'pageSize': int(page_size), 'totalPages': 0}
+                }
+        except Exception as e:
+            print(f"Error fetching DHT11 sensor data: {str(e)}")
+            all_sensor_data['dht11Data'] = {
+                'data': [],
+                'pagination': {'total': 0, 'page': 1, 'pageSize': int(page_size), 'totalPages': 0}
+            }
+            
+        print(f"Returning combined sensor data with: {len(all_sensor_data['fireSensorData']['data'])} fire records, {len(all_sensor_data['smokeSensorData']['data'])} smoke records, {len(all_sensor_data['dht11Data']['data'])} DHT11 records")
+        return jsonify(all_sensor_data)
+    except Exception as e:
+        print(f"Error in api_sensor_data_all: {str(e)}")
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
 @blueprint.route('/<template>')
 @login_required
 def route_template(template):
@@ -1494,8 +1658,14 @@ def unlock():
         response = requests.post(f'{API_BASE_URL}/api/login', json=payload)
         
         if response.status_code == 200 and response.json().get('success'):
+            # Get the response data
+            response_data = response.json()
+            
+            # Check for role_id in the response data
+            role_id = response_data.get('data', {}).get('role_id')
+            
             # Password is correct, redirect to dashboard based on role
-            if user_type == 'admin':
+            if role_id == 2 or user_type == 'admin':
                 return redirect(url_for('home_blueprint.dashboard_admin'))
             else:
                 return redirect(url_for('home_blueprint.index'))
@@ -1507,3 +1677,19 @@ def unlock():
     except Exception as e:
         flash(f'Error during unlock: {str(e)}', 'danger')
         return render_template('home/page-lock.html', user=user, error=True)
+
+# Route to display instructions for installing required packages
+@blueprint.route('/install-instructions')
+def install_instructions():
+    """
+    Display instructions for installing required packages for the application
+    """
+    return render_template('home/install_instructions.html',
+                           segment='install_instructions',
+                           required_packages=[
+                               {'name': 'pandas', 'purpose': 'Data manipulation and analysis'},
+                               {'name': 'xlsxwriter', 'purpose': 'Excel file creation for exports'},
+                               {'name': 'flask-socketio', 'purpose': 'Real-time communication'},
+                               {'name': 'python-socketio', 'purpose': 'Socket.IO client'},
+                               {'name': 'python-engineio', 'purpose': 'Engine.IO client'}
+                           ])
