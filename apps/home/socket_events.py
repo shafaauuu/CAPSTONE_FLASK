@@ -1,5 +1,4 @@
 from flask import session, request
-from flask_socketio import emit, SocketIO
 import requests
 import json
 import traceback
@@ -10,13 +9,12 @@ import io
 import base64
 from apps.config import Config
 
-# Try to import pandas with proper error handling
 try:
     import pandas as pd
     HAS_PANDAS = True
 except ImportError:
     HAS_PANDAS = False
-    print("WARNING: pandas not installed. Export functionality will not work.")
+    print("WARNING: pandas resolved not installed. Export functionality will not work.")
 
 # Try to import xlsxwriter with proper error handling
 try:
@@ -41,7 +39,7 @@ def register_socket_events(socketio):
     @socketio.on('request_admin_data')
     def handle_admin_data_request(data):
         user = session.get('user', {})
-        admin_id = user.get('id') or user.get('admin_id')
+        admin_id = user.get('id') or user.get('npk') or user.get('admin_id')
         
         if admin_id:
             try:
@@ -721,71 +719,115 @@ def register_socket_events(socketio):
 
     @socketio.on('request_alert_logs')
     def handle_request_alert_logs(data):
+        """
+        Handle request for fire alert logs with pagination and filtering
+        """
         try:
-            # Get dashboard data which includes latest alerts
-            api_url = f'{API_BASE_URL}/api/fire-alert/dashboard'
+            print(f"Received request_alert_logs with data: {data}")
             
-            print(f"Fetching fire alert logs from: {api_url}")
+            # Extract pagination parameters
+            page = data.get('page', 1)
+            page_size = data.get('pageSize', 10)
+            filters = data.get('filters', {})
             
-            # Get fire alert logs from Node.js backend
+            # Extract status filter if provided
+            status_filter = filters.get('status', '')
+            
+            # Build API URL with query parameters
+            api_url = f'{API_BASE_URL}/api/fire-alert/logs?page={page}&pageSize={page_size}'
+            
+            # Add status filter if provided
+            if status_filter:
+                api_url += f'&status={status_filter}'
+                
+            print(f"Fetching alert logs from API: {api_url}")
+            
+            # Make API request
             response = requests.get(api_url)
+            
             if response.status_code == 200:
-                dashboard_data = response.json()
-                alert_logs = dashboard_data.get('latestAlerts', [])
+                api_data = response.json()
+                logs = api_data.get('data', [])
+                pagination = api_data.get('pagination', {})
                 
-                # Format timestamps for better display
-                for alert in alert_logs:
-                    if 'alert_timestamp' in alert and alert['alert_timestamp']:
+                print(f"Retrieved {len(logs)} alert logs from API")
+                
+                # Process each log to ensure proper field mapping
+                for log in logs:
+                    # Debug log data
+                    print(f"Processing log: {log}")
+                    
+                    # Map backend alert_status to frontend status field
+                    if 'alert_status' in log:
+                        log['status'] = log['alert_status']
+                    
+                    # Ensure camera_id is properly set
+                    if 'camera_id' not in log or not log['camera_id']:
+                        # Try to get camera ID from other fields
+                        camera_id = log.get('camera', log.get('camera_name', ''))
+                        if not camera_id and 'detection' in log:
+                            # Try to get camera from detection object if present
+                            camera_id = log['detection'].get('camera_id', '')
+                        log['camera_id'] = camera_id or 'Camera 1'  # Default to Camera 1 if not found
+                    
+                    # Format date and time for display
+                    timestamp = None
+                    # Try different timestamp fields
+                    for field in ['created_at', 'timestamp', 'alert_timestamp', 'detection_time']:
+                        if field in log and log[field]:
+                            timestamp = log[field]
+                            break
+                    
+                    if timestamp:
                         try:
-                            # Parse timestamp
-                            dt = datetime.fromisoformat(alert['alert_timestamp'].replace('Z', '+00:00'))
-                            # Format for display
-                            alert['formatted_time'] = dt.strftime('%H:%M:%S')
-                            alert['formatted_date'] = dt.strftime('%d/%m/%Y')
+                            # Parse the timestamp
+                            if isinstance(timestamp, str):
+                                from datetime import datetime
+                                # Handle different timestamp formats
+                                if 'T' in timestamp:
+                                    # ISO format
+                                    dt = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+                                elif ' ' in timestamp:
+                                    # Space-separated format
+                                    dt = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S')
+                                else:
+                                    # Try simple format
+                                    dt = datetime.strptime(timestamp, '%Y-%m-%d')
+                                
+                                log['formatted_date'] = dt.strftime('%Y-%m-%d')
+                                log['formatted_time'] = dt.strftime('%H:%M:%S')
+                                print(f"Formatted timestamp: {log['formatted_date']} {log['formatted_time']}")
                         except Exception as e:
-                            print(f"Error formatting timestamp: {str(e)}")
-                            alert['formatted_time'] = ''
-                            alert['formatted_date'] = ''
-                    
-                    # Ensure fire status is properly formatted
-                    if 'fire_status' not in alert or alert['fire_status'] is None:
-                        alert['fire_status'] = 'Unknown'
-                    
-                    # Ensure smoke status is properly formatted
-                    if 'smoke_status' not in alert or alert['smoke_status'] is None:
-                        alert['smoke_status'] = 'Unknown'
-                    
-                    # Ensure temperature status is properly formatted
-                    if 'dht11_status' not in alert or alert['dht11_status'] is None:
-                        alert['dht11_status'] = 'Unknown'
+                            print(f"Error parsing timestamp: {e}")
+                            # Fallback to raw values
+                            log['formatted_date'] = timestamp.split('T')[0] if 'T' in timestamp else timestamp
+                            log['formatted_time'] = timestamp.split('T')[1].split('.')[0] if 'T' in timestamp else ''
+                    else:
+                        # No timestamp found, use current time as fallback
+                        from datetime import datetime
+                        now = datetime.now()
+                        log['formatted_date'] = now.strftime('%Y-%m-%d')
+                        log['formatted_time'] = now.strftime('%H:%M:%S')
+                        print(f"No timestamp found, using current time: {log['formatted_date']} {log['formatted_time']}")
                 
-                # Create pagination info
-                total_items = len(alert_logs)
-                pagination = {
-                    'total': total_items,
-                    'page': 1,
-                    'pageSize': total_items,
-                    'totalPages': 1
-                }
-                
+                # Send response to client
                 socketio.emit('fire_alert_logs', {
-                    'success': True, 
-                    'logs': alert_logs,
+                    'success': True,
+                    'logs': logs,
                     'pagination': pagination
                 })
-                
-                print(f"Emitted {len(alert_logs)} fire alert logs")
+                print(f"Emitted fire_alert_logs event with {len(logs)} logs")
             else:
-                print(f"Failed to fetch fire alert logs: {response.status_code}")
+                print(f"API error: {response.status_code}, {response.text[:100]}")
                 socketio.emit('fire_alert_logs', {
-                    'success': False, 
-                    'error': f"Failed to fetch fire alert logs: {response.status_code}"
+                    'success': False,
+                    'error': f"API error: {response.status_code}"
                 })
+        
         except Exception as e:
-            print(f"Error in fire alert logs request: {str(e)}")
-            traceback.print_exc()
+            print(f"Error in handle_request_alert_logs: {str(e)}")
             socketio.emit('fire_alert_logs', {
-                'success': False, 
+                'success': False,
                 'error': str(e)
             })
 
@@ -854,7 +896,6 @@ def register_socket_events(socketio):
                     # For Active status, use the active endpoint
                     api_url = f'{API_BASE_URL}/api/camera-detection/active?limit={limit}'
                 else:
-                    # For All or Resolved, use the recent endpoint
                     api_url = f'{API_BASE_URL}/api/camera-detection/recent?limit={limit}'
                 
                 print(f"Making API request to: {api_url}")
@@ -920,12 +961,12 @@ def register_socket_events(socketio):
     @socketio.on('resolve_fire_alert')
     def handle_resolve_fire_alert(data):
         try:
-            alert_id = data.get('alertId')
+            alert_id = data.get('alert_id')  # Using alert_id as in the frontend
             
             if not alert_id:
-                socketio.emit('fire_alert_resolved', {
+                socketio.emit('resolve_alert_response', {
                     'success': False,
-                    'alertId': alert_id,
+                    'alert_id': alert_id,
                     'error': 'Alert ID is required'
                 })
                 return
@@ -937,7 +978,7 @@ def register_socket_events(socketio):
             print(f"Making PUT request to: {api_url}")
             
             # Log the request payload for debugging
-            request_payload = {'status': 'Resolve'}
+            request_payload = {'status': 'Resolved'}
             print(f"Request payload: {request_payload}")
             
             response = requests.put(
@@ -953,10 +994,10 @@ def register_socket_events(socketio):
                 result = response.json()
                 print(f"Alert {alert_id} successfully resolved: {result}")
                 
-                socketio.emit('fire_alert_resolved', {
+                socketio.emit('resolve_alert_response', {
                     'success': True,
-                    'alertId': alert_id,
-                    'message': f"Alert #{alert_id} has been resolved"
+                    'alert_id': alert_id,
+                    'message': f"Alert #{alert_id} has been "
                 })
                 
                 # Also emit an event to update active fire alerts count
@@ -968,16 +1009,16 @@ def register_socket_events(socketio):
                 error_message = f"Failed to resolve alert: HTTP {response.status_code}"
                 print(error_message)
                 print(f"Response content: {response.text}")
-                socketio.emit('fire_alert_resolved', {
+                socketio.emit('resolve_alert_response', {
                     'success': False,
-                    'alertId': alert_id,
+                    'alert_id': alert_id,
                     'error': error_message
                 })
         except Exception as e:
             print(f"Error resolving fire alert: {str(e)}")
             traceback.print_exc()
-            socketio.emit('fire_alert_resolved', {
+            socketio.emit('resolve_alert_response', {
                 'success': False,
-                'alertId': data.get('alertId'),
+                'alert_id': data.get('alert_id'),
                 'error': str(e)
             })
