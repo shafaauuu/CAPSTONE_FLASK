@@ -4,7 +4,11 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentPage = 1;
     let pageSize = 10;
     let statusFilterValue = '';
-    let currentAlertId = null; // New global variable
+    let currentAlertId = null;
+    let searchTerm = ''; // Global variable for search
+    let searchField = 'location'; // Default search field
+    
+    const API_BASE_URL = window.API_BASE_URL;
     
     // Initialize the page
     init();
@@ -110,6 +114,34 @@ document.addEventListener('DOMContentLoaded', function() {
                     filterText.textContent = status || 'All';
                 }
                 
+                // Update the checkmark position
+                statusFilterOptions.forEach(opt => {
+                    // Remove checkmark from all options
+                    const checkIcon = opt.querySelector('svg');
+                    if (checkIcon) {
+                        opt.removeChild(checkIcon);
+                    }
+                });
+                
+                // Add checkmark to the selected option
+                const selectedOption = document.querySelector(`.status-filter-option[data-status="${status}"]`) || 
+                                      document.querySelector('.status-filter-option[data-status=""]');
+                if (selectedOption && !selectedOption.querySelector('svg')) {
+                    const checkSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                    checkSvg.classList.add('icon', 'icon-xxs', 'ms-auto');
+                    checkSvg.setAttribute('fill', 'currentColor');
+                    checkSvg.setAttribute('viewBox', '0 0 20 20');
+                    checkSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+                    
+                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    path.setAttribute('fill-rule', 'evenodd');
+                    path.setAttribute('d', 'M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z');
+                    path.setAttribute('clip-rule', 'evenodd');
+                    
+                    checkSvg.appendChild(path);
+                    selectedOption.appendChild(checkSvg);
+                }
+                
                 // Reset to first page when changing filter
                 currentPage = 1;
                 
@@ -117,6 +149,56 @@ document.addEventListener('DOMContentLoaded', function() {
                 fetchAlertLogs();
             });
         });
+        
+        // Search input - handle Enter key
+        const searchInput = document.getElementById('alert-search-input');
+        if (searchInput) {
+            console.log('Setting up search input event listener');
+            searchInput.addEventListener('keyup', function(e) {
+                // Trigger search on Enter key
+                if (e.key === 'Enter') {
+                    performSearch();
+                }
+            });
+            
+            // Add a click event to the search icon/button
+            const searchIcon = searchInput.previousElementSibling;
+            if (searchIcon) {
+                searchIcon.style.cursor = 'pointer';
+                searchIcon.addEventListener('click', function() {
+                    performSearch();
+                });
+            }
+        }
+        
+        // Search button
+        const searchButton = document.getElementById('search-button');
+        if (searchButton) {
+            console.log('Setting up search button event listener');
+            searchButton.addEventListener('click', function() {
+                performSearch();
+            });
+        }
+        
+        // Search field selector
+        const searchFieldSelector = document.getElementById('search-field-selector');
+        if (searchFieldSelector) {
+            searchFieldSelector.addEventListener('change', function() {
+                searchField = this.value;
+                console.log(`Search field changed to: ${searchField}`);
+            });
+        }
+        
+        // Status filter
+        const statusFilter = document.getElementById('status-filter');
+        if (statusFilter) {
+            statusFilter.addEventListener('change', function() {
+                statusFilterValue = this.value;
+                currentPage = 1; // Reset to first page when filtering
+                console.log(`Filtering by status: ${statusFilterValue}`);
+                fetchAlertLogs();
+            });
+        }
         
         // Search form
         const searchForm = document.getElementById('search-form');
@@ -133,16 +215,33 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         }
+    }
+    
+    // Helper function to perform search
+    function performSearch() {
+        const searchInput = document.getElementById('alert-search-input');
+        const searchFieldSelector = document.getElementById('search-field-selector');
         
-        // Status filter
-        const statusFilter = document.getElementById('status-filter');
-        if (statusFilter) {
-            statusFilter.addEventListener('change', function() {
-                statusFilterValue = this.value;
-                currentPage = 1; // Reset to first page when filtering
-                console.log(`Filtering by status: ${statusFilterValue}`);
-                fetchAlertLogs();
+        if (searchInput && searchFieldSelector) {
+            searchTerm = searchInput.value.trim();
+            searchField = searchFieldSelector.value;
+            
+            console.log(`Performing search for: "${searchTerm}" in field: "${searchField}"`);
+            
+            // Reset to first page when searching
+            currentPage = 1;
+            
+            // Fetch logs with the search parameters
+            fetchAlertLogs();
+            
+            // Show a notification that search is being performed
+            notyf.open({
+                type: 'info',
+                message: `Searching for "${searchTerm}" in ${searchField}...`,
+                duration: 3000
             });
+        } else {
+            console.error('Search input or field selector not found in the DOM');
         }
     }
     
@@ -186,6 +285,9 @@ document.addEventListener('DOMContentLoaded', function() {
         showLoading(true);
         
         console.log('Fetching alert logs with status filter:', statusFilterValue);
+        if (searchTerm) {
+            console.log('Search parameters:', { term: searchTerm, field: searchField });
+        }
         
         if (socket && socket.connected) {
             console.log('Fetching alert logs via Socket.IO...');
@@ -203,13 +305,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log(`Adding status filter: ${statusFilterValue}`);
             }
             
-            console.log('Emitting request_alert_logs event with data:', requestData);
+            // Add search parameters if set
+            if (searchTerm) {
+                requestData.filters.search = {
+                    term: searchTerm,
+                    field: searchField
+                };
+                console.log(`Adding search filter: ${searchTerm} in field: ${searchField}`);
+                console.log('Full request data:', JSON.stringify(requestData));
+            }
+            
+            console.log('Emitting request_alert_logs event with data:', JSON.stringify(requestData));
             socket.emit('request_alert_logs', requestData);
             
             // Set up a timeout for response
             setTimeout(function() {
                 // If we haven't received a response after 5 seconds, fall back to direct API
-                if (document.getElementById('loading-indicator').style.display !== 'none') {
+                const loadingIndicator = document.querySelector('.loading-indicator');
+                if (loadingIndicator && loadingIndicator.style.display !== 'none') {
                     console.warn('Socket.IO response timeout, falling back to direct API');
                     fallbackToDirectAPI();
                 }
@@ -233,49 +346,47 @@ document.addEventListener('DOMContentLoaded', function() {
             showNotification('error', `Failed to fetch alert logs: ${data.error}`);
         }
     }
-    
+
     // Fallback to direct API call if Socket.IO fails
     function fallbackToDirectAPI() {
-        console.log('Using direct API fallback...');
-        
-        // Build API URL with query parameters
+        console.log('Using fallback direct API call...');
+
+        // Build API URL
         let apiUrl = `${API_BASE_URL}/api/fire-alert/logs?page=${currentPage}&pageSize=${pageSize}`;
-        
+
         // Add status filter if set
         if (statusFilterValue) {
             apiUrl += `&status=${statusFilterValue}`;
         }
-        
+
+        // Add search parameters if set
+        if (searchTerm) {
+            apiUrl += `&searchTerm=${encodeURIComponent(searchTerm)}&searchField=${searchField}`;
+            console.log(`Adding search filter to direct API: ${searchTerm} in field: ${searchField}`);
+        }
+
+        console.log(`Fallback API URL: ${apiUrl}`);
+
+        // Make API request
         fetch(apiUrl)
             .then(response => {
                 if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
+                    throw new Error(`API error: ${response.status}`);
                 }
                 return response.json();
             })
             .then(data => {
-                console.log('Direct API response:', data);
-                
-                // Process the data
-                const logs = data.data || [];
-                const pagination = data.pagination || {
-                    total: logs.length,
-                    page: currentPage,
-                    pageSize: pageSize,
-                    totalPages: Math.ceil(logs.length / pageSize)
-                };
-                
-                // Update the UI
-                updateTable(logs);
-                updatePagination(pagination);
+                console.log('Received data from direct API:', data);
+                updateTable(data.data || [], data.pagination || {});
+                showLoading(false);
             })
             .catch(error => {
-                console.error('Error fetching alert logs via direct API:', error);
-                showNotification('error', `Failed to fetch alert logs: ${error.message}`);
+                console.error('Error fetching data from direct API:', error);
+                showError('Failed to load alert logs. Please try again later.');
                 showLoading(false);
             });
     }
-    
+
     // Show or hide loading indicator
     function showLoading(show) {
         console.log(`${show ? 'Showing' : 'Hiding'} loading indicator`);
@@ -286,27 +397,27 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Loading indicator element not found');
         }
     }
-    
+
     // Update table with alert logs data
     function updateTable(logs) {
         console.log(`Updating table with ${logs.length} logs`);
-        
+
         const tableBody = document.getElementById('alertLogsTableBody');
         if (!tableBody) {
             console.error('Table body element not found');
             return;
         }
-        
+
         // Clear existing rows except loading indicator
         const rows = tableBody.querySelectorAll('tr:not(.loading-indicator)');
         rows.forEach(row => row.remove());
-        
+
         // Hide loading indicator
         const loadingIndicator = tableBody.querySelector('.loading-indicator');
         if (loadingIndicator) {
             loadingIndicator.style.display = 'none';
         }
-        
+
         if (!logs || logs.length === 0) {
             // Display a message when no logs are available
             const emptyRow = document.createElement('tr');
@@ -314,15 +425,15 @@ document.addEventListener('DOMContentLoaded', function() {
             tableBody.appendChild(emptyRow);
             return;
         }
-        
+
         // Add rows for each log
         logs.forEach(log => {
             const row = document.createElement('tr');
-            
+
             // Determine if the alert is active and should show a resolve button
             let actionButton = '';
             const isActive = (log.status === 'Active' || log.alert_status === 'Active');
-            
+
             if (isActive) {
                 actionButton = `
                     <button class="btn btn-sm btn-danger resolve-alert-btn" data-alert-id="${log.alert_log_id}">
@@ -336,17 +447,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     </button>
                 `;
             }
-            
+
             // Get location from appropriate field
             const location = log.location || log.fire_loc || log.smoke_loc || log.dht11_loc || 'Unknown';
-            
+
             // Get camera ID from appropriate field with better fallbacks
             const cameraId = log.camera_id || log.camera || (log.detection ? log.detection.camera_id : '') || 'Camera 1';
-            
+
             // Get formatted time and date with fallbacks
             let formattedTime = log.formatted_time || '';
             let formattedDate = log.formatted_date || '';
-            
+
             // If no formatted time/date but we have a timestamp, try to format it
             if ((!formattedTime || !formattedDate) && log.created_at) {
                 try {
@@ -362,7 +473,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.error('Error formatting timestamp:', e);
                 }
             }
-            
+
             // Format the row HTML
             row.innerHTML = `
                 <td>${actionButton}</td>
@@ -392,10 +503,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     </span>
                 </td>
             `;
-            
+
             tableBody.appendChild(row);
         });
-        
+
         // Add event listeners to resolve buttons
         document.querySelectorAll('.resolve-alert-btn').forEach(btn => {
             btn.addEventListener('click', function() {

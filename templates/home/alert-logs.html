@@ -43,6 +43,9 @@
                       <option value="date">Date</option>
                   </select>
                   <input type="text" class="form-control" id="alert-search-input" placeholder="Search alerts...">
+                  <button class="btn btn-primary btn-sm" type="button" id="search-button">
+                      Search
+                  </button>
               </div>
           </div>
           <div class="col-4 col-md-2 col-xl-2 ps-md-0 text-end">
@@ -95,7 +98,9 @@
           <nav aria-label="Page navigation">
               <ul class="pagination mb-0"></ul>
           </nav>
-          <div class="fw-normal small mt-4 mt-lg-0 pagination-info">Showing <b>0-0</b> out of <b>0</b> entries</div>
+          <div class="d-flex justify-content-end">
+              <div class="fw-normal small mt-4 mt-lg-0 pagination-info">Showing <b>0-0</b> out of <b>0</b> entries</div>
+          </div>
       </div>
   </div>
 
@@ -147,12 +152,15 @@
             ]
         });
     </script>
-
+    
     <!-- Socket.IO client library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
-
+    
     <!-- API Configuration -->
-    <script src="/static/assets/js/config.js"></script>
+    <script src="{{ url_for('static', filename='assets/js/config.js') }}"></script>
+    
+    <!-- Then include alert-logs.js -->
+    <script src="{{ url_for('static', filename='assets/js/alert-logs.js') }}"></script>
     
     <!-- Add Bootstrap 5 JS bundle for proper modal and dropdown functionality -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
@@ -222,7 +230,4 @@
             });
         });
     </script>
-    
-    <!-- Alert Logs JavaScript -->
-    <script src="/static/assets/js/alert-logs.js"></script>
 {% endblock javascripts %}

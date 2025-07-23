@@ -733,12 +733,22 @@ def register_socket_events(socketio):
             # Extract status filter if provided
             status_filter = filters.get('status', '')
             
+            # Extract search parameters if provided
+            search_params = filters.get('search', {})
+            search_term = search_params.get('term', '')
+            search_field = search_params.get('field', 'location')
+            
             # Build API URL with query parameters
             api_url = f'{API_BASE_URL}/api/fire-alert/logs?page={page}&pageSize={page_size}'
             
             # Add status filter if provided
             if status_filter:
                 api_url += f'&status={status_filter}'
+                
+            # Add search parameters if provided
+            if search_term:
+                api_url += f'&searchTerm={search_term}&searchField={search_field}'
+                print(f"Adding search filter: {search_term} in field: {search_field}")
                 
             print(f"Fetching alert logs from API: {api_url}")
             
@@ -751,6 +761,68 @@ def register_socket_events(socketio):
                 pagination = api_data.get('pagination', {})
                 
                 print(f"Retrieved {len(logs)} alert logs from API")
+                
+                # If the API doesn't support search or returned no results with search params,
+                # implement client-side filtering
+                if search_term and len(logs) == 0:
+                    print(f"No results found with search parameters, trying client-side filtering")
+                    
+                    # Make a new request without search parameters to get all data
+                    base_url = f'{API_BASE_URL}/api/fire-alert/logs?page=1&pageSize=100'
+                    if status_filter:
+                        base_url += f'&status={status_filter}'
+                        
+                    base_response = requests.get(base_url)
+                    
+                    if base_response.status_code == 200:
+                        base_data = base_response.json()
+                        all_logs = base_data.get('data', [])
+                        
+                        # Apply client-side filtering
+                        filtered_logs = []
+                        for log in all_logs:
+                            # Convert search term and field value to lowercase for case-insensitive comparison
+                            term_lower = search_term.lower()
+                            
+                            # Handle different search fields
+                            if search_field == 'location':
+                                field_value = str(log.get('location', '') or log.get('fire_loc', '') or 
+                                                log.get('smoke_loc', '') or log.get('dht11_loc', '')).lower()
+                                if term_lower in field_value:
+                                    filtered_logs.append(log)
+                                    
+                            elif search_field == 'id':
+                                # Check if search term is in alert_log_id
+                                alert_id = str(log.get('alert_log_id', '')).lower()
+                                if term_lower in alert_id:
+                                    filtered_logs.append(log)
+                                    
+                            elif search_field == 'date':
+                                # Check if search term is in formatted_date or created_at
+                                date_value = str(log.get('formatted_date', '') or log.get('created_at', '')).lower()
+                                if term_lower in date_value:
+                                    filtered_logs.append(log)
+                        
+                        # Update logs and pagination
+                        logs = filtered_logs
+                        
+                        # Calculate new pagination values
+                        total_items = len(filtered_logs)
+                        total_pages = max(1, (total_items + page_size - 1) // page_size)
+                        
+                        # Get the current page of results
+                        start_idx = (page - 1) * page_size
+                        end_idx = min(start_idx + page_size, total_items)
+                        logs = filtered_logs[start_idx:end_idx]
+                        
+                        pagination = {
+                            'total': total_items,
+                            'page': page,
+                            'pageSize': page_size,
+                            'totalPages': total_pages
+                        }
+                        
+                        print(f"Client-side filtering found {total_items} results, showing page {page} with {len(logs)} items")
                 
                 # Process each log to ensure proper field mapping
                 for log in logs:
