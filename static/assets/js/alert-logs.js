@@ -3,17 +3,36 @@ document.addEventListener('DOMContentLoaded', function() {
     let socket;
     let currentPage = 1;
     let pageSize = 10;
-    let statusFilterValue = '';
     let currentAlertId = null;
-    let searchTerm = ''; // Global variable for search
-    let searchField = 'location'; // Default search field
-    let allAlertLogs = []; 
+    let allAlertLogs = [];
+    let searchTerm = '';
+    let searchField = 'location';
+    let statusFilterValue = '';
     
-    // API base URL from config.js
-    const API_BASE_URL = typeof API_CONFIG !== 'undefined' ? API_CONFIG.BASE_URL : 'http://127.0.0.1:3000';
-    console.log('Using API base URL:', API_BASE_URL);
+    const notyf = new Notyf({
+        duration: 3000,
+        position: {
+            x: 'right',
+            y: 'top',
+        },
+        types: [
+            {
+                type: 'warning',
+                background: '#FFC107',
+                icon: {
+                    className: 'fas fa-exclamation-triangle',
+                    tagName: 'span',
+                    color: '#fff'
+                },
+                dismissible: false
+            }
+        ]
+    });
     
     // Initialize the page
+    init();
+    
+    // Main initialization function
     function init() {
         console.log('Initializing alert logs page');
         
@@ -23,154 +42,193 @@ document.addEventListener('DOMContentLoaded', function() {
         // Set up event listeners
         setupEventListeners();
         
-        // Initial data fetch
-        fetchAlertLogs();
+        // Set up direct handlers for modal and dropdown
+        setupDirectHandlers();
     }
+    
+    // Set up direct handlers for modal and dropdown functionality
+    function setupDirectHandlers() {
+        console.log('Setting up direct handlers for modal and dropdown');
+        
+        // Get modal elements
+        const checkbox = document.getElementById('locationCheckedConfirmation');
+        const confirmBtn = document.getElementById('confirmResolveBtn');
+        
+        // Set up checkbox handler directly
+        if (checkbox) {
+            checkbox.addEventListener('change', function() {
+                console.log('Checkbox changed:', this.checked);
+                if (confirmBtn) {
+                    confirmBtn.disabled = !this.checked;
+                    console.log('Confirm button disabled:', confirmBtn.disabled);
+                }
+            });
+            console.log('Added direct checkbox handler');
+        }
+        
+        // Direct initialization of the status filter dropdown
+        const statusFilterDropdown = document.getElementById('statusFilterDropdown');
+        if (statusFilterDropdown) {
+            console.log('Found status filter dropdown button');
+            
+            // Ensure dropdown works by manually creating the dropdown instance
+            try {
+                const dropdown = new bootstrap.Dropdown(statusFilterDropdown);
+                console.log('Successfully initialized dropdown instance');
+                
+                // Add click handler to toggle dropdown manually
+                statusFilterDropdown.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    console.log('Status filter dropdown button clicked');
+                    dropdown.toggle();
+                });
+            } catch (error) {
+                console.error('Error initializing dropdown:', error);
+            }
+        } else {
+            console.error('Status filter dropdown button not found');
+        }
+        
+        // Add direct event listeners to status filter options
+        document.querySelectorAll('.status-filter-option').forEach(function(option) {
+            option.addEventListener('click', function(e) {
+                e.preventDefault();
+                const status = this.getAttribute('data-status');
+                console.log('Status filter clicked:', status || 'All');
+                
+                // Update the filter text
+                const filterText = document.querySelector('.current-status-filter');
+                if (filterText) {
+                    filterText.textContent = status || 'All';
+                }
+                
+                // Apply the status filter
+                applyStatusFilter(status);
+            });
+        });
+    }
+    
+    // Expose applyStatusFilter to window for direct access from HTML
+    window.applyStatusFilter = applyStatusFilter;
+    
+    // Apply status filter
+    function applyStatusFilter(status) {
+        console.log(`Applying status filter: ${status || 'All'}`);
+        
+        // Update the status filter value
+        statusFilterValue = status || '';
+        
+        // Update checkmark in dropdown
+        updateStatusFilterCheckmark(status);
+        
+        // Apply filtering if we have search term or reload data if not
+        if (searchTerm) {
+            filterAndDisplayLogs();
+        } else {
+            fetchAlertLogs();
+        }
+    }
+    
+    // Update status filter dropdown checkmark
+    function updateStatusFilterCheckmark(status) {
+        // Remove checkmark from all options
+        document.querySelectorAll('.status-filter-option .status-checkmark').forEach(function(checkmark) {
+            checkmark.innerHTML = '';
+        });
+        
+        // Add checkmark to selected option
+        const selectedOption = document.querySelector(`.status-filter-option[data-status="${status || ''}"]`);
+        if (selectedOption) {
+            const checkmark = selectedOption.querySelector('.status-checkmark');
+            if (checkmark) {
+                checkmark.innerHTML = '<svg class="icon icon-xs" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>';
+            }
+        }
+    }
+
+    // API base URL from config.js
+    const API_BASE_URL = typeof API_CONFIG !== 'undefined' ? API_CONFIG.BASE_URL : 'http://127.0.0.1:3000';
+    console.log('Using API base URL:', API_BASE_URL);
     
     // Set up event listeners
     function setupEventListeners() {
         console.log('Setting up event listeners');
         
-        // Refresh button
-        const refreshButton = document.getElementById('refresh-alert-logs');
-        if (refreshButton) {
-            refreshButton.addEventListener('click', function() {
-                console.log('Refresh button clicked');
-                // Clear search and filters when refreshing
-                clearSearchAndFilters();
-                fetchAlertLogs();
-            });
+        // Search button click
+        const searchButton = document.getElementById('search-button');
+        if (searchButton) {
+            searchButton.addEventListener('click', performSearch);
+            console.log('Added search button click listener');
         }
         
-        // Status filter dropdown
-        const statusFilterOptions = document.querySelectorAll('.status-filter-option');
-        statusFilterOptions.forEach(option => {
-            option.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                // Get the status value
-                const status = this.getAttribute('data-status');
-                console.log(`Status filter selected: "${status}"`);
-                
-                // Update the status filter value
-                statusFilterValue = status;
-                
-                // Update the dropdown button text
-                const statusFilterText = document.querySelector('.current-status-filter');
-                if (statusFilterText) {
-                    statusFilterText.textContent = status || 'All';
-                }
-                
-                // Remove checkmark from all options
-                statusFilterOptions.forEach(opt => {
-                    const checkmark = opt.querySelector('svg');
-                    if (checkmark) {
-                        checkmark.remove();
-                    }
-                });
-                
-                // Add checkmark to selected option
-                const checkmarkSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                checkmarkSvg.setAttribute('class', 'icon icon-xxs ms-auto');
-                checkmarkSvg.setAttribute('fill', 'currentColor');
-                checkmarkSvg.setAttribute('viewBox', '0 0 20 20');
-                checkmarkSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-                
-                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                path.setAttribute('fill-rule', 'evenodd');
-                path.setAttribute('d', 'M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z');
-                path.setAttribute('clip-rule', 'evenodd');
-                
-                checkmarkSvg.appendChild(path);
-                this.appendChild(checkmarkSvg);
-                
-                // Reset to first page
-                currentPage = 1;
-                
-                // If we have search term, use client-side filtering
-                if (searchTerm) {
-                    filterAndDisplayLogs();
-                } else {
-                    // Otherwise fetch from server
-                    fetchAlertLogs();
-                }
-            });
-        });
-        
-        // Search input
+        // Search input enter key
         const searchInput = document.getElementById('alert-search-input');
         if (searchInput) {
-            searchInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
+            searchInput.addEventListener('keyup', function(event) {
+                if (event.key === 'Enter') {
                     performSearch();
                 }
             });
+            console.log('Added search input keyup listener');
         }
         
-        // Search button
-        const searchButton = document.getElementById('search-button');
-        if (searchButton) {
-            searchButton.addEventListener('click', function(e) {
-                e.preventDefault();
-                performSearch();
-            });
-        }
-        
-        // Search field selector
+        // Search field selector change
         const searchFieldSelector = document.getElementById('search-field-selector');
         if (searchFieldSelector) {
             searchFieldSelector.addEventListener('change', function() {
+                // Update search field
                 searchField = this.value;
                 console.log(`Search field changed to: ${searchField}`);
                 
                 // Update placeholder based on selected field
                 if (searchInput) {
-                    if (searchField === 'location') {
-                        searchInput.placeholder = 'Search by location...';
-                    } else if (searchField === 'id') {
-                        searchInput.placeholder = 'Search by alert ID...';
-                    } else if (searchField === 'date') {
-                        searchInput.placeholder = 'Search by date (YYYY-MM-DD)...';
+                    switch (searchField) {
+                        case 'location':
+                            searchInput.placeholder = 'Search by location...';
+                            break;
+                        case 'id':
+                            searchInput.placeholder = 'Search by alert ID...';
+                            break;
+                        case 'date':
+                            searchInput.placeholder = 'Search by date (YYYY-MM-DD)...';
+                            break;
+                        default:
+                            searchInput.placeholder = 'Search';
                     }
                 }
-                
-                // If search term is already entered, perform search with new field
-                if (searchTerm) {
-                    performSearch();
-                }
             });
+            console.log('Added search field selector change listener');
         }
         
-        // Location checked confirmation checkbox
-        const locationCheckedConfirmation = document.getElementById('locationCheckedConfirmation');
-        if (locationCheckedConfirmation) {
-            locationCheckedConfirmation.addEventListener('change', function() {
-                const confirmButton = document.getElementById('confirmResolveBtn');
-                if (confirmButton) {
-                    confirmButton.disabled = !this.checked;
-                }
+        // Refresh button click
+        const refreshButton = document.getElementById('refresh-alert-logs');
+        if (refreshButton) {
+            refreshButton.addEventListener('click', function() {
+                console.log('Refresh button clicked');
+                clearSearchAndFilters();
+                fetchAlertLogs();
+
             });
+            console.log('Added refresh button click listener');
+        } else {
+            console.error('Refresh button not found in the DOM');
         }
         
-        // Confirm resolve button
-        const confirmResolveBtn = document.getElementById('confirmResolveBtn');
-        if (confirmResolveBtn) {
-            confirmResolveBtn.addEventListener('click', function() {
-                if (currentAlertId) {
-                    resolveAlert(currentAlertId);
+        // Pagination buttons
+        document.querySelectorAll('.page-link').forEach(function(button) {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const page = this.getAttribute('data-page');
+                if (page) {
+                    goToPage(parseInt(page));
                 }
             });
-        }
+        });
     }
     
     // Clear search and filters
     function clearSearchAndFilters() {
         console.log('Clearing search and filters');
-        
-        // Clear search term and field
-        searchTerm = '';
-        searchField = 'location';
         
         // Clear search input
         const searchInput = document.getElementById('alert-search-input');
@@ -178,23 +236,23 @@ document.addEventListener('DOMContentLoaded', function() {
             searchInput.value = '';
         }
         
-        // Reset search field selector
-        const searchFieldSelector = document.getElementById('search-field-selector');
-        if (searchFieldSelector) {
-            searchFieldSelector.value = 'location';
-        }
+        // Reset search term and field
+        searchTerm = '';
+        searchField = 'location';
         
-        // Clear status filter
+        // Reset status filter
         statusFilterValue = '';
         
         // Update status filter text
-        const statusFilterText = document.querySelector('.current-status-filter');
-        if (statusFilterText) {
-            statusFilterText.textContent = 'All';
+        const filterText = document.querySelector('.current-status-filter');
+        if (filterText) {
+            filterText.textContent = 'All';
         }
         
-        // Reset page
-        currentPage = 1;
+        // Update status filter checkmark
+        updateStatusFilterCheckmark('');
+        
+        console.log('Search and filters cleared');
     }
     
     // Helper function to perform search
@@ -893,7 +951,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Update the status in the allAlertLogs array
                 if (allAlertLogs && allAlertLogs.length > 0) {
-                    for (let i = 0; i < allAlertLogs.length; i++) {
+                    for (let i = 0; i <allAlertLogs.length; i++) {
                         if (allAlertLogs[i].alert_log_id == alertId) {
                             console.log(`Locally updating status of alert #${alertId} to Resolved`);
                             allAlertLogs[i].status = 'Resolved';
@@ -936,6 +994,4 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log(`${type.toUpperCase()}: ${message}`);
         }
     }
-    
-    init();
 });
