@@ -200,6 +200,41 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Added search field selector change listener');
         }
         
+        // Status filter dropdown options
+        const statusFilterOptions = document.querySelectorAll('.status-filter-option');
+        if (statusFilterOptions.length > 0) {
+            statusFilterOptions.forEach(option => {
+                option.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Get the status value from data attribute
+                    const status = this.getAttribute('data-status');
+                    console.log(`Status filter selected: "${status}"`);
+                    
+                    // Update the status filter value
+                    statusFilterValue = status;
+                    
+                    // Update the dropdown button text
+                    const statusFilterText = document.querySelector('.current-status-filter');
+                    if (statusFilterText) {
+                        statusFilterText.textContent = status || 'All';
+                    }
+                    
+                    // Update the checkmark
+                    updateStatusFilterCheckmark(status);
+                    
+                    // Reset to first page
+                    currentPage = 1;
+                    
+                    // Apply the filter
+                    applyStatusFilter(status);
+                });
+            });
+            console.log('Added status filter option click listeners');
+        } else {
+            console.error('Status filter options not found in the DOM');
+        }
+        
         // Refresh button click
         const refreshButton = document.getElementById('refresh-alert-logs');
         if (refreshButton) {
@@ -223,6 +258,67 @@ document.addEventListener('DOMContentLoaded', function() {
                     goToPage(parseInt(page));
                 }
             });
+        });
+    }
+    
+    // Function to apply status filter
+    function applyStatusFilter(status) {
+        console.log(`Applying status filter: "${status}"`);
+        
+        // Update global status filter value
+        statusFilterValue = status;
+        
+        // If we have cached logs, filter them client-side
+        if (allAlertLogs && allAlertLogs.length > 0) {
+            filterAndDisplayLogs();
+        } else {
+            // Otherwise fetch from server with the filter
+            fetchAlertLogs();
+        }
+    }
+    
+    // Helper function to update the checkmark in status filter dropdown
+    function updateStatusFilterCheckmark(selectedStatus) {
+        console.log(`Updating status filter checkmark for: "${selectedStatus}"`);
+        
+        // Get all status filter options
+        const statusFilterOptions = document.querySelectorAll('.status-filter-option');
+        
+        // Remove checkmark from all options
+        statusFilterOptions.forEach(option => {
+            // Find any existing checkmark SVG and remove it
+            const existingCheckmark = option.querySelector('svg.icon-xxs');
+            if (existingCheckmark && existingCheckmark.classList.contains('icon-xxs')) {
+                existingCheckmark.remove();
+            }
+        });
+        
+        // Find the selected option and add checkmark
+        statusFilterOptions.forEach(option => {
+            const status = option.getAttribute('data-status') || '';
+            if (status === selectedStatus) {
+                // Only add checkmark if it doesn't already have one
+                if (!option.querySelector('svg.icon-xxs')) {
+                    // Create SVG checkmark element
+                    const checkmarkSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                    checkmarkSvg.setAttribute('class', 'icon icon-xxs ms-auto');
+                    checkmarkSvg.setAttribute('fill', 'currentColor');
+                    checkmarkSvg.setAttribute('viewBox', '0 0 20 20');
+                    checkmarkSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+                    
+                    // Create path element
+                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    path.setAttribute('fill-rule', 'evenodd');
+                    path.setAttribute('d', 'M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z');
+                    path.setAttribute('clip-rule', 'evenodd');
+                    
+                    // Append path to SVG
+                    checkmarkSvg.appendChild(path);
+                    
+                    // Append SVG to option
+                    option.appendChild(checkmarkSvg);
+                }
+            }
         });
     }
     
