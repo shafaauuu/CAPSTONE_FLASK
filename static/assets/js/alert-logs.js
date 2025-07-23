@@ -48,68 +48,67 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Set up direct handlers for modal and dropdown functionality
     function setupDirectHandlers() {
-        console.log('Setting up direct handlers for modal and dropdown');
+        console.log('Setting up direct handlers');
         
-        // Get modal elements
-        const checkbox = document.getElementById('locationCheckedConfirmation');
-        const confirmBtn = document.getElementById('confirmResolveBtn');
-        
-        // Set up checkbox handler directly
-        if (checkbox) {
-            checkbox.addEventListener('change', function() {
-                console.log('Checkbox changed:', this.checked);
-                if (confirmBtn) {
-                    confirmBtn.disabled = !this.checked;
-                    console.log('Confirm button disabled:', confirmBtn.disabled);
+        // Location checked confirmation checkbox
+        const locationCheckedConfirmation = document.getElementById('locationCheckedConfirmation');
+        if (locationCheckedConfirmation) {
+            locationCheckedConfirmation.addEventListener('change', function() {
+                const confirmButton = document.getElementById('confirmResolveBtn');
+                if (confirmButton) {
+                    confirmButton.disabled = !this.checked;
                 }
             });
-            console.log('Added direct checkbox handler');
-        }
-        
-        // Direct initialization of the status filter dropdown
-        const statusFilterDropdown = document.getElementById('statusFilterDropdown');
-        if (statusFilterDropdown) {
-            console.log('Found status filter dropdown button');
-            
-            // Ensure dropdown works by manually creating the dropdown instance
-            try {
-                const dropdown = new bootstrap.Dropdown(statusFilterDropdown);
-                console.log('Successfully initialized dropdown instance');
-                
-                // Add click handler to toggle dropdown manually
-                statusFilterDropdown.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    console.log('Status filter dropdown button clicked');
-                    dropdown.toggle();
-                });
-            } catch (error) {
-                console.error('Error initializing dropdown:', error);
-            }
+            console.log('Added location checked confirmation change listener');
         } else {
-            console.error('Status filter dropdown button not found');
+            console.error('Location checked confirmation checkbox not found');
         }
         
-        // Add direct event listeners to status filter options
-        document.querySelectorAll('.status-filter-option').forEach(function(option) {
-            option.addEventListener('click', function(e) {
-                e.preventDefault();
-                const status = this.getAttribute('data-status');
-                console.log('Status filter clicked:', status || 'All');
-                
-                // Update the filter text
-                const filterText = document.querySelector('.current-status-filter');
-                if (filterText) {
-                    filterText.textContent = status || 'All';
+        // Confirm resolve button
+        const confirmResolveBtn = document.getElementById('confirmResolveBtn');
+        if (confirmResolveBtn) {
+            confirmResolveBtn.addEventListener('click', function() {
+                if (currentAlertId) {
+                    resolveAlert(currentAlertId);
                 }
-                
-                // Apply the status filter
-                applyStatusFilter(status);
             });
-        });
+            console.log('Added confirm resolve button click listener');
+        } else {
+            console.error('Confirm resolve button not found');
+        }
+        
+        // Debug the status filter options
+        const statusFilterOptions = document.querySelectorAll('.status-filter-option');
+        console.log(`Found ${statusFilterOptions.length} status filter options:`, statusFilterOptions);
+        
+        // Add window level function for debugging
+        window.applyStatusFilter = function(status) {
+            console.log(`Status filter applied: "${status}"`);
+            
+            // Update the status filter value
+            statusFilterValue = status;
+            
+            // Update the dropdown button text
+            const statusFilterText = document.querySelector('.current-status-filter');
+            if (statusFilterText) {
+                statusFilterText.textContent = status || 'All';
+            }
+            
+            // Update the checkmark in the dropdown
+            updateStatusFilterCheckmark(status);
+            
+            // Reset to first page
+            currentPage = 1;
+            
+            // If we have cached logs, filter them client-side
+            if (allAlertLogs && allAlertLogs.length > 0) {
+                filterAndDisplayLogs();
+            } else {
+                // Otherwise fetch from server with the filter
+                fetchAlertLogs();
+            }
+        };
     }
-    
-    // Expose applyStatusFilter to window for direct access from HTML
-    window.applyStatusFilter = applyStatusFilter;
     
     // Apply status filter
     function applyStatusFilter(status) {
@@ -118,13 +117,23 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update the status filter value
         statusFilterValue = status || '';
         
-        // Update checkmark in dropdown
+        // Update the dropdown button text
+        const statusFilterText = document.querySelector('.current-status-filter');
+        if (statusFilterText) {
+            statusFilterText.textContent = status || 'All';
+        }
+        
+        // Update the checkmark in the dropdown
         updateStatusFilterCheckmark(status);
         
-        // Apply filtering if we have search term or reload data if not
-        if (searchTerm) {
+        // Reset to first page
+        currentPage = 1;
+        
+        // If we have cached logs, filter them client-side
+        if (allAlertLogs && allAlertLogs.length > 0) {
             filterAndDisplayLogs();
         } else {
+            // Otherwise fetch from server with the filter
             fetchAlertLogs();
         }
     }
@@ -321,7 +330,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    
+
     // Clear search and filters
     function clearSearchAndFilters() {
         console.log('Clearing search and filters');
