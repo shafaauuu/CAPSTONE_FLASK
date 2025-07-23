@@ -929,6 +929,37 @@ document.addEventListener('DOMContentLoaded', function() {
             showLoading(false);
         });
         
+        // Listen for active fire alerts
+        socket.on('active_fire_alert', function(data) {
+            console.log('Received active_fire_alert event in alert-logs.js:', data);
+            
+            if (data.active && data.count > 0) {
+                let location = 'Unknown';
+                if (data.location) {
+                    location = data.location;
+                } else if (data.alert && data.alert.location) {
+                    location = data.alert.location;
+                } else if (data.fire_loc) {
+                    location = data.fire_loc;
+                } else if (data.area) {
+                    location = data.area;
+                } else if (data.zone) {
+                    location = data.zone;
+                }
+                
+                // Extract alert ID
+                const alertId = data.alert_id || (data.alert ? data.alert.alert_log_id : null);
+                
+                if (alertId) {
+                    // Show notification with the location information
+                    showNotification('warning', `FIRE ALERT! Fire detected in ${location}. Immediate action required.`);
+                    
+                    // Refresh the alert logs to show the new alert
+                    fetchAlertLogs();
+                }
+            }
+        });
+        
         // Listen for alert status changes
         socket.on('alert_status_changed', function(data) {
             console.log('Received alert_status_changed event:', data);
@@ -958,7 +989,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-
+    
     // Resolve Alert
     function resolveAlert(alertId) {
         console.log(`Resolving alert ID: ${alertId}`);

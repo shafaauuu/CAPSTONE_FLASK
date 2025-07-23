@@ -160,7 +160,6 @@ notyfStyle.textContent = `
 `;
 document.head.appendChild(notyfStyle);
 
-// Maximum number of alerts to show at once
 const MAX_VISIBLE_ALERTS = 3;
 let activeAlerts = [];
 
@@ -194,7 +193,7 @@ function createAlertMessage(location, cameraId) {
     let alertMessage = `
         <div class="d-flex align-items-center justify-content-between">
             <div>
-                FIRE ALERT! Fire detected in ${location} (Camera ${cameraId}). Immediate action required.
+                FIRE ALERT! Fire detected in ${location}. Immediate action required.
             </div>`;
 
     if (!isOnAlertLogsPage) {
