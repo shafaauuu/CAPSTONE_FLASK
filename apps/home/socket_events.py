@@ -28,6 +28,8 @@ except ImportError:
 API_BASE_URL = Config.API_BASE_URL
 
 def register_socket_events(socketio):
+    """Register all socket event handlers"""
+    
     @socketio.on('connect')
     def handle_connect():
         print('Client connected')
@@ -1029,6 +1031,77 @@ def register_socket_events(socketio):
         except Exception as e:
             print(f"Error in handle_camera_detections_request: {str(e)}")
             socketio.emit('camera_detections', [])
+
+    @socketio.on('resolve_alert')
+    def handle_resolve_alert(data):
+        """
+        Handle request to resolve a fire alert
+        """
+        try:
+            print(f"Received resolve_alert with data: {data}")
+            
+            # Extract alert ID
+            alert_id = data.get('alertId')
+            
+            if not alert_id:
+                print("No alert ID provided")
+                socketio.emit('alert_resolved', {
+                    'success': False,
+                    'error': 'No alert ID provided'
+                })
+                return
+                
+            print(f"Resolving alert with ID: {alert_id}")
+            
+            # Build API URL for updating alert status
+            api_url = f'{API_BASE_URL}/api/fire-alert/logs/{alert_id}/status'
+            
+            # Make API request to update status
+            response = requests.put(
+                api_url,
+                json={'status': 'Resolved'},
+                headers={'Content-Type': 'application/json'}
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                print(f"Alert resolved successfully: {result}")
+                
+                socketio.emit('alert_resolved', {
+                    'success': True,
+                    'message': f"Alert #{alert_id} has been resolved successfully",
+                    'alert_id': alert_id
+                })
+                
+                # Also emit an event to refresh alert logs for all connected clients
+                socketio.emit('alert_status_changed', {
+                    'alert_id': alert_id,
+                    'new_status': 'Resolved'
+                })
+            else:
+                error_msg = f"API error: {response.status_code}"
+                try:
+                    error_data = response.json()
+                    if 'message' in error_data:
+                        error_msg = error_data['message']
+                except:
+                    pass
+                    
+                print(f"Error resolving alert: {error_msg}")
+                socketio.emit('alert_resolved', {
+                    'success': False,
+                    'error': error_msg,
+                    'alert_id': alert_id
+                })
+                
+        except Exception as e:
+            print(f"Error in handle_resolve_alert: {str(e)}")
+            traceback.print_exc()
+            socketio.emit('alert_resolved', {
+                'success': False,
+                'error': f"Server error: {str(e)}",
+                'alert_id': alert_id if 'alert_id' in locals() else None
+            })
 
     @socketio.on('resolve_fire_alert')
     def handle_resolve_fire_alert(data):

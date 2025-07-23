@@ -7,21 +7,15 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentAlertId = null;
     let searchTerm = ''; // Global variable for search
     let searchField = 'location'; // Default search field
+    let allAlertLogs = []; 
     
-    const API_BASE_URL = window.API_BASE_URL;
+    // API base URL from config.js
+    const API_BASE_URL = typeof API_CONFIG !== 'undefined' ? API_CONFIG.BASE_URL : 'http://127.0.0.1:3000';
+    console.log('Using API base URL:', API_BASE_URL);
     
     // Initialize the page
-    init();
-    
-    window.applyStatusFilter = function(status) {
-        console.log(`Applying status filter from global function: ${status || 'All'}`);
-        statusFilterValue = status;
-        currentPage = 1; // Reset to first page when changing filter
-        fetchAlertLogs();
-    };
-    
     function init() {
-        console.log('Initializing alert logs page...');
+        console.log('Initializing alert logs page');
         
         // Initialize Socket.IO connection
         initSocketConnection();
@@ -29,153 +23,96 @@ document.addEventListener('DOMContentLoaded', function() {
         // Set up event listeners
         setupEventListeners();
         
-        // Initialize Bootstrap components
-        initBootstrapComponents();
-        
-        // Initialize the checkbox and confirm button in the modal
-        initModal();
-        
-        // Initial fetch of alert logs
+        // Initial data fetch
         fetchAlertLogs();
-    }
-    
-    // Initialize Bootstrap components
-    function initBootstrapComponents() {
-        console.log('Initializing Bootstrap components...');
-        
-        // Initialize all dropdowns
-        const dropdownElementList = [].slice.call(document.querySelectorAll('[data-bs-toggle="dropdown"]'));
-        dropdownElementList.forEach(function(dropdownToggleEl) {
-            console.log('Initializing dropdown:', dropdownToggleEl);
-            try {
-                new bootstrap.Dropdown(dropdownToggleEl);
-            } catch (error) {
-                console.error('Error initializing dropdown:', error);
-            }
-        });
-    }
-    
-    // Initialize modal functionality
-    function initModal() {
-        console.log('Initializing modal functionality');
-        
-        // Get modal elements
-        const checkbox = document.getElementById('locationCheckedConfirmation');
-        const confirmBtn = document.getElementById('confirmResolveBtn');
-        
-        // Set up checkbox handler
-        if (checkbox) {
-            checkbox.addEventListener('change', function() {
-                console.log('Checkbox changed:', this.checked);
-                if (confirmBtn) {
-                    confirmBtn.disabled = !this.checked;
-                    console.log('Confirm button disabled:', confirmBtn.disabled);
-                }
-            });
-            console.log('Added checkbox handler');
-        } else {
-            console.error('Checkbox element not found');
-        }
-        
-        // Make sure confirm button is initially disabled
-        if (confirmBtn) {
-            confirmBtn.disabled = true;
-            console.log('Confirm button initially disabled');
-        } else {
-            console.error('Confirm button element not found');
-        }
     }
     
     // Set up event listeners
     function setupEventListeners() {
+        console.log('Setting up event listeners');
+        
         // Refresh button
-        const refreshBtn = document.getElementById('refresh-alert-logs');
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', function() {
+        const refreshButton = document.getElementById('refresh-alert-logs');
+        if (refreshButton) {
+            refreshButton.addEventListener('click', function() {
                 console.log('Refresh button clicked');
+                // Clear search and filters when refreshing
+                clearSearchAndFilters();
                 fetchAlertLogs();
             });
         }
         
-        // Status filter options
+        // Status filter dropdown
         const statusFilterOptions = document.querySelectorAll('.status-filter-option');
-        console.log(`Found ${statusFilterOptions.length} status filter options`);
-        
         statusFilterOptions.forEach(option => {
             option.addEventListener('click', function(e) {
                 e.preventDefault();
+                
+                // Get the status value
                 const status = this.getAttribute('data-status');
-                console.log(`Filtering by status: ${status || 'All'}`);
+                console.log(`Status filter selected: "${status}"`);
+                
+                // Update the status filter value
                 statusFilterValue = status;
                 
                 // Update the dropdown button text
-                const filterText = document.querySelector('.current-status-filter');
-                if (filterText) {
-                    filterText.textContent = status || 'All';
+                const statusFilterText = document.querySelector('.current-status-filter');
+                if (statusFilterText) {
+                    statusFilterText.textContent = status || 'All';
                 }
                 
-                // Update the checkmark position
+                // Remove checkmark from all options
                 statusFilterOptions.forEach(opt => {
-                    // Remove checkmark from all options
-                    const checkIcon = opt.querySelector('svg');
-                    if (checkIcon) {
-                        opt.removeChild(checkIcon);
+                    const checkmark = opt.querySelector('svg');
+                    if (checkmark) {
+                        checkmark.remove();
                     }
                 });
                 
-                // Add checkmark to the selected option
-                const selectedOption = document.querySelector(`.status-filter-option[data-status="${status}"]`) || 
-                                      document.querySelector('.status-filter-option[data-status=""]');
-                if (selectedOption && !selectedOption.querySelector('svg')) {
-                    const checkSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                    checkSvg.classList.add('icon', 'icon-xxs', 'ms-auto');
-                    checkSvg.setAttribute('fill', 'currentColor');
-                    checkSvg.setAttribute('viewBox', '0 0 20 20');
-                    checkSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-                    
-                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                    path.setAttribute('fill-rule', 'evenodd');
-                    path.setAttribute('d', 'M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z');
-                    path.setAttribute('clip-rule', 'evenodd');
-                    
-                    checkSvg.appendChild(path);
-                    selectedOption.appendChild(checkSvg);
-                }
+                // Add checkmark to selected option
+                const checkmarkSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                checkmarkSvg.setAttribute('class', 'icon icon-xxs ms-auto');
+                checkmarkSvg.setAttribute('fill', 'currentColor');
+                checkmarkSvg.setAttribute('viewBox', '0 0 20 20');
+                checkmarkSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
                 
-                // Reset to first page when changing filter
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('fill-rule', 'evenodd');
+                path.setAttribute('d', 'M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z');
+                path.setAttribute('clip-rule', 'evenodd');
+                
+                checkmarkSvg.appendChild(path);
+                this.appendChild(checkmarkSvg);
+                
+                // Reset to first page
                 currentPage = 1;
                 
-                // Fetch logs with the new filter
-                fetchAlertLogs();
+                // If we have search term, use client-side filtering
+                if (searchTerm) {
+                    filterAndDisplayLogs();
+                } else {
+                    // Otherwise fetch from server
+                    fetchAlertLogs();
+                }
             });
         });
         
-        // Search input - handle Enter key
+        // Search input
         const searchInput = document.getElementById('alert-search-input');
         if (searchInput) {
-            console.log('Setting up search input event listener');
-            searchInput.addEventListener('keyup', function(e) {
-                // Trigger search on Enter key
+            searchInput.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
+                    e.preventDefault();
                     performSearch();
                 }
             });
-            
-            // Add a click event to the search icon/button
-            const searchIcon = searchInput.previousElementSibling;
-            if (searchIcon) {
-                searchIcon.style.cursor = 'pointer';
-                searchIcon.addEventListener('click', function() {
-                    performSearch();
-                });
-            }
         }
         
         // Search button
         const searchButton = document.getElementById('search-button');
         if (searchButton) {
-            console.log('Setting up search button event listener');
-            searchButton.addEventListener('click', function() {
+            searchButton.addEventListener('click', function(e) {
+                e.preventDefault();
                 performSearch();
             });
         }
@@ -186,35 +123,78 @@ document.addEventListener('DOMContentLoaded', function() {
             searchFieldSelector.addEventListener('change', function() {
                 searchField = this.value;
                 console.log(`Search field changed to: ${searchField}`);
-            });
-        }
-        
-        // Status filter
-        const statusFilter = document.getElementById('status-filter');
-        if (statusFilter) {
-            statusFilter.addEventListener('change', function() {
-                statusFilterValue = this.value;
-                currentPage = 1; // Reset to first page when filtering
-                console.log(`Filtering by status: ${statusFilterValue}`);
-                fetchAlertLogs();
-            });
-        }
-        
-        // Search form
-        const searchForm = document.getElementById('search-form');
-        if (searchForm) {
-            searchForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                const searchInput = document.getElementById('search-input');
+                
+                // Update placeholder based on selected field
                 if (searchInput) {
-                    const searchTerm = searchInput.value.trim();
-                    console.log(`Searching for: ${searchTerm}`);
-                    // Add search functionality here
-                    // For now, just refresh the logs
-                    fetchAlertLogs();
+                    if (searchField === 'location') {
+                        searchInput.placeholder = 'Search by location...';
+                    } else if (searchField === 'id') {
+                        searchInput.placeholder = 'Search by alert ID...';
+                    } else if (searchField === 'date') {
+                        searchInput.placeholder = 'Search by date (YYYY-MM-DD)...';
+                    }
+                }
+                
+                // If search term is already entered, perform search with new field
+                if (searchTerm) {
+                    performSearch();
                 }
             });
         }
+        
+        // Location checked confirmation checkbox
+        const locationCheckedConfirmation = document.getElementById('locationCheckedConfirmation');
+        if (locationCheckedConfirmation) {
+            locationCheckedConfirmation.addEventListener('change', function() {
+                const confirmButton = document.getElementById('confirmResolveBtn');
+                if (confirmButton) {
+                    confirmButton.disabled = !this.checked;
+                }
+            });
+        }
+        
+        // Confirm resolve button
+        const confirmResolveBtn = document.getElementById('confirmResolveBtn');
+        if (confirmResolveBtn) {
+            confirmResolveBtn.addEventListener('click', function() {
+                if (currentAlertId) {
+                    resolveAlert(currentAlertId);
+                }
+            });
+        }
+    }
+    
+    // Clear search and filters
+    function clearSearchAndFilters() {
+        console.log('Clearing search and filters');
+        
+        // Clear search term and field
+        searchTerm = '';
+        searchField = 'location';
+        
+        // Clear search input
+        const searchInput = document.getElementById('alert-search-input');
+        if (searchInput) {
+            searchInput.value = '';
+        }
+        
+        // Reset search field selector
+        const searchFieldSelector = document.getElementById('search-field-selector');
+        if (searchFieldSelector) {
+            searchFieldSelector.value = 'location';
+        }
+        
+        // Clear status filter
+        statusFilterValue = '';
+        
+        // Update status filter text
+        const statusFilterText = document.querySelector('.current-status-filter');
+        if (statusFilterText) {
+            statusFilterText.textContent = 'All';
+        }
+        
+        // Reset page
+        currentPage = 1;
     }
     
     // Helper function to perform search
@@ -226,73 +206,134 @@ document.addEventListener('DOMContentLoaded', function() {
             searchTerm = searchInput.value.trim();
             searchField = searchFieldSelector.value;
             
-            console.log(`Performing search for: "${searchTerm}" in field: "${searchField}"`);
+            console.log(`Performing client-side search for: "${searchTerm}" in field: "${searchField}"`);
             
-            // Reset to first page when searching
-            currentPage = 1;
-            
-            // Fetch logs with the search parameters
-            fetchAlertLogs();
-            
-            // Show a notification that search is being performed
-            notyf.open({
-                type: 'info',
-                message: `Searching for "${searchTerm}" in ${searchField}...`,
-                duration: 3000
-            });
+            // Apply client-side filtering on the current data
+            filterAndDisplayLogs();
         } else {
             console.error('Search input or field selector not found in the DOM');
         }
     }
     
+    // Filter logs based on search term and field
+    function filterAndDisplayLogs() {
+        if (!allAlertLogs || allAlertLogs.length === 0) {
+            console.log('No logs to filter');
+            return;
+        }
+        
+        console.log(`Filtering ${allAlertLogs.length} logs with search term: "${searchTerm}" in field: "${searchField}"`);
+        
+        let filteredLogs = allAlertLogs;
+        
+        // Apply status filter if set
+        if (statusFilterValue) {
+            filteredLogs = filteredLogs.filter(log => {
+                const status = log.status || log.alert_status || '';
+                return status.toLowerCase() === statusFilterValue.toLowerCase();
+            });
+            console.log(`After status filter (${statusFilterValue}): ${filteredLogs.length} logs`);
+        }
+        
+        // Apply search filter if set
+        if (searchTerm) {
+            filteredLogs = filteredLogs.filter(log => {
+                const term = searchTerm.toLowerCase();
+                
+                // Search in different fields based on searchField
+                if (searchField === 'location') {
+                    const location = (log.fire_loc || log.location || log.smoke_loc || log.dht11_loc || '').toLowerCase();
+                    return location.includes(term);
+                } 
+                else if (searchField === 'id') {
+                    const id = String(log.alert_log_id || '').toLowerCase();
+                    return id.includes(term);
+                }
+                else if (searchField === 'date') {
+                    const date = (log.formatted_date || '').toLowerCase();
+                    return date.includes(term);
+                }
+                
+                return false;
+            });
+            console.log(`After search filter: ${filteredLogs.length} logs`);
+        }
+        
+        // Calculate pagination for filtered results
+        const totalItems = filteredLogs.length;
+        const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+        
+        // Adjust current page if it's out of bounds
+        if (currentPage > totalPages) {
+            currentPage = 1;
+        }
+        
+        // Get current page of data
+        const startIndex = (currentPage - 1) * pageSize;
+        const endIndex = Math.min(startIndex + pageSize, totalItems);
+        const currentPageData = filteredLogs.slice(startIndex, endIndex);
+        
+        console.log(`Displaying page ${currentPage} (${startIndex}-${endIndex}) of ${totalItems} filtered logs`);
+        
+        // Update the table with filtered data
+        updateTable(currentPageData, {
+            total: totalItems,
+            page: currentPage,
+            pageSize: pageSize,
+            totalPages: totalPages
+        });
+    }
+    
     // Socket.IO Connection
     function initSocketConnection() {
+        console.log('Initializing Socket.IO connection');
+        
         try {
-            console.log('Initializing Socket.IO connection...');
+            // Connect to Socket.IO server
             socket = io();
             
+            // Connection events
             socket.on('connect', function() {
-                console.log('Socket.IO connected successfully');
+                console.log('Socket.IO connected');
+                
+                // Set up event handlers for socket events
+                setupSocketEventHandlers();
+                
+                // Fetch alert logs once connected
                 fetchAlertLogs();
             });
             
             socket.on('connect_error', function(error) {
                 console.error('Socket.IO connection error:', error);
+                
+                // Fallback to direct API call after connection error
                 fallbackToDirectAPI();
             });
             
-            socket.on('fire_alert_logs', handleFireAlertLogsResponse);
-            
-            socket.on('resolve_alert_response', function(data) {
-                console.log('Received resolve_alert_response:', data);
-                if (data.success) {
-                    notyf.success(data.message || `Alert #${data.alert_id} has been resolved successfully`);
-                    // Refresh the alert logs after successful resolution
-                    setTimeout(fetchAlertLogs, 1000);
-                } else {
-                    notyf.error(data.error || `Failed to resolve alert: ${data.error || 'Unknown error'}`);
-                }
+            socket.on('disconnect', function() {
+                console.log('Socket.IO disconnected');
             });
             
+            socket.on('error', function(error) {
+                console.error('Socket.IO error:', error);
+            });
         } catch (error) {
             console.error('Error initializing Socket.IO:', error);
+            
+            // Fallback to direct API call
             fallbackToDirectAPI();
         }
     }
     
     // Fetch Alert Logs via Socket.IO
     function fetchAlertLogs() {
+        console.log('Fetching alert logs via Socket.IO...');
         showLoading(true);
         
-        console.log('Fetching alert logs with status filter:', statusFilterValue);
-        if (searchTerm) {
-            console.log('Search parameters:', { term: searchTerm, field: searchField });
-        }
-        
         if (socket && socket.connected) {
-            console.log('Fetching alert logs via Socket.IO...');
+            console.log('Socket is connected, emitting request_alert_logs event');
             
-            // Prepare request parameters
+            // Prepare request data
             const requestData = {
                 page: currentPage,
                 pageSize: pageSize,
@@ -302,7 +343,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // Add status filter if set
             if (statusFilterValue) {
                 requestData.filters.status = statusFilterValue;
-                console.log(`Adding status filter: ${statusFilterValue}`);
             }
             
             // Add search parameters if set
@@ -311,39 +351,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     term: searchTerm,
                     field: searchField
                 };
-                console.log(`Adding search filter: ${searchTerm} in field: ${searchField}`);
-                console.log('Full request data:', JSON.stringify(requestData));
             }
             
-            console.log('Emitting request_alert_logs event with data:', JSON.stringify(requestData));
+            // Emit event to request alert logs
             socket.emit('request_alert_logs', requestData);
-            
-            // Set up a timeout for response
-            setTimeout(function() {
-                // If we haven't received a response after 5 seconds, fall back to direct API
-                const loadingIndicator = document.querySelector('.loading-indicator');
-                if (loadingIndicator && loadingIndicator.style.display !== 'none') {
-                    console.warn('Socket.IO response timeout, falling back to direct API');
-                    fallbackToDirectAPI();
-                }
-            }, 5000);
         } else {
-            console.log('Socket.IO not connected, falling back to direct API...');
+            console.warn('Socket not connected, using REST API fallback');
             fallbackToDirectAPI();
-        }
-    }
-    
-    // Handle the response from Socket.IO for fire alert logs
-    function handleFireAlertLogsResponse(data) {
-        console.log('Received fire_alert_logs response:', data);
-        showLoading(false);
-        
-        if (data.success) {
-            updateTable(data.logs);
-            updatePagination(data.pagination);
-        } else {
-            console.error('Error fetching alert logs:', data.error);
-            showNotification('error', `Failed to fetch alert logs: ${data.error}`);
         }
     }
 
@@ -399,223 +413,234 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Update table with alert logs data
-    function updateTable(logs) {
+    function updateTable(logs, pagination) {
         console.log(`Updating table with ${logs.length} logs`);
 
         const tableBody = document.getElementById('alertLogsTableBody');
         if (!tableBody) {
-            console.error('Table body element not found');
+            console.error('Alert logs table body not found');
             return;
         }
 
-        // Clear existing rows except loading indicator
-        const rows = tableBody.querySelectorAll('tr:not(.loading-indicator)');
-        rows.forEach(row => row.remove());
+        // Clear existing rows
+        tableBody.innerHTML = '';
 
-        // Hide loading indicator
-        const loadingIndicator = tableBody.querySelector('.loading-indicator');
-        if (loadingIndicator) {
-            loadingIndicator.style.display = 'none';
-        }
-
-        if (!logs || logs.length === 0) {
-            // Display a message when no logs are available
+        if (logs.length === 0) {
+            // No logs to display
             const emptyRow = document.createElement('tr');
-            emptyRow.innerHTML = '<td colspan="10" class="text-center">No alert logs available</td>';
+            const emptyCell = document.createElement('td');
+            emptyCell.colSpan = 10;
+            emptyCell.className = 'text-center';
+            emptyCell.textContent = 'No alert logs found';
+            emptyRow.appendChild(emptyCell);
             tableBody.appendChild(emptyRow);
-            return;
-        }
-
-        // Add rows for each log
-        logs.forEach(log => {
-            const row = document.createElement('tr');
-
-            // Determine if the alert is active and should show a resolve button
-            let actionButton = '';
-            const isActive = (log.status === 'Active' || log.alert_status === 'Active');
-
-            if (isActive) {
-                actionButton = `
-                    <button class="btn btn-sm btn-danger resolve-alert-btn" data-alert-id="${log.alert_log_id}">
-                        Resolve
-                    </button>
-                `;
-            } else {
-                actionButton = `
-                    <button class="btn btn-sm btn-outline-secondary" disabled>
-                        Resolved
-                    </button>
-                `;
-            }
-
-            // Get location from appropriate field
-            const location = log.location || log.fire_loc || log.smoke_loc || log.dht11_loc || 'Unknown';
-
-            // Get camera ID from appropriate field with better fallbacks
-            const cameraId = log.camera_id || log.camera || (log.detection ? log.detection.camera_id : '') || 'Camera 1';
-
-            // Get formatted time and date with fallbacks
-            let formattedTime = log.formatted_time || '';
-            let formattedDate = log.formatted_date || '';
-
-            // If no formatted time/date but we have a timestamp, try to format it
-            if ((!formattedTime || !formattedDate) && log.created_at) {
-                try {
-                    const timestamp = log.created_at;
-                    const dt = new Date(timestamp);
-                    if (!formattedTime) {
-                        formattedTime = dt.toTimeString().split(' ')[0];
-                    }
-                    if (!formattedDate) {
-                        formattedDate = dt.toISOString().split('T')[0];
-                    }
-                } catch (e) {
-                    console.error('Error formatting timestamp:', e);
+        } else {
+            // Add logs to table
+            logs.forEach(log => {
+                const row = document.createElement('tr');
+                
+                // Action column (first column)
+                const actionCell = document.createElement('td');
+                const status = log.status || log.alert_status || '';
+                if (status.toLowerCase() === 'active') {
+                    // For active alerts, show resolve button
+                    const resolveButton = document.createElement('button');
+                    resolveButton.className = 'btn btn-sm btn-danger resolve-alert-btn';
+                    resolveButton.textContent = 'Resolve';
+                    resolveButton.dataset.alertId = log.alert_log_id;
+                    resolveButton.addEventListener('click', function() {
+                        showResolveModal(log.alert_log_id);
+                    });
+                    actionCell.appendChild(resolveButton);
+                } else {
+                    // For resolved alerts, show details button
+                    const detailsButton = document.createElement('button');
+                    detailsButton.className = 'btn btn-sm btn-outline-secondary';
+                    detailsButton.textContent = 'Resolved';
+                    detailsButton.dataset.alertId = log.alert_log_id;
+                    actionCell.appendChild(detailsButton);
                 }
-            }
-
-            // Format the row HTML
-            row.innerHTML = `
-                <td>${actionButton}</td>
-                <td style="font-weight: bold">#FD-${log.alert_log_id || ''}</td>
-                <td>${cameraId}</td>
-                <td>${location}</td>
-                <td>${formattedTime}</td>
-                <td>${formattedDate}</td>
-                <td>
-                    <span class="badge bg-${log.fire_status === 'Detected' ? 'danger' : 'success'}">
-                        ${log.fire_status || 'Unknown'}
-                    </span>
-                </td>
-                <td>
-                    <span class="badge bg-${log.smoke_status === 'Detected' ? 'warning' : 'success'}">
-                        ${log.smoke_status || 'Unknown'}
-                    </span>
-                </td>
-                <td>
-                    <span class="badge bg-${log.dht11_status === 'High Temp' ? 'warning' : 'success'}">
-                        ${log.dht11_status || 'Unknown'}
-                    </span>
-                </td>
-                <td>
-                    <span class="badge bg-${isActive ? 'danger' : 'success'}">
-                        ${isActive ? 'Active' : 'Resolved'}
-                    </span>
-                </td>
-            `;
-
-            tableBody.appendChild(row);
-        });
-
-        // Add event listeners to resolve buttons
-        document.querySelectorAll('.resolve-alert-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const alertId = this.getAttribute('data-alert-id');
-                if (alertId) {
-                    console.log(`Resolve button clicked for alert ID: ${alertId}`);
-                    showResolveModal(alertId);
-                }
+                row.appendChild(actionCell);
+                
+                // Alert ID
+                const idCell = document.createElement('td');
+                idCell.style.fontWeight = 'bold';
+                idCell.textContent = '#FD-' + log.alert_log_id || '';
+                row.appendChild(idCell);
+                
+                // Camera
+                const cameraCell = document.createElement('td');
+                cameraCell.textContent = log.camera_id || log.camera || 'Camera 1';
+                row.appendChild(cameraCell);
+                
+                // Location
+                const locationCell = document.createElement('td');
+                locationCell.textContent = log.fire_loc || log.location || log.smoke_loc || log.dht11_loc || '';
+                row.appendChild(locationCell);
+                
+                // Time
+                const timeCell = document.createElement('td');
+                timeCell.textContent = log.formatted_time || '';
+                row.appendChild(timeCell);
+                
+                // Date
+                const dateCell = document.createElement('td');
+                dateCell.textContent = log.formatted_date || '';
+                row.appendChild(dateCell);
+                
+                // Fire Status
+                const fireStatusCell = document.createElement('td');
+                const fireStatus = log.fire_status || 'Unknown';
+                const fireBadgeClass = fireStatus === 'Detected' ? 'bg-danger' : 'bg-success';
+                fireStatusCell.innerHTML = `<span class="badge ${fireBadgeClass}">${fireStatus}</span>`;
+                row.appendChild(fireStatusCell);
+                
+                // Smoke Status
+                const smokeStatusCell = document.createElement('td');
+                const smokeStatus = log.smoke_status || 'Unknown';
+                const smokeBadgeClass = smokeStatus === 'Detected' ? 'bg-warning' : 'bg-success';
+                smokeStatusCell.innerHTML = `<span class="badge ${smokeBadgeClass}">${smokeStatus}</span>`;
+                row.appendChild(smokeStatusCell);
+                
+                // Temperature Status
+                const tempStatusCell = document.createElement('td');
+                const tempStatus = log.dht11_status || 'Normal';
+                const tempBadgeClass = tempStatus === 'High Temp' ? 'bg-warning' : 'bg-success';
+                tempStatusCell.innerHTML = `<span class="badge ${tempBadgeClass}">${tempStatus}</span>`;
+                row.appendChild(tempStatusCell);
+                
+                // Alert Status
+                const statusCell = document.createElement('td');
+                const alertStatus = status || 'Unknown';
+                const alertBadgeClass = alertStatus.toLowerCase() === 'active' ? 'bg-danger' : 'bg-success';
+                statusCell.innerHTML = `<span class="badge ${alertBadgeClass}">${alertStatus}</span>`;
+                row.appendChild(statusCell);
+                
+                tableBody.appendChild(row);
             });
-        });
+        }
+        
+        // Update pagination
+        updatePagination(pagination);
+        
+        // Update pagination info text
+        updatePaginationInfo(pagination);
     }
     
-    // Update pagination controls
+    // Update pagination
     function updatePagination(pagination) {
-        if (!pagination) return;
+        const paginationElement = document.querySelector('.pagination');
+        if (!paginationElement) return;
         
-        const paginationContainer = document.querySelector('.card-footer');
-        if (!paginationContainer) return;
+        const totalPages = pagination.totalPages || 1;
+        const currentPage = pagination.page || 1;
+        
+        console.log(`Updating pagination: page ${currentPage} of ${totalPages}`);
         
         // Clear existing pagination
-        paginationContainer.innerHTML = '';
+        paginationElement.innerHTML = '';
         
-        // Create wrapper for pagination elements
-        const paginationWrapper = document.createElement('div');
-        paginationWrapper.className = 'd-flex flex-column flex-lg-row align-items-center justify-content-between';
-        
-        // Create pagination navigation
-        const paginationNav = document.createElement('nav');
-        paginationNav.setAttribute('aria-label', 'Page navigation');
-        
-        const paginationList = document.createElement('ul');
-        paginationList.className = 'pagination mb-0';
+        // Don't show pagination if there's only one page
+        if (totalPages <= 1) return;
         
         // Previous button
         const prevLi = document.createElement('li');
-        prevLi.className = `page-item ${pagination.page === 1 ? 'disabled' : ''}`;
-        prevLi.innerHTML = `
-            <a class="page-link" href="#" aria-label="Previous" ${pagination.page === 1 ? 'tabindex="-1"' : ''}>
-                <span aria-hidden="true">&laquo;</span>
-            </a>
-        `;
-        if (pagination.page > 1) {
-            prevLi.querySelector('a').addEventListener('click', function(e) {
+        prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+        
+        const prevLink = document.createElement('a');
+        prevLink.className = 'page-link';
+        prevLink.href = '#';
+        prevLink.setAttribute('aria-label', 'Previous');
+        prevLink.innerHTML = '<span aria-hidden="true">&laquo;</span>';
+        
+        if (currentPage > 1) {
+            prevLink.addEventListener('click', function(e) {
                 e.preventDefault();
-                currentPage--;
-                fetchAlertLogs();
+                goToPage(currentPage - 1);
             });
         }
-        paginationList.appendChild(prevLi);
+        
+        prevLi.appendChild(prevLink);
+        paginationElement.appendChild(prevLi);
         
         // Page numbers
-        const totalPages = pagination.totalPages || 1;
-        let currentPage = pagination.page || 1;
+        const maxPagesToShow = 5;
+        let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+        let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
         
-        for (let i = 1; i <= totalPages; i++) {
+        // Adjust start page if we're near the end
+        if (endPage - startPage + 1 < maxPagesToShow) {
+            startPage = Math.max(1, endPage - maxPagesToShow + 1);
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
             const pageLi = document.createElement('li');
             pageLi.className = `page-item ${i === currentPage ? 'active' : ''}`;
-            pageLi.innerHTML = `
-                <a class="page-link" href="#">${i}</a>
-            `;
+            
+            const pageLink = document.createElement('a');
+            pageLink.className = 'page-link';
+            pageLink.href = '#';
+            pageLink.textContent = i;
             
             if (i !== currentPage) {
-                pageLi.querySelector('a').addEventListener('click', function(e) {
+                pageLink.addEventListener('click', function(e) {
                     e.preventDefault();
-                    currentPage = i;
-                    fetchAlertLogs();
+                    goToPage(i);
                 });
             }
             
-            paginationList.appendChild(pageLi);
+            pageLi.appendChild(pageLink);
+            paginationElement.appendChild(pageLi);
         }
         
         // Next button
         const nextLi = document.createElement('li');
         nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
-        nextLi.innerHTML = `
-            <a class="page-link" href="#" aria-label="Next" ${currentPage === totalPages ? 'tabindex="-1"' : ''}>
-                <span aria-hidden="true">&raquo;</span>
-            </a>
-        `;
+        
+        const nextLink = document.createElement('a');
+        nextLink.className = 'page-link';
+        nextLink.href = '#';
+        nextLink.setAttribute('aria-label', 'Next');
+        nextLink.innerHTML = '<span aria-hidden="true">&raquo;</span>';
+        
         if (currentPage < totalPages) {
-            nextLi.querySelector('a').addEventListener('click', function(e) {
+            nextLink.addEventListener('click', function(e) {
                 e.preventDefault();
-                currentPage++;
-                fetchAlertLogs();
+                goToPage(currentPage + 1);
             });
         }
-        paginationList.appendChild(nextLi);
         
-        // Add pagination list to nav
-        paginationNav.appendChild(paginationList);
+        nextLi.appendChild(nextLink);
+        paginationElement.appendChild(nextLi);
+    }
+    
+    // Update pagination info text
+    function updatePaginationInfo(pagination) {
+        const paginationInfoElement = document.querySelector('.pagination-info');
+        if (!paginationInfoElement) return;
         
-        // Add pagination nav to the left side of the wrapper
-        paginationWrapper.appendChild(paginationNav);
+        const total = pagination.total || 0;
+        const currentPage = pagination.page || 1;
+        const pageSize = pagination.pageSize || 10;
         
-        // Add pagination info text to the right side of the wrapper
-        const start = (currentPage - 1) * pageSize + 1;
-        const end = Math.min(start + pageSize - 1, pagination.total);
-        const total = pagination.total;
+        const start = total > 0 ? (currentPage - 1) * pageSize + 1 : 0;
+        const end = Math.min(start + pageSize - 1, total);
         
-        const paginationInfo = document.createElement('div');
-        paginationInfo.className = 'fw-normal small mt-4 mt-lg-0 pagination-info';
-        paginationInfo.innerHTML = `Showing <b>${total > 0 ? start : 0}-${end}</b> out of <b>${total}</b> entries`;
+        paginationInfoElement.innerHTML = `Showing <b>${start}-${end}</b> out of <b>${total}</b> entries`;
+    }
+    
+    // Go to a specific page
+    function goToPage(page) {
+        console.log(`Going to page ${page}`);
+        currentPage = page;
         
-        // Add the pagination info to the right side of the wrapper
-        paginationWrapper.appendChild(paginationInfo);
-        
-        // Add the wrapper to the pagination container
-        paginationContainer.appendChild(paginationWrapper);
+        // If we have search term or status filter, use client-side filtering
+        if (searchTerm || statusFilterValue) {
+            filterAndDisplayLogs();
+        } else {
+            // Otherwise fetch from server
+            fetchAlertLogs();
+        }
     }
     
     // Show resolve confirmation modal
@@ -714,36 +739,127 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // Socket.IO event handlers
+    function setupSocketEventHandlers() {
+        if (!socket) return;
+        
+        // Listen for fire alert logs
+        socket.on('fire_alert_logs', function(data) {
+            console.log('Received fire_alert_logs event:', data);
+            
+            if (data.success) {
+                // Store all logs for client-side filtering
+                allAlertLogs = data.logs || [];
+                console.log(`Stored ${allAlertLogs.length} logs for client-side filtering`);
+                
+                // Apply filtering if search term is set
+                if (searchTerm) {
+                    filterAndDisplayLogs();
+                } else {
+                    updateTable(data.logs, data.pagination);
+                }
+            } else {
+                console.error('Error fetching alert logs:', data.error);
+                showError(data.error || 'Failed to fetch alert logs');
+            }
+            
+            showLoading(false);
+        });
+        
+        // Listen for alert status changes
+        socket.on('alert_status_changed', function(data) {
+            console.log('Received alert_status_changed event:', data);
+            
+            // Update the status in the allAlertLogs array
+            if (allAlertLogs && allAlertLogs.length > 0) {
+                const alertId = data.alert_id;
+                const newStatus = data.new_status;
+                
+                // Find the alert in the array and update its status
+                for (let i = 0; i < allAlertLogs.length; i++) {
+                    if (allAlertLogs[i].alert_log_id == alertId) {
+                        console.log(`Updating status of alert #${alertId} to ${newStatus}`);
+                        allAlertLogs[i].status = newStatus;
+                        allAlertLogs[i].alert_status = newStatus;
+                        break;
+                    }
+                }
+                
+                // Re-apply any filtering and update the table
+                if (searchTerm || statusFilterValue) {
+                    filterAndDisplayLogs();
+                } else {
+                    // Refresh from server if no filters are applied
+                    fetchAlertLogs();
+                }
+            }
+        });
+    }
+
     // Resolve Alert
     function resolveAlert(alertId) {
-        console.log(`Resolving alert with ID: ${alertId}`);
+        console.log(`Resolving alert ID: ${alertId}`);
         
         if (!alertId) {
-            console.error('Cannot resolve alert: No alert ID provided');
-            notyf.error('Error: Cannot resolve alert without an ID');
+            console.error('No alert ID provided');
             return;
         }
         
-        // Show loading notification
-        notyf.open({
-            type: 'info',
-            message: 'Processing alert resolution...'
-        });
+        showLoading(true);
         
+        // Use Socket.IO if connected
         if (socket && socket.connected) {
-            console.log(`Emitting resolve_fire_alert event with ID: ${alertId}`);
-            socket.emit('resolve_fire_alert', { alert_id: alertId });
+            console.log('Resolving alert via Socket.IO');
+            socket.emit('resolve_alert', { alertId: alertId });
             
-            // Set up one-time listener for the response
-            socket.once('resolve_alert_response', function(response) {
-                console.log('Received resolve_alert_response:', response);
+            // Listen for response
+            socket.once('alert_resolved', function(response) {
+                console.log('Received alert_resolved event:', response);
+                showLoading(false);
                 
                 if (response.success) {
-                    notyf.success(response.message || `Alert #${alertId} has been resolved successfully`);
-                    // Refresh the alert logs to show updated status
-                    fetchAlertLogs();
+                    // Close the modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('resolveAlertModal'));
+                    if (modal) {
+                        modal.hide();
+                    }
+                    
+                    // Show success message
+                    notyf.success({
+                        message: response.message || `Alert #${alertId} has been resolved successfully`,
+                        duration: 5000,
+                        position: {
+                            x: 'center',
+                            y: 'top'
+                        }
+                    });
+                    
+                    // Update the status in the allAlertLogs array
+                    if (allAlertLogs && allAlertLogs.length > 0) {
+                        for (let i = 0; i < allAlertLogs.length; i++) {
+                            if (allAlertLogs[i].alert_log_id == alertId) {
+                                console.log(`Locally updating status of alert #${alertId} to Resolved`);
+                                allAlertLogs[i].status = 'Resolved';
+                                allAlertLogs[i].alert_status = 'Resolved';
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // Refresh the alert logs
+                    if (searchTerm || statusFilterValue) {
+                        // If we have filters, just update the current view
+                        filterAndDisplayLogs();
+                    } else {
+                        // Otherwise fetch fresh data
+                        fetchAlertLogs();
+                    }
                 } else {
-                    notyf.error(response.error || `Failed to resolve alert #${alertId}`);
+                    // Show error message
+                    notyf.error({
+                        message: response.error || `Failed to resolve alert: ${response.error || 'Unknown error'}`,
+                        duration: 5000
+                    });
                 }
             });
         } else {
@@ -754,7 +870,7 @@ document.addEventListener('DOMContentLoaded', function() {
             fetch(apiUrl, {
                 method: 'PUT',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ status: 'Resolved' })
             })
@@ -765,14 +881,46 @@ document.addEventListener('DOMContentLoaded', function() {
                 return response.json();
             })
             .then(data => {
-                console.log('Alert resolved successfully via REST API:', data);
-                notyf.success(`Alert #${alertId} has been resolved successfully`);
+                console.log('Alert resolution response:', data);
+                showLoading(false);
+                
+                // Close the modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('resolveAlertModal'));
+                if (modal) {
+                    modal.hide();
+                }
+
+                
+                // Update the status in the allAlertLogs array
+                if (allAlertLogs && allAlertLogs.length > 0) {
+                    for (let i = 0; i < allAlertLogs.length; i++) {
+                        if (allAlertLogs[i].alert_log_id == alertId) {
+                            console.log(`Locally updating status of alert #${alertId} to Resolved`);
+                            allAlertLogs[i].status = 'Resolved';
+                            allAlertLogs[i].alert_status = 'Resolved';
+                            break;
+                        }
+                    }
+                }
+                
                 // Refresh the alert logs
-                fetchAlertLogs();
+                if (searchTerm || statusFilterValue) {
+                    // If we have filters, just update the current view
+                    filterAndDisplayLogs();
+                } else {
+                    // Otherwise fetch fresh data
+                    fetchAlertLogs();
+                }
             })
             .catch(error => {
-                console.error('Error resolving alert via REST API:', error);
-                notyf.error(`Failed to resolve alert: ${error.message}`);
+                console.error('Error resolving alert:', error);
+                showLoading(false);
+                
+                // Show error message
+                notyf.error({
+                    message: `Failed to resolve alert #${alertId}: ${error.message}`,
+                    duration: 5000
+                });
             });
         }
     }
@@ -788,4 +936,6 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log(`${type.toUpperCase()}: ${message}`);
         }
     }
+    
+    init();
 });
