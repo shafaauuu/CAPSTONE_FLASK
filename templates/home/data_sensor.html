@@ -97,9 +97,8 @@
                                 <h3 class="fw-extrabold mb-1" id="fire-sensor-count">0</h3>
                             </div>
                             <small>
-                                Active <span class="fw-bold text-success" id="fire-sensor-normal">0</span> |
-                                Warning <span class="fw-bold text-warning" id="fire-sensor-warning">0</span> |
-                                Danger <span class="fw-bold text-danger" id="fire-sensor-danger">0</span>
+                                Detected <span class="fw-bold text-success" id="fire-sensor-normal">0</span> |
+                                Not Detected <span class="fw-bold text-danger" id="fire-sensor-danger">0</span>
                             </small>
                             <div class="small d-flex mt-1">
                                 <div>Last check <span class="fw-bold" id="fire-sensor-last-check">-</span></div>
@@ -130,9 +129,8 @@
                                 <h3 class="fw-extrabold mb-1" id="smoke-sensor-count">0</h3>
                             </div>
                             <small>
-                                Active <span class="fw-bold text-success" id="smoke-sensor-normal">0</span> |
-                                Warning <span class="fw-bold text-warning" id="smoke-sensor-warning">0</span> |
-                                Danger <span class="fw-bold text-danger" id="smoke-sensor-danger">0</span>
+                                Detected <span class="fw-bold text-success" id="smoke-sensor-normal">0</span> |
+                                Not Detected <span class="fw-bold text-danger" id="smoke-sensor-danger">0</span>
                             </small>
                             <div class="small d-flex mt-1">
                                 <div>Last check <span class="fw-bold" id="smoke-sensor-last-check">-</span></div>
@@ -163,9 +161,8 @@
                                 <h3 class="fw-extrabold mb-1" id="dht11-sensor-count">0</h3>
                             </div>
                             <small>
-                                Active <span class="fw-bold text-success" id="dht11-sensor-normal">0</span> |
-                                Warning <span class="fw-bold text-warning" id="dht11-sensor-warning">0</span> |
-                                Danger <span class="fw-bold text-danger" id="dht11-sensor-danger">0</span>
+                                Normal <span class="fw-bold text-success" id="dht11-sensor-normal">0</span> |
+                                High Temp <span class="fw-bold text-danger" id="dht11-sensor-danger">0</span>
                             </small>
                             <div class="small d-flex mt-1">
                                 <div>Avg. Temperature <span class="fw-bold" id="dht11-avg-temp">-</span></div>
@@ -525,109 +522,15 @@
                 requestSensorData(1, pageSize, location, status);
             });
 
-            // Function to update sensor overview cards with real-time data
-            function updateSensorOverviewCards(sensorData) {
-                console.log("Updating sensor overview cards with:", sensorData);
-
-                // Format time for "last check" display
-                const now = new Date();
-                const lastCheckTime = now.toLocaleTimeString();
-
-                // Update Fire Sensor Card
-                if (sensorData.fireSensorData && sensorData.fireSensorData.data) {
-                    const fireData = sensorData.fireSensorData.data;
-                    const fireTotal = fireData.length;
-
-                    // Count sensors by status
-                    let normalCount = 0;
-                    let warningCount = 0;
-                    let dangerCount = 0;
-
-                    fireData.forEach(sensor => {
-                        if (sensor.fire_status === 'Not Detected') {
-                            normalCount++;
-                        } else if (sensor.fire_status === 'Warning') {
-                            warningCount++;
-                        } else if (sensor.fire_status === 'Detected') {
-                            dangerCount++;
-                        }
-                    });
-
-                    // Update UI elements
-                    document.getElementById('fire-sensor-count').textContent = fireTotal;
-                    document.getElementById('fire-sensor-count-mobile').textContent = fireTotal;
-                    document.getElementById('fire-sensor-normal').textContent = normalCount;
-                    document.getElementById('fire-sensor-warning').textContent = warningCount;
-                    document.getElementById('fire-sensor-danger').textContent = dangerCount;
-                    document.getElementById('fire-sensor-last-check').textContent = lastCheckTime;
-                }
-
-                // Update Smoke Sensor Card
-                if (sensorData.smokeSensorData && sensorData.smokeSensorData.data) {
-                    const smokeData = sensorData.smokeSensorData.data;
-                    const smokeTotal = smokeData.length;
-
-                    // Count sensors by status
-                    let normalCount = 0;
-                    let warningCount = 0;
-                    let dangerCount = 0;
-
-                    smokeData.forEach(sensor => {
-                        if (sensor.smoke_status === 'Not Detected') {
-                            normalCount++;
-                        } else if (sensor.smoke_status === 'Warning') {
-                            warningCount++;
-                        } else if (sensor.smoke_status === 'Detected') {
-                            dangerCount++;
-                        }
-                    });
-
-                    // Update UI elements
-                    document.getElementById('smoke-sensor-count').textContent = smokeTotal;
-                    document.getElementById('smoke-sensor-count-mobile').textContent = smokeTotal;
-                    document.getElementById('smoke-sensor-normal').textContent = normalCount;
-                    document.getElementById('smoke-sensor-warning').textContent = warningCount;
-                    document.getElementById('smoke-sensor-danger').textContent = dangerCount;
-                    document.getElementById('smoke-sensor-last-check').textContent = lastCheckTime;
-                }
-
-                // Update DHT11 Sensor Card
-                if (sensorData.dht11Data && sensorData.dht11Data.data) {
-                    const dht11Data = sensorData.dht11Data.data;
-                    const dht11Total = dht11Data.length;
-
-                    // Count sensors by status and calculate average temperature
-                    let normalCount = 0;
-                    let warningCount = 0;
-                    let dangerCount = 0;
-                    let totalTemp = 0;
-
-                    dht11Data.forEach(sensor => {
-                        if (sensor.dht11_status === 'Normal') {
-                            normalCount++;
-                        } else if (sensor.dht11_status === 'High Temp' || sensor.dht11_status === 'Low Temp' || sensor.dht11_status === 'Warning') {
-                            warningCount++;
-                        } else if (sensor.dht11_status === 'Danger') {
-                            dangerCount++;
-                        }
-
-                        // Add temperature for average calculation if it exists and is a number
-                        if (sensor.temperature && !isNaN(sensor.temperature)) {
-                            totalTemp += parseFloat(sensor.temperature);
-                        }
-                    });
-
-                    // Calculate average temperature
-                    const avgTemp = dht11Total > 0 ? (totalTemp / dht11Total).toFixed(1) + '°C' : '-';
-
-                    // Update UI elements
-                    document.getElementById('dht11-sensor-count').textContent = dht11Total;
-                    document.getElementById('dht11-sensor-count-mobile').textContent = dht11Total;
-                    document.getElementById('dht11-sensor-normal').textContent = normalCount;
-                    document.getElementById('dht11-sensor-warning').textContent = warningCount;
-                    document.getElementById('dht11-sensor-danger').textContent = dangerCount;
-                    document.getElementById('dht11-avg-temp').textContent = avgTemp;
-                }
+            // Function to request sensor data
+            function requestSensorData(page = 1, pageSize = 10, location = null, status = null) {
+                console.log('Requesting sensor data with params:', { page, pageSize, location, status });
+                socket.emit('request_sensor_data', {
+                    page: page,
+                    pageSize: pageSize,
+                    location: location,
+                    status: status
+                });
             }
         });
     </script>

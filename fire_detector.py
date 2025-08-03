@@ -188,6 +188,12 @@ def generate_frames(camera_source=0):
     
     print(f"Attempting to open camera source: {camera_source}")
     
+    # Set camera location based on source
+    if camera_source == 1 or camera_source == '1':
+        fire_detector.camera_location = "DroidCam"
+    else:
+        fire_detector.camera_location = "Webcam"
+    
     # Try multiple camera backends
     for backend in [cv2.CAP_DSHOW, cv2.CAP_MSMF, cv2.CAP_ANY]:
         try:

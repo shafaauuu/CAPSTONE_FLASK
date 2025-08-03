@@ -653,14 +653,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Fire Status
                 const fireStatusCell = document.createElement('td');
-                const fireStatus = log.fire_status || 'Unknown';
+                const fireStatus = log.fire_status || 'Not Detected';
                 const fireBadgeClass = fireStatus === 'Detected' ? 'bg-danger' : 'bg-success';
                 fireStatusCell.innerHTML = `<span class="badge ${fireBadgeClass}">${fireStatus}</span>`;
                 row.appendChild(fireStatusCell);
                 
                 // Smoke Status
                 const smokeStatusCell = document.createElement('td');
-                const smokeStatus = log.smoke_status || 'Unknown';
+                const smokeStatus = log.smoke_status || 'Normal';
                 const smokeBadgeClass = smokeStatus === 'Detected' ? 'bg-warning' : 'bg-success';
                 smokeStatusCell.innerHTML = `<span class="badge ${smokeBadgeClass}">${smokeStatus}</span>`;
                 row.appendChild(smokeStatusCell);

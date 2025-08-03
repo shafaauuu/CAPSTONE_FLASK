@@ -91,11 +91,10 @@
                                             Camera Options
                                         </button>
                                         <ul class="dropdown-menu" aria-labelledby="cameraDropdown">
-                                            <li><a class="dropdown-item" href="#">Camera 1</a></li>
-                                            <li><a class="dropdown-item" href="#">Camera 2</a></li>
-                                            <li><a class="dropdown-item" href="#">Camera 3</a></li>
+                                            <li><a class="dropdown-item camera-option" href="#" data-camera="webcam" data-source="0">Camera 1</a></li>
+                                            <li><a class="dropdown-item camera-option" href="#" data-camera="droidcam" data-source="1">Camera 2</a></li>
                                             <li><hr class="dropdown-divider"></li>
-                                            <li><a class="dropdown-item" href="#">Refresh Feed</a></li>
+                                            <li><a class="dropdown-item" href="#" id="refreshCameraFeed">Refresh Feed</a></li>
                                         </ul>
                                     </div>
                                 </div>
@@ -115,7 +114,9 @@
                                 </div>
                                 <!-- Live Camera Feed -->
                                 <div class="col-12">
-                                    <img src="{{ url_for('home_blueprint.video_feed') }}" class="camera-feed" id="liveCameraFeed" alt="Live Camera Feed">
+                                    <video id="video" class="camera-feed" autoplay playsinline style="display: none;"></video>
+                                    <img src="{{ url_for('home_blueprint.video_feed', camera=0) }}" class="camera-feed" id="liveCameraFeed" alt="Live Camera Feed">
+                                    <canvas id="canvas" style="display: none;"></canvas>
                                 </div>
                                 <div class="col-12 mt-3">
                                     <div class="d-flex justify-content-between">
@@ -123,7 +124,7 @@
                                             Capture
                                         </button>
                                         <button class="btn btn-sm btn-danger" id="recordVideo">
-                                            Record
+                                            <span class="fas fa-stop me-2"></span>Stop
                                         </button>
                                     </div>
                                 </div>
@@ -132,41 +133,6 @@
                     </div>
                 </div>
 
-                <!-- Secondary Cameras Grid -->
-                <div class="col-12 mb-4">
-                    <div class="card border-0 shadow">
-                        <div class="card-header">
-                            <div class="row align-items-center">
-                                <div class="col">
-                                    <h2 class="fs-5 fw-bold mb-0">Additional Camera Feeds</h2>
-                                </div>
-                                <div class="col text-end">
-                                    <a href="/detections" target="_blank" class="btn btn-sm btn-primary">View All</a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <div class="card">
-                                        <div class="card-body p-2">
-                                            <h6 class="card-title mb-2">Camera 2</h6>
-                                            <img src="{{ url_for('static', filename='assets/img/camera-placeholder.jpg') }}" class="camera-feed" alt="Camera 2">
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <div class="card">
-                                        <div class="card-body p-2">
-                                            <h6 class="card-title mb-2">Camera 3</h6>
-                                            <img src="{{ url_for('static', filename='assets/img/camera-placeholder.jpg') }}" class="camera-feed" alt="Camera 3">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -201,33 +167,32 @@
                         <div class="d-flex align-items-center justify-content-between mb-3">
                             <div>
                                 <h6 class="mb-0">Camera 1</h6>
-                                <small class="text-success">Online</small>
+                                <small id="webcam-status-text" class="text-success">Checking...</small>
                             </div>
-                            <span class="badge bg-success">Active</span>
+                            <span id="webcam-status-badge" class="badge bg-secondary">Checking</span>
                         </div>
 
                         <!-- Camera Status -->
                         <div class="d-flex align-items-center justify-content-between mb-3">
                             <div>
                                 <h6 class="mb-0">Camera 2</h6>
-                                <small class="text-success">Online</small>
+                                <small id="droidcam-status-text" class="text-secondary">Checking...</small>
                             </div>
-                            <span class="badge bg-success">Active</span>
-                        </div>
-
-                        <!-- Camera Status -->
-                        <div class="d-flex align-items-center justify-content-between mb-3">
-                            <div>
-                                <h6 class="mb-0">Camera 3</h6>
-                                <small class="text-muted">Offline</small>
-                            </div>
-                            <span class="badge bg-danger">Inactive</span>
+                            <span id="droidcam-status-badge" class="badge bg-secondary">Checking</span>
                         </div>
 
                         <!-- Fire Detection Module -->
                         <div class="d-flex align-items-center justify-content-between mb-3">
                             <div>
-                                <h6 class="mb-0">Fire Detection Module</h6>
+                                <h6 class="mb-0">Fire Detection Camera</h6>
+                                <small class="text-success">Running</small>
+                            </div>
+                            <span class="badge bg-success">Active</span>
+                        </div>
+
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <div>
+                                <h6 class="mb-0">Fire Detection Sensor</h6>
                                 <small class="text-success">Running</small>
                             </div>
                             <span class="badge bg-success">Active</span>
@@ -251,8 +216,50 @@
 <!-- Specific Page JS goes HERE  -->
 {% block javascripts %}
 <script>
+    // Global variables
+    let currentStream = null;
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let isWebcamActive = false;
+    let isDroidCamActive = false;
+    let activeCamera = 'server'; // Default to server stream
+    let currentCameraSource = '0'; // Default to camera index 0 (webcam)
+    
     // Document ready event handler
     document.addEventListener('DOMContentLoaded', function() {
+        // Check available cameras
+        checkAvailableCameras();
+        
+        // Camera selection event handlers
+        document.querySelectorAll('.camera-option').forEach(option => {
+            option.addEventListener('click', function(e) {
+                e.preventDefault();
+                const cameraType = this.getAttribute('data-camera');
+                const cameraSource = this.getAttribute('data-source');
+                switchCamera(cameraType, cameraSource);
+            });
+        });
+
+        // Camera source dropdown handlers
+        document.querySelectorAll('.camera-switch').forEach(option => {
+            option.addEventListener('click', function(e) {
+                e.preventDefault();
+                const cameraSource = this.getAttribute('data-camera');
+                switchCameraSource(cameraSource);
+            });
+        });
+        
+        // Refresh camera feed
+        document.getElementById('refreshCameraFeed').addEventListener('click', function(e) {
+            e.preventDefault();
+            if (activeCamera !== 'server') {
+                switchCamera(activeCamera);
+            } else {
+                // Reload server feed with current camera source
+                reloadServerFeed();
+            }
+        });
+        
         // Button event handlers
         document.getElementById('captureImage').addEventListener('click', function() {
             captureImage();
@@ -267,192 +274,337 @@
             toggleRecording();
         });
     });
+    
+    // Check available cameras
+    function checkAvailableCameras() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+            console.log("enumerateDevices() not supported.");
+            updateCameraStatus('webcam', false);
+            updateCameraStatus('droidcam', false);
+            return;
+        }
 
-    // Capture image from camera feed
-    function captureImage() {
-        // Get the image from the video feed
-        const videoElement = document.getElementById('liveCameraFeed');
+        navigator.mediaDevices.enumerateDevices()
+            .then(devices => {
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                console.log("Available video devices:", videoDevices);
+                
+                // Check if webcam is available (usually the first camera)
+                const hasWebcam = videoDevices.length > 0;
+                updateCameraStatus('webcam', hasWebcam);
+                isWebcamActive = hasWebcam;
+                
+                // Check if DroidCam is available
+                const hasDroidCam = videoDevices.some(device => 
+                    device.label && device.label.toLowerCase().includes('droidcam'));
+                updateCameraStatus('droidcam', hasDroidCam);
+                isDroidCamActive = hasDroidCam;
+            })
+            .catch(err => {
+                console.error("Error enumerating devices:", err);
+                updateCameraStatus('webcam', false);
+                updateCameraStatus('droidcam', false);
+            });
+    }
+    
+    // Update camera status in UI
+    function updateCameraStatus(cameraType, isAvailable) {
+        const statusText = document.getElementById(`${cameraType}-status-text`);
+        const statusBadge = document.getElementById(`${cameraType}-status-badge`);
         
-        // Create a notification
+        if (isAvailable) {
+            statusText.className = 'text-success';
+            statusText.textContent = 'Online';
+            statusBadge.className = 'badge bg-success';
+            statusBadge.textContent = 'Active';
+        } else {
+            statusText.className = 'text-danger';
+            statusText.textContent = 'Offline';
+            statusBadge.className = 'badge bg-danger';
+            statusBadge.textContent = 'Inactive';
+        }
+    }
+    
+    // Switch between cameras
+    function switchCamera(cameraType, cameraSource) {
+        // Stop any existing stream
+        if (currentStream) {
+            currentStream.getTracks().forEach(track => track.stop());
+            currentStream = null;
+        }
+        
+        const videoElement = document.getElementById('video');
+        const serverFeed = document.getElementById('liveCameraFeed');
+        
+        // Reset UI
+        videoElement.style.display = 'none';
+        serverFeed.style.display = 'none';
+        
+        if (cameraType === 'server') {
+            // Use server feed
+            serverFeed.style.display = 'block';
+            activeCamera = 'server';
+            return;
+        }
+        
+        // Set active camera
+        activeCamera = cameraType;
+        currentCameraSource = cameraSource;
+        
+        // Update server feed URL with camera source parameter
+        serverFeed.src = "{{ url_for('home_blueprint.video_feed') }}?camera=" + cameraSource;
+        serverFeed.style.display = 'block';
+        
+        // For client-side camera access (optional)
+        if (false) { // Disabled for now to prioritize server-side processing
+            // Show video element for client-side cameras
+            videoElement.style.display = 'block';
+            
+            // Get the appropriate constraints
+            let constraints = { video: true };
+            
+            if (cameraType === 'droidcam' && isDroidCamActive) {
+                // Find DroidCam device
+                navigator.mediaDevices.enumerateDevices()
+                    .then(devices => {
+                        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                        const droidCam = videoDevices.find(device => 
+                            device.label && device.label.toLowerCase().includes('droidcam'));
+                        
+                        if (droidCam) {
+                            constraints = { video: { deviceId: { exact: droidCam.deviceId } } };
+                            startCamera(constraints);
+                        } else {
+                            console.error("DroidCam not found");
+                            showCameraError("DroidCam not found");
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Error getting devices:", err);
+                        showCameraError("Error accessing camera devices");
+                    });
+            } else if (cameraType === 'webcam' && isWebcamActive) {
+                // Use default webcam
+                startCamera(constraints);
+            } else {
+                showCameraError("Selected camera is not available");
+            }
+        }
+    }
+    
+    // Switch between camera sources (webcam/droidcam) for server feed
+    function switchCameraSource(cameraSource) {
+        currentCameraSource = cameraSource;
+        
+        // Update camera feed source
+        const serverFeed = document.getElementById('liveCameraFeed');
+        serverFeed.src = `{{ url_for('home_blueprint.video_feed') }}?camera=${cameraSource}`;
+        
+        // Update status text
+        const statusText = cameraSource === '0' ? 'Webcam' : 'DroidCam';
+        document.querySelector('.fire-status h5').innerHTML = 
+            `<span class="fas fa-fire-extinguisher me-2"></span>Fire Status: Normal (${statusText})`;
+        
+        console.log(`Switched to camera source: ${cameraSource}`);
+    }
+    
+    // Reload the server feed with current camera source
+    function reloadServerFeed() {
+        const serverFeed = document.getElementById('liveCameraFeed');
+        const currentSrc = serverFeed.src;
+        serverFeed.src = '';
+        setTimeout(() => {
+            serverFeed.src = `{{ url_for('home_blueprint.video_feed') }}?camera=${currentCameraSource}`;
+        }, 100);
+    }
+    
+    // Start camera with given constraints
+    function startCamera(constraints) {
+        navigator.mediaDevices.getUserMedia(constraints)
+            .then(stream => {
+                currentStream = stream;
+                const videoElement = document.getElementById('video');
+                videoElement.srcObject = stream;
+            })
+            .catch(err => {
+                console.error("Error accessing camera:", err);
+                showCameraError("Error accessing camera: " + err.message);
+            });
+    }
+    
+    // Show camera error
+    function showCameraError(message) {
         const notification = document.createElement('div');
-        notification.className = 'alert alert-success alert-dismissible fade show';
+        notification.className = 'alert alert-danger alert-dismissible fade show';
         notification.innerHTML = `
-            <span class="fas fa-check-circle me-2"></span>
-            Image captured successfully!
+            <span class="fas fa-exclamation-circle me-2"></span>
+            ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         `;
         
-        // Add notification to the page
         document.querySelector('.col-12.mb-4').prepend(notification);
         
-        // Remove notification after 3 seconds
+        // Remove notification after 5 seconds
         setTimeout(() => {
             notification.classList.remove('show');
             setTimeout(() => notification.remove(), 300);
-        }, 3000);
+        }, 5000);
+        
+        // Switch back to server feed
+        const serverFeed = document.getElementById('liveCameraFeed');
+        serverFeed.style.display = 'block';
+        activeCamera = 'server';
+    }
+
+    // Capture image from camera feed
+    function captureImage() {
+        let imageSource = null;
+        let imageData = null;
+        
+        if (activeCamera === 'server') {
+            // Capture from server feed
+            imageSource = document.getElementById('liveCameraFeed');
+        } else if (currentStream) {
+            // Capture from client-side camera
+            imageSource = document.getElementById('video');
+        } else {
+            showCameraError("No camera feed available to capture");
+            return;
+        }
+        
+        // Draw the image to canvas
+        const canvas = document.getElementById('canvas');
+        canvas.width = imageSource.videoWidth || imageSource.width;
+        canvas.height = imageSource.videoHeight || imageSource.height;
+        
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(imageSource, 0, 0, canvas.width, canvas.height);
+        
+        // Get image data
+        try {
+            imageData = canvas.toDataURL('image/jpeg');
+            
+            // Here you could send the image data to your server
+            console.log("Image captured:", imageData.substring(0, 50) + "...");
+            
+            // Create a notification
+            const notification = document.createElement('div');
+            notification.className = 'alert alert-success alert-dismissible fade show';
+            notification.innerHTML = `
+                <span class="fas fa-check-circle me-2"></span>
+                Image captured successfully!
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            
+            // Add notification to the page
+            document.querySelector('.col-12.mb-4').prepend(notification);
+            
+            // Remove notification after 3 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+            
+            // Optional: Download the image
+            /*
+            const link = document.createElement('a');
+            link.download = 'fire-detection-' + new Date().toISOString() + '.jpg';
+            link.href = imageData;
+            link.click();
+            */
+        } catch (error) {
+            console.error("Error capturing image:", error);
+            showCameraError("Error capturing image: " + error.message);
+        }
     }
     
     // Toggle video recording
     function toggleRecording() {
-        // Implementation for recording video
-        console.log('Recording toggled');
-    }
-
-    // Fire status simulation
-    const fireStatusElement = document.querySelector('.fire-status');
-    if (fireStatusElement) {
-        // Fire status will be updated by socket-client.js
-    }
-
-    // Direct API fallback for camera detections
-    document.addEventListener('DOMContentLoaded', function() {
-        // Wait a bit to see if socket.io loads the data
-        setTimeout(function() {
-            const alertHistoryContainer = document.querySelector('.alert-history');
-            if (alertHistoryContainer && alertHistoryContainer.innerHTML.includes('Loading detection data')) {
-                console.log('Socket.IO not loading camera detections, trying direct API call');
-                fetchCameraDetectionsDirectly();
+        if (!currentStream) {
+            if (activeCamera === 'server') {
+                showCameraError("Recording is only available with client-side cameras");
+            } else {
+                showCameraError("No camera stream available for recording");
             }
-        }, 8000); // Wait 8 seconds before trying direct API call
-    });
-
-    // Fallback function to fetch camera detections directly from API
-    function fetchCameraDetectionsDirectly() {
-        const url = 'http://localhost:3000/api/camera-detection/recent?limit=5';
-        
-        fetch(url)
-            .then(response => response.json())
-            .then(detections => {
-                console.log('Received detections directly from API:', detections);
-                updateCameraDetectionsUI(detections);
-            })
-            .catch(error => {
-                console.error('Error fetching camera detections directly:', error);
-                const alertHistoryContainer = document.querySelector('.alert-history');
-                if (alertHistoryContainer) {
-                    alertHistoryContainer.innerHTML = `
-                        <div class="alert alert-danger">
-                            <span class="fas fa-exclamation-circle me-2"></span>
-                            Error loading detection data: ${error.message || 'Failed to connect to API'}
-                        </div>
-                    `;
-                }
-            });
-    }
-
-    // Function to update camera detections UI (fallback version)
-    function updateCameraDetectionsUI(detections) {
-        const alertHistoryContainer = document.querySelector('.alert-history');
-        if (!alertHistoryContainer) return;
-        
-        if (!detections || detections.length === 0) {
-            alertHistoryContainer.innerHTML = '<div class="text-center py-3">No recent detections</div>';
+            
+            // Reset button state
+            const recordButton = document.getElementById('recordVideo');
+            recordButton.classList.remove('btn-danger');
+            recordButton.classList.add('btn-primary');
+            recordButton.innerHTML = '<span class="fas fa-video me-2"></span>Record';
+            
             return;
         }
         
-        alertHistoryContainer.innerHTML = '';
-        
-        detections.forEach(detection => {
-            const confidenceScore = parseFloat(detection.confidence_score) || 0;
-            const confidenceClass = confidenceScore > 0.7 ? 'danger' : (confidenceScore > 0.4 ? 'warning' : 'success');
-            const confidenceText = confidenceScore > 0.7 ? 'High' : (confidenceScore > 0.4 ? 'Medium' : 'Low');
-            
-            // Format timestamp
-            let formattedTime = detection.formatted_time;
-            if (!formattedTime && detection.detection_timestamp) {
-                const date = new Date(detection.detection_timestamp);
-                formattedTime = date.toLocaleString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                    hour: 'numeric',
-                    minute: 'numeric',
-                    second: 'numeric'
-                });
-            }
-            
-            // Handle image path
-            let imagePath = detection.image_path || '';
-            if (imagePath.startsWith('/uploads')) {
-                imagePath = 'http://localhost:3000' + imagePath;
-            }
-            
-            const alertItem = document.createElement('div');
-            alertItem.className = 'd-flex mt-2 mb-3 pb-3 border-bottom';
-            alertItem.innerHTML = `
-                <div class="icon-shape icon-sm icon-shape-${confidenceClass} rounded me-3">
-                    <span class="fas fa-fire"></span>
-                </div>
-                <div class="d-block">
-                    <div class="d-flex align-items-center mb-1">
-                        <h5 class="mb-0 me-2">Fire Detected</h5>
-                        <span class="badge bg-${confidenceClass} text-white">${confidenceText}</span>
-                    </div>
-                    <div class="small text-gray">
-                        <span class="fas fa-clock me-1"></span>
-                        ${formattedTime || 'Unknown time'}
-                    </div>
-                    <div class="small text-gray">
-                        <span class="fas fa-map-marker-alt me-1"></span>
-                        ${detection.camera_location || 'Unknown location'}
-                    </div>
-                    ${imagePath ? `<div class="mt-2">
-                        <a href="#" class="view-detection" data-id="${detection.detection_id}">
-                            <img src="${imagePath}" class="img-fluid rounded" style="max-height: 80px;" alt="Detection Image">
-                        </a>
-                    </div>` : ''}
-                </div>
-            `;
-            
-            alertHistoryContainer.appendChild(alertItem);
-        });
-        
-        // Add event listeners for detection image clicks
-        document.querySelectorAll('.view-detection').forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                const detectionId = this.getAttribute('data-id');
-                window.location.href = `/detection/${detectionId}`;
-            });
-        });
-        
-        // Update fire status indicator
-        updateFireStatusIndicator(detections);
-    }
-    
-    // Function to update fire status indicator (fallback version)
-    function updateFireStatusIndicator(detections) {
-        const fireStatus = document.querySelector('.fire-status');
-        if (!fireStatus || !detections || detections.length === 0) return;
-        
-        // Find active detections
-        const activeDetections = detections.filter(d => d.detection_status === 'Active');
-        
-        if (activeDetections.length === 0) {
-            fireStatus.className = 'fire-status text-success';
-            fireStatus.innerHTML = '<span class="fas fa-check-circle me-2"></span>No Active Fire';
-            return;
-        }
-        
-        // Find highest confidence score
-        let highestConfidence = 0;
-        activeDetections.forEach(detection => {
-            const confidence = parseFloat(detection.confidence_score) || 0;
-            if (confidence > highestConfidence) {
-                highestConfidence = confidence;
-            }
-        });
-        
-        // Set status based on confidence
-        if (highestConfidence > 0.7) {
-            fireStatus.className = 'fire-status text-danger';
-            fireStatus.innerHTML = '<span class="fas fa-fire me-2"></span>High Risk Fire Detected';
-        } else if (highestConfidence > 0.4) {
-            fireStatus.className = 'fire-status text-warning';
-            fireStatus.innerHTML = '<span class="fas fa-exclamation-triangle me-2"></span>Medium Risk Fire Detected';
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+            // Stop recording
+            mediaRecorder.stop();
+            console.log("Recording stopped");
         } else {
-            fireStatus.className = 'fire-status text-info';
-            fireStatus.innerHTML = '<span class="fas fa-info-circle me-2"></span>Low Risk Fire Detected';
+            // Start recording
+            recordedChunks = [];
+            
+            try {
+                mediaRecorder = new MediaRecorder(currentStream, { mimeType: 'video/webm' });
+                
+                mediaRecorder.ondataavailable = function(e) {
+                    if (e.data.size > 0) {
+                        recordedChunks.push(e.data);
+                    }
+                };
+                
+                mediaRecorder.onstop = function() {
+                    // Create blob from recorded chunks
+                    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                    
+                    // Create download link
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'fire-detection-' + new Date().toISOString() + '.webm';
+                    
+                    // Trigger download
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    // Release object URL
+                    setTimeout(() => {
+                        URL.revokeObjectURL(url);
+                    }, 100);
+                    
+                    // Create a notification
+                    const notification = document.createElement('div');
+                    notification.className = 'alert alert-success alert-dismissible fade show';
+                    notification.innerHTML = `
+                        <span class="fas fa-check-circle me-2"></span>
+                        Video saved successfully!
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    `;
+                    
+                    // Add notification to the page
+                    document.querySelector('.col-12.mb-4').prepend(notification);
+                    
+                    // Remove notification after 3 seconds
+                    setTimeout(() => {
+                        notification.classList.remove('show');
+                        setTimeout(() => notification.remove(), 300);
+                    }, 3000);
+                };
+                
+                // Start recording
+                mediaRecorder.start();
+                console.log("Recording started");
+            } catch (error) {
+                console.error("Error starting recording:", error);
+                showCameraError("Error starting recording: " + error.message);
+                
+                // Reset button state
+                const recordButton = document.getElementById('recordVideo');
+                recordButton.classList.remove('btn-danger');
+                recordButton.classList.add('btn-primary');
+                recordButton.innerHTML = '<span class="fas fa-video me-2"></span>Record';
+            }
         }
     }
 </script>
