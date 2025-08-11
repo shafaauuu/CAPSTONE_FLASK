@@ -141,8 +141,6 @@ def dashboard_admin():
         one_week_ago = today - timedelta(days=7)
         date_range = f"{one_week_ago.strftime('%b %d')} - {today.strftime('%b %d')}"
         
-        # Fetch user statistics from your API or database
-        # These are placeholders - implement actual API calls or database queries
         import requests
         
         try:
@@ -227,10 +225,7 @@ def dashboard_admin():
             
             # Get newest users for the table (this will be loaded via JavaScript)
             newest_users = pending_users[:5] if pending_users else []
-            
-            # TEMPORARY FIX FOR DEMO PURPOSES
-            # If the calculated total still seems too low, use this sample data
-            # Remove this code when the API is fully working
+
             if all_users_count < 10:
                 print("Using sample data for demonstration purposes, but keeping actual pending count")
                 # Keep the actual pending_users_count from the API
@@ -808,7 +803,6 @@ def detections():
         'id': user_id,
         'email': user_email,
         'name': user_name,
-        # Add any other fields that might be needed by the template
         'role': session.get('role', 'user')
     }
     
@@ -1015,7 +1009,7 @@ def download_sensor_data(filename):
 def init_fire_detector():
     """Initialize the fire detector model"""
     try:
-        # Setup model directory if it doesn't exist
+        # Setup model directory
         model_dir = os.path.join(os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'models', 'fire_detector')
         os.makedirs(model_dir, exist_ok=True)
         
@@ -1494,7 +1488,7 @@ def api_sensor_data_all():
                 'pagination': {'total': 0, 'page': 1, 'pageSize': int(page_size), 'totalPages': 0}
             }
         
-        # Fetch DHT11 sensor data - try non-paginated endpoint first for exports
+        # Fetch DHT11 sensor data (not-paginated))
         try:
             # For exports, try to get all data without pagination first
             dht11_api_url = f'{API_BASE_URL}/api/sensor/sensor-data/dht11'

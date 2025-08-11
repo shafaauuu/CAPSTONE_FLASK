@@ -493,9 +493,6 @@ def register_socket_events(socketio):
             location = data.get('location', '')
             status = data.get('status', '')
             
-            # Instead of using the combined endpoint, directly fetch from individual endpoints
-            # This bypasses the issue with the combined endpoint returning empty data
-            
             # Initialize data containers
             fire_data = []
             smoke_data = []

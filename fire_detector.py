@@ -27,7 +27,7 @@ class FireDetector:
         self.backend_url = backend_url or f"{Config.API_BASE_URL}/api/camera-detection"
         self.camera_location = camera_location
         self.last_alert_time = 0
-        self.alert_cooldown = 30  # seconds between alerts to avoid flooding the backend
+        self.alert_cooldown = 10  # seconds between alerts to avoid flooding the backend
         self.connection_error_count = 0
         self.max_connection_errors = 5  # After this many errors, reduce alert frequency
         self.connection_error_cooldown = 60  # seconds to wait after max errors reached
@@ -263,7 +263,7 @@ def generate_frames(camera_source=0):
     
     fire_status = False
     last_alert_time = 0
-    alert_cooldown = 30  # seconds
+    alert_cooldown = 10  # seconds
     
     while True:
         success, frame = cap.read()

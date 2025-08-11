@@ -14,8 +14,7 @@ socket.on('connect', function() {
     
     if (currentPath === '/' || currentPath.includes('/dashboard')) {
         console.log('On dashboard page, initializing dashboard data requests');
-        // Dashboard page - refresh dashboard stats and camera detections
-        
+
         // Request camera detections immediately
         console.log('Requesting initial camera detections immediately');
         requestCameraDetections(10);
@@ -436,7 +435,7 @@ function updatePagination(paginationId, pagination) {
 function updateLocationFilters(locations) {
     console.log('Updating location filters with:', locations);
     
-    // Get the dropdown menu for locations
+    // dropdown
     const locationDropdown = document.querySelector('ul[aria-labelledby="locationFilterDropdown"]');
     
     if (locationDropdown) {
@@ -570,8 +569,6 @@ function updateSensorOverviewCards(sensorData) {
         }
     }
 }
-
-// Alert logs handlers are now in alert-logs.js
 
 // Camera detection handlers
 function requestCameraDetections(limit = 5, status = null, location = null) {
@@ -985,7 +982,7 @@ function updateDetectionDetailsModal(detection) {
     }
 }
 
-// Function to mark a detection as resolved
+// detection as resolved
 function markDetectionAsResolved(detectionId) {
     fetch(`${API_BASE_URL}/api/camera-detection/${detectionId}/resolve`, {
         method: 'PUT',
@@ -1121,11 +1118,11 @@ function updateDetectionsTable(detections) {
             imageHtml = `
                 <img src="${detection.image_url}" alt="Detection Image" 
                      class="img-thumbnail detection-thumbnail" 
-                     onerror="this.onerror=null; this.src='/static/assets/images/no-image.png';">
+                     onerror="this.onerror=null; this.src='';">
             `;
         } else {
             imageHtml = `
-                <img src="/static/assets/images/no-image.png" alt="No Image Available" 
+                <img src="" alt="No Image Available" 
                      class="img-thumbnail detection-thumbnail">
             `;
         }
@@ -1336,7 +1333,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Auto-update data at intervals
 function setupAutoRefresh() {
-    // Set different intervals for different types of data
     const dashboardRefreshInterval = 30000; // 30 seconds
     const sensorRefreshInterval = 5000;     // 5 seconds
     const alertLogsRefreshInterval = 10000; // 10 seconds

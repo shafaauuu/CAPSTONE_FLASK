@@ -1001,6 +1001,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         showLoading(true);
         
+        // Stop alarm sound immediately when resolving an alert
+        if (typeof window.stopAlarmSound === 'function') {
+            console.log('Stopping alarm sound from alert-logs.js');
+            window.stopAlarmSound();
+        }
+        
         // Use Socket.IO if connected
         if (socket && socket.connected) {
             console.log('Resolving alert via Socket.IO');
@@ -1027,6 +1033,11 @@ document.addEventListener('DOMContentLoaded', function() {
                             y: 'top'
                         }
                     });
+                    
+                    // Stop alarm sound again to ensure it's stopped
+                    if (typeof window.stopAlarmSound === 'function') {
+                        window.stopAlarmSound();
+                    }
                     
                     // Update the status in the allAlertLogs array
                     if (allAlertLogs && allAlertLogs.length > 0) {
@@ -1084,6 +1095,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     modal.hide();
                 }
 
+                // Stop alarm sound again to ensure it's stopped
+                if (typeof window.stopAlarmSound === 'function') {
+                    window.stopAlarmSound();
+                }
                 
                 // Update the status in the allAlertLogs array
                 if (allAlertLogs && allAlertLogs.length > 0) {
