@@ -59,8 +59,40 @@
                         </select>
                     </div>
                 </div>
-                <div class="row mt-2">
-                    <div class="col-12 text-end">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="sensorDateRangeFilter">Filter by Date Range</label>
+                        <select class="form-select" id="sensorDateRangeFilter">
+                            <option value="all" selected>All Time</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
+                            <option value="custom">Custom Range</option>
+                            <option value="day">Specific Date</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3" id="sensorDateFilterContainer">
+                        <label for="sensorDateFilter">Select Date</label>
+                        <input type="date" class="form-control" id="sensorDateFilter">
+                    </div>
+                    <div class="col-md-4 mb-3 d-none" id="sensorDateRangeContainer">
+                        <div class="row">
+                            <div class="col-6">
+                                <label for="sensorStartDateFilter">Start Date</label>
+                                <input type="date" class="form-control" id="sensorStartDateFilter">
+                            </div>
+                            <div class="col-6">
+                                <label for="sensorEndDateFilter">End Date</label>
+                                <input type="date" class="form-control" id="sensorEndDateFilter">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-8 mb-3 d-flex align-items-end justify-content-end">
+                        <button type="button" id="generateChartBtn" class="btn btn-sm btn-info me-2" style="display: none;">
+                            <span class="fas fa-chart-pie me-1"></span>Generate Chart
+                        </button>
+                        <button type="button" id="clearFilters" class="btn btn-sm btn-secondary me-2">
+                            <span class="fas fa-times me-1"></span>Clear Filters
+                        </button>
                         <div class="btn-group">
                             <button type="button" id="export-sensor-data" class="btn btn-sm btn-outline-primary">
                                 <span class="fas fa-download me-1"></span>Export
@@ -97,8 +129,8 @@
                                 <h3 class="fw-extrabold mb-1" id="fire-sensor-count">0</h3>
                             </div>
                             <small>
-                                Detected <span class="fw-bold text-success" id="fire-sensor-normal">0</span> |
-                                Not Detected <span class="fw-bold text-danger" id="fire-sensor-danger">0</span>
+                                Detected <span class="fw-bold text-success" id="fire-sensor-danger">0</span> |
+                                Not Detected <span class="fw-bold text-danger" id="fire-sensor-normal">0</span>
                             </small>
                             <div class="small d-flex mt-1">
                                 <div>Last check <span class="fw-bold" id="fire-sensor-last-check">-</span></div>
@@ -129,8 +161,8 @@
                                 <h3 class="fw-extrabold mb-1" id="smoke-sensor-count">0</h3>
                             </div>
                             <small>
-                                Detected <span class="fw-bold text-success" id="smoke-sensor-normal">0</span> |
-                                Not Detected <span class="fw-bold text-danger" id="smoke-sensor-danger">0</span>
+                                Detected <span class="fw-bold text-success" id="smoke-sensor-danger">0</span> |
+                                Not Detected <span class="fw-bold text-danger" id="smoke-sensor-normal">0</span>
                             </small>
                             <div class="small d-flex mt-1">
                                 <div>Last check <span class="fw-bold" id="smoke-sensor-last-check">-</span></div>
@@ -165,7 +197,7 @@
                                 High Temp <span class="fw-bold text-danger" id="dht11-sensor-danger">0</span>
                             </small>
                             <div class="small d-flex mt-1">
-                                <div>Avg. Temperature <span class="fw-bold" id="dht11-avg-temp">-</span></div>
+                                <div class="ms-auto">Last check <span class="fw-bold" id="dht11-sensor-last-check">-</span></div>
                             </div>
                         </div>
                     </div>
@@ -202,7 +234,7 @@
                 </table>
             </div>
             <!-- Enhanced Pagination for fire sensor table -->
-            <div class="d-flex justify-content-between align-items-center mt-3">
+            <div class="pagination-container d-flex justify-content-between align-items-center mt-3">
                 <div class="pagination-info small text-muted">
                     Showing <span class="fw-bold" id="fire-showing-start">1</span> to <span class="fw-bold" id="fire-showing-end">10</span> of <span class="fw-bold" id="fire-total-items">0</span> items
                 </div>
@@ -242,7 +274,7 @@
                     </tbody>
                 </table>
             </div>
-            <div class="d-flex justify-content-between align-items-center mt-3">
+            <div class="pagination-container d-flex justify-content-between align-items-center mt-3">
                 <div class="pagination-info small text-muted">
                     Showing <span class="fw-bold" id="smoke-showing-start">1</span> to <span class="fw-bold" id="smoke-showing-end">10</span> of <span class="fw-bold" id="smoke-total-items">0</span> items
                 </div>
@@ -282,7 +314,7 @@
                     </tbody>
                 </table>
             </div>
-            <div class="d-flex justify-content-between align-items-center mt-3">
+            <div class="pagination-container d-flex justify-content-between align-items-center mt-3">
                 <div class="pagination-info small text-muted">
                     Showing <span class="fw-bold" id="dht11-showing-start">1</span> to <span class="fw-bold" id="dht11-showing-end">10</span> of <span class="fw-bold" id="dht11-total-items">0</span> items
                 </div>
@@ -295,11 +327,56 @@
         </div>
     </div>
 
+    <!-- Chart Modal -->
+    <div class="modal fade" id="chartModal" tabindex="-1" aria-labelledby="chartModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="chartModalLabel">Sensor Data Charts</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Flame Detectors</h5>
+                                    <canvas id="fireChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Smoke Detectors</h5>
+                                    <canvas id="smokeChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">DHT11 Sensors</h5>
+                                    <canvas id="dht11Chart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 {% endblock content %}
 
 {% block javascripts %}
     <!-- Load Socket.IO first -->
     <script src="{{ url_for('static', filename='assets/js/socket.io.min.js') }}"></script>
+    <!-- Load Chart.js for visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <!-- Load custom Socket.IO client -->
     <script src="{{ url_for('static', filename='assets/js/socket-client.js') }}"></script>
     <script>
@@ -309,10 +386,10 @@
             // Debug socket connection
             socket.on('connect', function() {
                 console.log('Socket.IO connected, requesting sensor data');
-                
+
                 // Request sensor data with default values
                 requestSensorData();
-                
+
                 // Fetch sensor locations for the filter
                 fetch(`${API_BASE_URL}/api/sensor/sensor-data/locations`)
                     .then(response => {
@@ -321,7 +398,7 @@
                     })
                     .then(locations => {
                         console.log('Sensor locations received:', locations);
-                        
+
                         // Populate location filter dropdown
                         const locationSelect = document.getElementById('sensorLocationFilter');
                         if (locationSelect) {
@@ -329,7 +406,7 @@
                             while (locationSelect.options.length > 1) {
                                 locationSelect.remove(1);
                             }
-                            
+
                             // Add location options
                             locations.forEach(location => {
                                 const option = document.createElement('option');
@@ -343,7 +420,7 @@
                         console.error('Error fetching sensor locations:', error);
                     });
             });
-            
+
             // Initial data request
             requestSensorData();
 
@@ -354,6 +431,7 @@
                 // Get current location filter and page size
                 const location = document.getElementById('sensorLocationFilter').value;
                 const pageSize = parseInt(document.getElementById('sensorPageSizeFilter').value);
+                const dateFilter = document.getElementById('sensorDateFilter').value;
 
                 console.log('Filtering by status:', status);
                 requestSensorData(1, pageSize, location, status);
@@ -366,6 +444,7 @@
                 // Get current filters
                 const location = document.getElementById('sensorLocationFilter').value;
                 const status = document.getElementById('sensorStatusFilter').value;
+                const dateFilter = document.getElementById('sensorDateFilter').value;
 
                 console.log('Changing page size to:', pageSize);
                 requestSensorData(1, pageSize, location, status);
@@ -377,8 +456,9 @@
                 const location = document.getElementById('sensorLocationFilter').value;
                 const status = document.getElementById('sensorStatusFilter').value;
                 const pageSize = parseInt(document.getElementById('sensorPageSizeFilter').value);
+                const dateFilter = document.getElementById('sensorDateFilter').value;
 
-                console.log('Refreshing sensor data with filters:', { location, status, pageSize });
+                console.log('Refreshing sensor data with filters:', { location, status, pageSize, dateFilter });
                 requestSensorData(1, pageSize, location, status);
             });
 
@@ -387,9 +467,10 @@
                 // Get current filters
                 const location = document.getElementById('sensorLocationFilter').value;
                 const status = document.getElementById('sensorStatusFilter').value;
+                const dateFilter = document.getElementById('sensorDateFilter').value;
 
-                console.log('Exporting sensor data with filters:', { location, status });
-                
+                console.log('Exporting sensor data with filters:', { location, status, dateFilter });
+
                 // Show loading indicator
                 const originalText = this.innerHTML;
                 this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Exporting...';
@@ -398,19 +479,20 @@
                 // Emit export event to server
                 socket.emit('export_sensor_data', {
                     location: location,
-                    status: status
+                    status: status,
+                    date: dateFilter
                 });
-                
+
                 // Handle export response
                 socket.once('export_sensor_data_response', function(response) {
                     // Reset button
                     const exportBtn = document.getElementById('export-sensor-data');
                     exportBtn.innerHTML = originalText;
                     exportBtn.disabled = false;
-                    
+
                     if (response.success) {
                         console.log('Export successful, downloading file:', response.filename);
-                        
+
                         // Handle direct download via data URL
                         if (response.data_url) {
                             // Create a temporary link element to trigger download
@@ -420,7 +502,7 @@
                             document.body.appendChild(downloadLink);
                             downloadLink.click();
                             document.body.removeChild(downloadLink);
-                            
+
                             // Show success notification
                             const toast = document.createElement('div');
                             toast.className = 'toast align-items-center text-white bg-success border-0 position-fixed bottom-0 end-0 m-3';
@@ -436,11 +518,11 @@
                                 </div>
                             `;
                             document.body.appendChild(toast);
-                            
+
                             // Initialize and show the toast
                             const bsToast = new bootstrap.Toast(toast);
                             bsToast.show();
-                            
+
                             // Remove toast after it's hidden
                             toast.addEventListener('hidden.bs.toast', function() {
                                 document.body.removeChild(toast);
@@ -453,7 +535,7 @@
                             document.body.appendChild(downloadLink);
                             downloadLink.click();
                             document.body.removeChild(downloadLink);
-                            
+
                             // Show success notification
                             const toast = document.createElement('div');
                             toast.className = 'toast align-items-center text-white bg-success border-0 position-fixed bottom-0 end-0 m-3';
@@ -469,11 +551,11 @@
                                 </div>
                             `;
                             document.body.appendChild(toast);
-                            
+
                             // Initialize and show the toast
                             const bsToast = new bootstrap.Toast(toast);
                             bsToast.show();
-                            
+
                             // Remove toast after it's hidden
                             toast.addEventListener('hidden.bs.toast', function() {
                                 document.body.removeChild(toast);
@@ -481,7 +563,7 @@
                         }
                     } else {
                         console.error('Export failed:', response.error);
-                        
+
                         // Show error notification
                         const toast = document.createElement('div');
                         toast.className = 'toast align-items-center text-white bg-danger border-0 position-fixed bottom-0 end-0 m-3';
@@ -497,11 +579,11 @@
                             </div>
                         `;
                         document.body.appendChild(toast);
-                        
+
                         // Initialize and show the toast
                         const bsToast = new bootstrap.Toast(toast);
                         bsToast.show();
-                        
+
                         // Remove toast after it's hidden
                         toast.addEventListener('hidden.bs.toast', function() {
                             document.body.removeChild(toast);
@@ -517,19 +599,593 @@
                 // Get current status filter and page size
                 const status = document.getElementById('sensorStatusFilter').value;
                 const pageSize = parseInt(document.getElementById('sensorPageSizeFilter').value);
+                const dateFilter = document.getElementById('sensorDateFilter').value;
 
                 console.log('Filtering by location:', location);
                 requestSensorData(1, pageSize, location, status);
             });
 
+            // Set up date filter event handler
+            document.getElementById('sensorDateRangeFilter').addEventListener('change', function() {
+                const dateRange = this.value;
+
+                if (dateRange === 'custom') {
+                    document.getElementById('sensorDateRangeContainer').classList.remove('d-none');
+                    document.getElementById('sensorDateFilterContainer').classList.add('d-none');
+                } else if (dateRange === 'day') {
+                    document.getElementById('sensorDateRangeContainer').classList.add('d-none');
+                    document.getElementById('sensorDateFilterContainer').classList.remove('d-none');
+                } else {
+                    document.getElementById('sensorDateRangeContainer').classList.add('d-none');
+                    document.getElementById('sensorDateFilterContainer').classList.add('d-none');
+                }
+
+                applyDateFilter();
+            });
+
+            // Set up date filter event handler
+            document.getElementById('sensorDateFilter').addEventListener('change', function() {
+                applyDateFilter();
+            });
+
+            // Set up start date filter event handler
+            document.getElementById('sensorStartDateFilter').addEventListener('change', function() {
+                applyDateFilter();
+            });
+
+            // Set up end date filter event handler
+            document.getElementById('sensorEndDateFilter').addEventListener('change', function() {
+                applyDateFilter();
+            });
+
+            // Set up clear filters button
+            document.getElementById('clearFilters').addEventListener('click', function() {
+                // Reset all filters
+                document.getElementById('sensorLocationFilter').value = '';
+                document.getElementById('sensorStatusFilter').value = '';
+                document.getElementById('sensorDateRangeFilter').value = 'all';
+                document.getElementById('sensorDateFilter').value = '';
+                document.getElementById('sensorStartDateFilter').value = '';
+                document.getElementById('sensorEndDateFilter').value = '';
+
+                // Reset to default page size
+                const pageSize = 10;
+                document.getElementById('sensorPageSizeFilter').value = pageSize;
+
+                // Request data with cleared filters
+                requestSensorData(1, pageSize, null, null);
+
+                // Show pagination controls again
+                document.querySelectorAll('.pagination-container').forEach(container => {
+                    container.style.display = '';
+                });
+            });
+
+            // Function to apply date filter on the client side
+            function applyDateFilter() {
+                const dateRange = document.getElementById('sensorDateRangeFilter').value;
+                const dateFilter = document.getElementById('sensorDateFilter').value;
+                const startDateFilter = document.getElementById('sensorStartDateFilter').value;
+                const endDateFilter = document.getElementById('sensorEndDateFilter').value;
+
+                if (dateRange === 'custom') {
+                    if (!startDateFilter || !endDateFilter) {
+                        console.error('Both start and end dates are required for custom range');
+                        return;
+                    }
+
+                    // Parse the selected dates (YYYY-MM-DD from input)
+                    const startDateParts = startDateFilter.split('-');
+                    const endDateParts = endDateFilter.split('-');
+
+                    if (startDateParts.length !== 3 || endDateParts.length !== 3) {
+                        console.error('Invalid date filter format:', startDateFilter, endDateFilter);
+                        return;
+                    }
+
+                    const startYear = parseInt(startDateParts[0], 10);
+                    const startMonth = parseInt(startDateParts[1], 10);
+                    const startDay = parseInt(startDateParts[2], 10);
+                    const endYear = parseInt(endDateParts[0], 10);
+                    const endMonth = parseInt(endDateParts[1], 10);
+                    const endDay = parseInt(endDateParts[2], 10);
+
+                    console.log('Selected date parts:', { startYear, startMonth, startDay, endYear, endMonth, endDay });
+
+                    // Get current filters
+                    const location = document.getElementById('sensorLocationFilter').value;
+                    const status = document.getElementById('sensorStatusFilter').value;
+
+                    // Request all data (set pageSize to a large number to get all data)
+                    requestSensorData(1, 1000, location, status);
+
+                    // Wait for data to load then apply filter
+                    setTimeout(() => {
+                        // Filter all sensor tables
+                        filterTableByDateRange('fire-sensor-table', startYear, startMonth, startDay, endYear, endMonth, endDay);
+                        filterTableByDateRange('smoke-sensor-table', startYear, startMonth, startDay, endYear, endMonth, endDay);
+                        filterTableByDateRange('dht11-sensor-table', startYear, startMonth, startDay, endYear, endMonth, endDay);
+
+                        // Hide pagination controls when date filter is active
+                        document.querySelectorAll('.pagination-container').forEach(container => {
+                            container.style.display = 'none';
+                        });
+
+                        // Show Generate Chart button
+                        document.getElementById('generateChartBtn').style.display = '';
+                    }, 500);
+                } else if (dateRange === 'day') {
+                    if (!dateFilter) {
+                        console.error('Date is required for specific date filter');
+                        return;
+                    }
+
+                    // Parse the selected date (YYYY-MM-DD from input)
+                    const dateParts = dateFilter.split('-');
+
+                    if (dateParts.length !== 3) {
+                        console.error('Invalid date filter format:', dateFilter);
+                        return;
+                    }
+
+                    const year = parseInt(dateParts[0], 10);
+                    const month = parseInt(dateParts[1], 10);
+                    const day = parseInt(dateParts[2], 10);
+
+                    console.log('Selected date parts:', { year, month, day });
+
+                    // Get current filters
+                    const location = document.getElementById('sensorLocationFilter').value;
+                    const status = document.getElementById('sensorStatusFilter').value;
+
+                    // Request all data (set pageSize to a large number to get all data)
+                    requestSensorData(1, 1000, location, status);
+
+                    // Wait for data to load then apply filter
+                    setTimeout(() => {
+                        // Filter all sensor tables
+                        filterTableByDate('fire-sensor-table', year, month, day);
+                        filterTableByDate('smoke-sensor-table', year, month, day);
+                        filterTableByDate('dht11-sensor-table', year, month, day);
+
+                        // Hide pagination controls when date filter is active
+                        document.querySelectorAll('.pagination-container').forEach(container => {
+                            container.style.display = 'none';
+                        });
+
+                        // Show Generate Chart button
+                        document.getElementById('generateChartBtn').style.display = '';
+                    }, 500);
+                } else {
+                    // Get current filters
+                    const location = document.getElementById('sensorLocationFilter').value;
+                    const status = document.getElementById('sensorStatusFilter').value;
+
+                    // Request data with cleared filters
+                    requestSensorData(1, 10, location, status);
+
+                    // Show pagination controls again
+                    document.querySelectorAll('.pagination-container').forEach(container => {
+                        container.style.display = '';
+                    });
+                }
+            }
+
+            // Function to filter a specific table by date range
+            function filterTableByDateRange(tableId, startYear, startMonth, startDay, endYear, endMonth, endDay) {
+                const table = document.getElementById(tableId);
+                if (!table) return;
+
+                let matchFound = false;
+                const rows = table.querySelectorAll('tbody tr');
+
+                rows.forEach(row => {
+                    // Get timestamp cell (last column)
+                    const timestampCell = row.querySelector('td:last-child');
+                    if (!timestampCell) return;
+
+                    const timestamp = timestampCell.textContent.trim();
+                    if (!timestamp) {
+                        row.style.display = 'none';
+                        return;
+                    }
+
+                    try {
+                        // Parse the timestamp manually (format: "M/D/YYYY, h:mm:ss PM")
+                        // Example: "8/6/2025, 2:00:56 PM"
+                        const parts = timestamp.split(',');
+                        if (parts.length < 2) {
+                            console.warn('Invalid timestamp format:', timestamp);
+                            row.style.display = 'none';
+                            return;
+                        }
+
+                        const datePart = parts[0].trim();
+                        const datePieces = datePart.split('/');
+
+                        if (datePieces.length !== 3) {
+                            console.warn('Invalid date format in timestamp:', timestamp);
+                            row.style.display = 'none';
+                            return;
+                        }
+
+                        // Parse date parts (M/D/YYYY)
+                        const month = parseInt(datePieces[0], 10);
+                        const day = parseInt(datePieces[1], 10);
+                        const year = parseInt(datePieces[2], 10);
+
+                        console.log('Row date parts:', { year, month, day, timestamp });
+
+                        // Compare date parts directly
+                        if (year >= startYear && year <= endYear && month >= startMonth && month <= endMonth && day >= startDay && day <= endDay) {
+                            row.style.display = ''; // Show matching rows
+                            matchFound = true;
+                        } else {
+                            row.style.display = 'none'; // Hide non-matching rows
+                        }
+                    } catch (error) {
+                        console.error('Error parsing date:', error, timestamp);
+                        row.style.display = 'none';
+                    }
+                });
+
+                // Add a "no results" message if no matches found
+                let noResultsRow = table.querySelector('.no-results-row');
+
+                if (!matchFound && rows.length > 0) {
+                    if (!noResultsRow) {
+                        const tbody = table.querySelector('tbody');
+                        noResultsRow = document.createElement('tr');
+                        noResultsRow.className = 'no-results-row';
+                        const td = document.createElement('td');
+                        td.colSpan = 4; // Assuming 4 columns in the table
+                        td.textContent = 'No data found for the selected date range';
+                        td.className = 'text-center py-3 text-muted';
+                        noResultsRow.appendChild(td);
+                        tbody.appendChild(noResultsRow);
+                    } else {
+                        noResultsRow.style.display = '';
+                    }
+                } else if (noResultsRow) {
+                    noResultsRow.style.display = 'none';
+                }
+            }
+
+            // Function to filter a specific table by date
+            function filterTableByDate(tableId, year, month, day) {
+                const table = document.getElementById(tableId);
+                if (!table) return;
+
+                let matchFound = false;
+                const rows = table.querySelectorAll('tbody tr');
+
+                rows.forEach(row => {
+                    // Get timestamp cell (last column)
+                    const timestampCell = row.querySelector('td:last-child');
+                    if (!timestampCell) return;
+
+                    const timestamp = timestampCell.textContent.trim();
+                    if (!timestamp) {
+                        row.style.display = 'none';
+                        return;
+                    }
+
+                    try {
+                        // Parse the timestamp manually (format: "M/D/YYYY, h:mm:ss PM")
+                        // Example: "8/6/2025, 2:00:56 PM"
+                        const parts = timestamp.split(',');
+                        if (parts.length < 2) {
+                            console.warn('Invalid timestamp format:', timestamp);
+                            row.style.display = 'none';
+                            return;
+                        }
+
+                        const datePart = parts[0].trim();
+                        const datePieces = datePart.split('/');
+
+                        if (datePieces.length !== 3) {
+                            console.warn('Invalid date format in timestamp:', timestamp);
+                            row.style.display = 'none';
+                            return;
+                        }
+
+                        // Parse date parts (M/D/YYYY)
+                        const month = parseInt(datePieces[0], 10);
+                        const day = parseInt(datePieces[1], 10);
+                        const year = parseInt(datePieces[2], 10);
+
+                        console.log('Row date parts:', { year, month, day, timestamp });
+
+                        // Compare date parts directly
+                        if (year === year && month === month && day === day) {
+                            row.style.display = ''; // Show matching rows
+                            matchFound = true;
+                        } else {
+                            row.style.display = 'none'; // Hide non-matching rows
+                        }
+                    } catch (error) {
+                        console.error('Error parsing date:', error, timestamp);
+                        row.style.display = 'none';
+                    }
+                });
+
+                // Add a "no results" message if no matches found
+                let noResultsRow = table.querySelector('.no-results-row');
+
+                if (!matchFound && rows.length > 0) {
+                    if (!noResultsRow) {
+                        const tbody = table.querySelector('tbody');
+                        noResultsRow = document.createElement('tr');
+                        noResultsRow.className = 'no-results-row';
+                        const td = document.createElement('td');
+                        td.colSpan = 4; // Assuming 4 columns in the table
+                        td.textContent = 'No data found for the selected date';
+                        td.className = 'text-center py-3 text-muted';
+                        noResultsRow.appendChild(td);
+                        tbody.appendChild(noResultsRow);
+                    } else {
+                        noResultsRow.style.display = '';
+                    }
+                } else if (noResultsRow) {
+                    noResultsRow.style.display = 'none';
+                }
+            }
+
             // Function to request sensor data
             function requestSensorData(page = 1, pageSize = 10, location = null, status = null) {
-                console.log('Requesting sensor data with params:', { page, pageSize, location, status });
+                console.log(`Requesting sensor data with page=${page}, pageSize=${pageSize}, location=${location}, status=${status}`);
+
+                // Get date filter parameters
+                const dateRangeType = document.getElementById('sensorDateRangeFilter').value;
+                let dateFilter = null;
+                let startDate = null;
+                let endDate = null;
+
+                if (dateRangeType === 'day') {
+                    dateFilter = document.getElementById('sensorDateFilter').value;
+                } else if (dateRangeType === 'custom') {
+                    startDate = document.getElementById('sensorStartDateFilter').value;
+                    endDate = document.getElementById('sensorEndDateFilter').value;
+                } else if (dateRangeType === 'monthly' || dateRangeType === 'yearly') {
+                    dateFilter = document.getElementById('sensorDateFilter').value;
+                }
+
+                // Show loading spinners
+                document.querySelectorAll('#fire-sensor-table tbody, #smoke-sensor-table tbody, #dht11-sensor-table tbody').forEach(tbody => {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></td></tr>';
+                });
+
+                // Emit socket event to request data
                 socket.emit('request_sensor_data', {
                     page: page,
                     pageSize: pageSize,
                     location: location,
-                    status: status
+                    status: status,
+                    dateFilter: dateFilter,
+                    dateRangeType: dateRangeType,
+                    startDate: startDate,
+                    endDate: endDate
+                });
+            }
+
+            // Define the chart generation function globally so it can be accessed from multiple places
+            window.handleGenerateChartClick = function() {
+                console.log('Generate Chart button clicked');
+
+                // Get current filters
+                const location = document.getElementById('sensorLocationFilter').value;
+                const status = document.getElementById('sensorStatusFilter').value;
+                const dateRange = document.getElementById('sensorDateRangeFilter').value;
+                const dateFilter = document.getElementById('sensorDateFilter').value;
+                const startDateFilter = document.getElementById('sensorStartDateFilter').value;
+                const endDateFilter = document.getElementById('sensorEndDateFilter').value;
+
+                // Remove any existing listeners to prevent duplicates
+                socket.off('generate_chart_response');
+
+                // Add new listener for chart generation response
+                socket.on('generate_chart_response', function(response) {
+                    console.log('Received chart generation response:', response);
+
+                    if (response.success) {
+                        console.log('Chart data received:', response.data);
+
+                        // Create charts
+                        createFireChart(response.data.fire);
+                        createSmokeChart(response.data.smoke);
+                        createDht11Chart(response.data.dht11);
+
+                        // Show chart modal
+                        const chartModal = new bootstrap.Modal(document.getElementById('chartModal'));
+                        chartModal.show();
+                    } else {
+                        console.error('Error generating chart:', response.error);
+                        alert('Error generating chart: ' + (response.error || 'Unknown error'));
+                    }
+                });
+
+                // Emit chart generation event to server
+                socket.emit('generate_chart', {
+                    location: location,
+                    status: status,
+                    dateRange: dateRange,
+                    date: dateFilter,
+                    startDate: startDateFilter,
+                    endDate: endDateFilter
+                });
+                
+                console.log('Chart generation request sent to server');
+            };
+            
+            // Function to create a chart
+            function createFireChart(data) {
+                const ctx = document.getElementById('fireChart').getContext('2d');
+
+                // Destroy existing chart if it exists
+                if (window.fireChart) {
+                    window.fireChart.destroy();
+                }
+
+                window.fireChart = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            label: 'Flame Detectors',
+                            data: data.values,
+                            backgroundColor: [
+                                'rgba(255, 99, 132, 0.7)',
+                                'rgba(54, 162, 235, 0.7)'
+                            ],
+                            borderColor: [
+                                'rgba(255, 99, 132, 1)',
+                                'rgba(54, 162, 235, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Flame Detector Status'
+                            }
+                        }
+                    }
+                });
+            }
+
+            function createSmokeChart(data) {
+                const ctx = document.getElementById('smokeChart').getContext('2d');
+
+                // Destroy existing chart if it exists
+                if (window.smokeChart) {
+                    window.smokeChart.destroy();
+                }
+
+                window.smokeChart = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            label: 'Smoke Detectors',
+                            data: data.values,
+                            backgroundColor: [
+                                'rgba(255, 99, 132, 0.7)',
+                                'rgba(54, 162, 235, 0.7)'
+                            ],
+                            borderColor: [
+                                'rgba(255, 99, 132, 1)',
+                                'rgba(54, 162, 235, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Smoke Detector Status'
+                            }
+                        }
+                    }
+                });
+            }
+
+            function createDht11Chart(data) {
+                const ctx = document.getElementById('dht11Chart').getContext('2d');
+
+                // Destroy existing chart if it exists
+                if (window.dht11Chart) {
+                    window.dht11Chart.destroy();
+                }
+
+                window.dht11Chart = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            label: 'DHT11 Sensors',
+                            data: data.values,
+                            backgroundColor: [
+                                'rgba(75, 192, 192, 0.7)',
+                                'rgba(255, 159, 64, 0.7)'
+                            ],
+                            borderColor: [
+                                'rgba(75, 192, 192, 1)',
+                                'rgba(255, 159, 64, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            },
+                            title: {
+                                display: true,
+                                text: 'DHT11 Sensor Status'
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+    
+    <script>
+        // Initialize chart modal event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing chart event handlers');
+            
+            // Ensure the Generate Chart button has its event handler
+            const generateChartBtn = document.getElementById('generateChartBtn');
+            if (generateChartBtn) {
+                // Remove any existing listeners to prevent duplicates
+                generateChartBtn.removeEventListener('click', handleGenerateChartClick);
+                
+                // Add fresh event listener
+                generateChartBtn.addEventListener('click', handleGenerateChartClick);
+                console.log('Generate Chart button event listener attached');
+            } else {
+                console.error('Generate Chart button not found in DOM');
+            }
+            
+            // Set up chart modal close event
+            const chartModal = document.getElementById('chartModal');
+            if (chartModal) {
+                chartModal.addEventListener('hidden.bs.modal', function() {
+                    console.log('Chart modal closed, cleaning up');
+                    
+                    // Remove socket listener to prevent duplicate handlers
+                    socket.off('generate_chart_response');
+                    
+                    // Request updated data
+                    const location = document.getElementById('sensorLocationFilter').value;
+                    const status = document.getElementById('sensorStatusFilter').value;
+                    const pageSize = parseInt(document.getElementById('sensorPageSizeFilter').value);
+                    requestSensorData(1, pageSize, location, status);
+                    
+                    // Re-attach the event listener for generate chart button
+                    const generateChartBtn = document.getElementById('generateChartBtn');
+                    if (generateChartBtn) {
+                        // Remove any existing listeners to prevent duplicates
+                        generateChartBtn.removeEventListener('click', handleGenerateChartClick);
+                        
+                        // Add fresh event listener
+                        generateChartBtn.addEventListener('click', handleGenerateChartClick);
+                        console.log('Generate Chart button event listener re-attached after modal close');
+                    }
                 });
             }
         });

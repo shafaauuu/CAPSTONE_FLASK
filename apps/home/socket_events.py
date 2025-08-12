@@ -232,10 +232,16 @@ def register_socket_events(socketio):
             pageSize = data.get('pageSize', 10)
             location = data.get('location')
             status = data.get('status')
-            
+
+            # Get date filter parameters
+            date_filter = data.get('dateFilter')
+            date_range_type = data.get('dateRangeType', 'all')  # 'all', 'monthly', 'yearly', 'custom'
+            start_date = data.get('startDate')
+            end_date = data.get('endDate')
+
             # Initialize response data
             sensor_data = {}
-            
+
             # Test if the Node.js server is accessible
             try:
                 # Try with direct IP instead of localhost
@@ -249,16 +255,40 @@ def register_socket_events(socketio):
                 print(f"Error connecting to Node.js API server: {str(e)}")
                 print(f"Error type: {type(e).__name__}")
                 print(f"Error details: {traceback.format_exc()}")
-            
+
             # Fetch fire sensor data
             try:
                 fire_api_url = f'{API_BASE_URL}/api/sensor/sensor-data/fire/paginated?page={page}&pageSize={pageSize}' + \
                               (f'&location={location}' if location else '') + \
                               (f'&status={status}' if status else '')
+
+                # Add date filter parameters if provided
+                if date_filter and date_range_type == 'day':
+                    fire_api_url += f'&date={date_filter}'
+                elif date_range_type == 'monthly' and date_filter:
+                    # Extract year and month from date_filter (format: YYYY-MM-DD)
+                    try:
+                        date_obj = datetime.strptime(date_filter, '%Y-%m-%d')
+                        year = date_obj.year
+                        month = date_obj.month
+                        fire_api_url += f'&year={year}&month={month}'
+                    except:
+                        print(f"Invalid date format for monthly filter: {date_filter}")
+                elif date_range_type == 'yearly' and date_filter:
+                    # Extract year from date_filter
+                    try:
+                        date_obj = datetime.strptime(date_filter, '%Y-%m-%d')
+                        year = date_obj.year
+                        fire_api_url += f'&year={year}'
+                    except:
+                        print(f"Invalid date format for yearly filter: {date_filter}")
+                elif date_range_type == 'custom' and start_date and end_date:
+                    fire_api_url += f'&startDate={start_date}&endDate={end_date}'
+
                 print(f"Requesting fire sensor data from: {fire_api_url}")
                 fire_response = requests.get(fire_api_url, timeout=5)
                 print(f"Fire sensor API response status: {fire_response.status_code}")
-                
+
                 if fire_response.status_code == 200:
                     sensor_data['fireSensorData'] = fire_response.json()
                     print(f"Fire sensor data received: {len(sensor_data['fireSensorData'].get('data', []))} records")
@@ -268,7 +298,7 @@ def register_socket_events(socketio):
                     fallback_url = f'{API_BASE_URL}/api/sensor/sensor-data/fire'
                     print(f"Trying fallback URL: {fallback_url}")
                     fallback_response = requests.get(fallback_url, timeout=5)
-                    
+
                     if fallback_response.status_code == 200:
                         # Convert regular response to paginated format
                         data_list = fallback_response.json()
@@ -298,16 +328,40 @@ def register_socket_events(socketio):
                     'pagination': {'total': 0, 'page': page, 'pageSize': pageSize, 'totalPages': 0},
                     'error': f"Error fetching fire sensor data: {str(e)}"
                 }
-            
+
             # Fetch smoke sensor data
             try:
                 smoke_api_url = f'{API_BASE_URL}/api/sensor/sensor-data/smoke/paginated?page={page}&pageSize={pageSize}' + \
                                (f'&location={location}' if location else '') + \
                                (f'&status={status}' if status else '')
+
+                # Add date filter parameters if provided
+                if date_filter and date_range_type == 'day':
+                    smoke_api_url += f'&date={date_filter}'
+                elif date_range_type == 'monthly' and date_filter:
+                    # Extract year and month from date_filter
+                    try:
+                        date_obj = datetime.strptime(date_filter, '%Y-%m-%d')
+                        year = date_obj.year
+                        month = date_obj.month
+                        smoke_api_url += f'&year={year}&month={month}'
+                    except:
+                        print(f"Invalid date format for monthly filter: {date_filter}")
+                elif date_range_type == 'yearly' and date_filter:
+                    # Extract year from date_filter
+                    try:
+                        date_obj = datetime.strptime(date_filter, '%Y-%m-%d')
+                        year = date_obj.year
+                        smoke_api_url += f'&year={year}'
+                    except:
+                        print(f"Invalid date format for yearly filter: {date_filter}")
+                elif date_range_type == 'custom' and start_date and end_date:
+                    smoke_api_url += f'&startDate={start_date}&endDate={end_date}'
+
                 print(f"Requesting smoke sensor data from: {smoke_api_url}")
                 smoke_response = requests.get(smoke_api_url, timeout=5)
                 print(f"Smoke sensor API response status: {smoke_response.status_code}")
-                
+
                 if smoke_response.status_code == 200:
                     sensor_data['smokeSensorData'] = smoke_response.json()
                     print(f"Smoke sensor data received: {len(sensor_data['smokeSensorData'].get('data', []))} records")
@@ -317,7 +371,7 @@ def register_socket_events(socketio):
                     fallback_url = f'{API_BASE_URL}/api/sensor/sensor-data/smoke'
                     print(f"Trying fallback URL: {fallback_url}")
                     fallback_response = requests.get(fallback_url, timeout=5)
-                    
+
                     if fallback_response.status_code == 200:
                         # Convert regular response to paginated format
                         data_list = fallback_response.json()
@@ -347,30 +401,54 @@ def register_socket_events(socketio):
                     'pagination': {'total': 0, 'page': page, 'pageSize': pageSize, 'totalPages': 0},
                     'error': f"Error fetching smoke sensor data: {str(e)}"
                 }
-            
+
             # Fetch DHT11 sensor data
             try:
                 dht11_api_url = f'{API_BASE_URL}/api/sensor/sensor-data/dht11/paginated?page={page}&pageSize={pageSize}' + \
                                (f'&location={location}' if location else '') + \
                                (f'&status={status}' if status else '')
+
+                # Add date filter parameters if provided
+                if date_filter and date_range_type == 'day':
+                    dht11_api_url += f'&date={date_filter}'
+                elif date_range_type == 'monthly' and date_filter:
+                    # Extract year and month from date_filter
+                    try:
+                        date_obj = datetime.strptime(date_filter, '%Y-%m-%d')
+                        year = date_obj.year
+                        month = date_obj.month
+                        dht11_api_url += f'&year={year}&month={month}'
+                    except:
+                        print(f"Invalid date format for monthly filter: {date_filter}")
+                elif date_range_type == 'yearly' and date_filter:
+                    # Extract year from date_filter
+                    try:
+                        date_obj = datetime.strptime(date_filter, '%Y-%m-%d')
+                        year = date_obj.year
+                        dht11_api_url += f'&year={year}'
+                    except:
+                        print(f"Invalid date format for yearly filter: {date_filter}")
+                elif date_range_type == 'custom' and start_date and end_date:
+                    dht11_api_url += f'&startDate={start_date}&endDate={end_date}'
+
                 print(f"Requesting DHT11 sensor data from: {dht11_api_url}")
                 dht11_response = requests.get(dht11_api_url, timeout=5)
                 print(f"DHT11 sensor API response status: {dht11_response.status_code}")
-                
+
                 if dht11_response.status_code == 200:
-                    sensor_data['dht11Data'] = dht11_response.json()
-                    print(f"DHT11 sensor data received: {len(sensor_data['dht11Data'].get('data', []))} records")
+                    sensor_data['dht11SensorData'] = dht11_response.json()
+                    print(f"DHT11 sensor data received: {len(sensor_data['dht11SensorData'].get('data', []))} records")
                 else:
                     print(f"DHT11 sensor API error: {dht11_response.text}")
                     # Try the non-paginated endpoint as fallback
                     fallback_url = f'{API_BASE_URL}/api/sensor/sensor-data/dht11'
                     print(f"Trying fallback URL: {fallback_url}")
                     fallback_response = requests.get(fallback_url, timeout=5)
-                    
+
                     if fallback_response.status_code == 200:
                         # Convert regular response to paginated format
                         data_list = fallback_response.json()
-                        sensor_data['dht11Data'] = {
+                        sensor_data['dht11SensorData'] = {
                             'data': data_list[:int(pageSize)],
                             'pagination': {
                                 'total': len(data_list),
@@ -382,7 +460,7 @@ def register_socket_events(socketio):
                         print(f"DHT11 sensor data received from fallback: {len(data_list)} records")
                     else:
                         print(f"Fallback API error: {fallback_response.text}")
-                        sensor_data['dht11Data'] = {
+                        sensor_data['dht11SensorData'] = {
                             'data': [],
                             'pagination': {'total': 0, 'page': page, 'pageSize': pageSize, 'totalPages': 0},
                             'error': f"Failed to fetch DHT11 sensor data: Status {dht11_response.status_code}"
@@ -391,23 +469,23 @@ def register_socket_events(socketio):
                 print(f"Error fetching DHT11 sensor data: {str(e)}")
                 print(f"Error type: {type(e).__name__}")
                 print(f"Error details: {traceback.format_exc()}")
-                sensor_data['dht11Data'] = {
+                sensor_data['dht11SensorData'] = {
                     'data': [],
                     'pagination': {'total': 0, 'page': page, 'pageSize': pageSize, 'totalPages': 0},
                     'error': f"Error fetching DHT11 sensor data: {str(e)}"
                 }
-            
+
             # Fetch sensor locations for filtering
             try:
                 locations_api_url = f'{API_BASE_URL}/api/sensor/sensor-data/locations'
                 print(f"Requesting sensor locations from: {locations_api_url}")
                 locations_response = requests.get(locations_api_url, timeout=5)
                 print(f"Locations API response status: {locations_response.status_code}")
-                
+
                 if locations_response.status_code == 200:
                     locations_data = locations_response.json()
                     print(f"Sensor locations received: {locations_data}")
-                    
+
                     # Handle both array and object formats
                     if isinstance(locations_data, list):
                         # If API returns a simple array of locations, convert to the expected format
@@ -427,15 +505,15 @@ def register_socket_events(socketio):
                     try:
                         fire_data = sensor_data.get('fireSensorData', {}).get('data', [])
                         smoke_data = sensor_data.get('smokeSensorData', {}).get('data', [])
-                        dht11_data = sensor_data.get('dht11Data', {}).get('data', [])
-                        
+                        dht11_data = sensor_data.get('dht11SensorData', {}).get('data', [])
+
                         fire_locations = list(set([item.get('fire_loc') for item in fire_data if item.get('fire_loc')]))
                         smoke_locations = list(set([item.get('smoke_loc') for item in smoke_data if item.get('smoke_loc')]))
                         dht11_locations = list(set([item.get('dht11_loc') for item in dht11_data if item.get('dht11_loc')]))
-                        
+
                         # Combine all locations into a single list to ensure we have all unique locations
                         all_locations = list(set(fire_locations + smoke_locations + dht11_locations))
-                        
+
                         sensor_data['locations'] = {
                             'fireLocations': fire_locations,
                             'smokeLocations': smoke_locations,
@@ -462,7 +540,7 @@ def register_socket_events(socketio):
                     'smokeLocations': [],
                     'dht11Locations': []
                 }
-            
+
             # Emit sensor data to the client
             print(f"Emitting sensor data to client")
             socketio.emit('sensor_data', {
@@ -479,6 +557,173 @@ def register_socket_events(socketio):
                 'error': f"Error fetching sensor data: {str(e)}"
             })
 
+    @socketio.on('request_all_sensor_data')
+    def handle_all_sensor_data_request(data):
+        try:
+            print("Received request for all sensor data")
+
+            # Initialize response data
+            all_sensor_data = {}
+
+            try:
+                fire_api_url = f'{API_BASE_URL}/api/sensor/sensor-data/fire'
+                print(f"Requesting all fire sensor data from: {fire_api_url}")
+                fire_response = requests.get(fire_api_url, timeout=5)
+
+                if fire_response.status_code == 200:
+                    fire_data = fire_response.json()
+                    not_detected_count = sum(1 for item in fire_data if item.get('fire_status') == 'Not Detected')
+                    detected_count = sum(1 for item in fire_data if item.get('fire_status') == 'Detected')
+
+                    # Ensure counts add up to total by accounting for any missing or invalid statuses
+                    total_count = len(fire_data)
+                    if detected_count + not_detected_count < total_count:
+                        not_detected_count = total_count - detected_count
+
+                    all_sensor_data['fireSensorData'] = {
+                        'data': fire_data,
+                        'pagination': {
+                            'total': total_count,
+                            'page': 1,
+                            'pageSize': len(fire_data),
+                            'totalPages': 1
+                        },
+                        'counts': {
+                            'detected': detected_count,
+                            'notDetected': not_detected_count
+                        }
+                    }
+                    print(f"All fire sensor data received: {len(fire_data)} records")
+                else:
+                    print(f"Fire sensor API error: {fire_response.text}")
+                    all_sensor_data['fireSensorData'] = {
+                        'data': [],
+                        'pagination': {'total': 0, 'page': 1, 'pageSize': 0, 'totalPages': 0},
+                        'counts': {'detected': 0, 'notDetected': 0},
+                        'error': f"Failed to fetch fire sensor data: Status {fire_response.status_code}"
+                    }
+            except Exception as e:
+                print(f"Error fetching all fire sensor data: {str(e)}")
+                all_sensor_data['fireSensorData'] = {
+                    'data': [],
+                    'pagination': {'total': 0, 'page': 1, 'pageSize': 0, 'totalPages': 0},
+                    'counts': {'detected': 0, 'notDetected': 0},
+                    'error': f"Error fetching fire sensor data: {str(e)}"
+                }
+
+            # Fetch all smoke sensor data without pagination
+            try:
+                smoke_api_url = f'{API_BASE_URL}/api/sensor/sensor-data/smoke'
+                print(f"Requesting all smoke sensor data from: {smoke_api_url}")
+                smoke_response = requests.get(smoke_api_url, timeout=5)
+
+                if smoke_response.status_code == 200:
+                    smoke_data = smoke_response.json()
+                    detected_count = sum(1 for item in smoke_data if item.get('smoke_status') == 'Detected')
+                    not_detected_count = sum(1 for item in smoke_data if item.get('smoke_status') == 'Not Detected')
+
+                    # Ensure counts add up to total by accounting for any missing or invalid statuses
+                    total_count = len(smoke_data)
+                    if detected_count + not_detected_count < total_count:
+                        not_detected_count = total_count - detected_count
+
+                    all_sensor_data['smokeSensorData'] = {
+                        'data': smoke_data,
+                        'pagination': {
+                            'total': total_count,
+                            'page': 1,
+                            'pageSize': len(smoke_data),
+                            'totalPages': 1
+                        },
+                        'counts': {
+                            'detected': detected_count,
+                            'notDetected': not_detected_count
+                        }
+                    }
+                    print(f"All smoke sensor data received: {len(smoke_data)} records")
+                else:
+                    print(f"Smoke sensor API error: {smoke_response.text}")
+                    all_sensor_data['smokeSensorData'] = {
+                        'data': [],
+                        'pagination': {'total': 0, 'page': 1, 'pageSize': 0, 'totalPages': 0},
+                        'counts': {'detected': 0, 'notDetected': 0},
+                        'error': f"Failed to fetch smoke sensor data: Status {smoke_response.status_code}"
+                    }
+            except Exception as e:
+                print(f"Error fetching all smoke sensor data: {str(e)}")
+                all_sensor_data['smokeSensorData'] = {
+                    'data': [],
+                    'pagination': {'total': 0, 'page': 1, 'pageSize': 0, 'totalPages': 0},
+                    'counts': {'detected': 0, 'notDetected': 0},
+                    'error': f"Error fetching smoke sensor data: {str(e)}"
+                }
+
+            # Fetch all DHT11 sensor data without pagination
+            try:
+                dht11_api_url = f'{API_BASE_URL}/api/sensor/sensor-data/dht11'
+                print(f"Requesting all DHT11 sensor data from: {dht11_api_url}")
+                dht11_response = requests.get(dht11_api_url, timeout=5)
+
+                if dht11_response.status_code == 200:
+                    dht11_data = dht11_response.json()
+
+                    # Count normal and high temp statuses
+                    high_temp_count = sum(1 for item in dht11_data if item.get('dht11_status') == 'High Temp')
+                    normal_temp_count = sum(1 for item in dht11_data if item.get('dht11_status') == 'Normal')
+
+                    # Ensure counts add up to total by accounting for any missing or invalid statuses
+                    total_count = len(dht11_data)
+                    if high_temp_count + normal_temp_count < total_count:
+                        normal_temp_count = total_count - high_temp_count
+
+                    all_sensor_data['dht11SensorData'] = {
+                        'data': dht11_data,
+                        'pagination': {
+                            'total': total_count,
+                            'page': 1,
+                            'pageSize': len(dht11_data),
+                            'totalPages': 1
+                        },
+                        'counts': {
+                            'highTemp': high_temp_count,
+                            'normalTemp': normal_temp_count
+                        }
+                    }
+                    print(f"All DHT11 sensor data received: {len(dht11_data)} records")
+                else:
+                    print(f"DHT11 sensor API error: {dht11_response.text}")
+                    all_sensor_data['dht11SensorData'] = {
+                        'data': [],
+                        'pagination': {'total': 0, 'page': 1, 'pageSize': 0, 'totalPages': 0},
+                        'counts': {'highTemp': 0, 'normalTemp': 0},
+                        'error': f"Failed to fetch DHT11 sensor data: Status {dht11_response.status_code}"
+                    }
+            except Exception as e:
+                print(f"Error fetching all DHT11 sensor data: {str(e)}")
+                all_sensor_data['dht11SensorData'] = {
+                    'data': [],
+                    'pagination': {'total': 0, 'page': 1, 'pageSize': 0, 'totalPages': 0},
+                    'counts': {'highTemp': 0, 'normalTemp': 0},
+                    'error': f"Error fetching DHT11 sensor data: {str(e)}"
+                }
+
+            # Emit all sensor data to the client
+            socketio.emit('all_sensor_data', {
+                'success': True,
+                'fireSensorData': all_sensor_data['fireSensorData'],
+                'smokeSensorData': all_sensor_data['smokeSensorData'],
+                'dht11SensorData': all_sensor_data['dht11SensorData']
+            })
+
+        except Exception as e:
+            print(f"Error handling all sensor data request: {str(e)}")
+            print(f"Error type: {type(e).__name__}")
+            print(f"Error details: {traceback.format_exc()}")
+            socketio.emit('all_sensor_data', {
+                'success': False,
+                'error': f"Error handling all sensor data request: {str(e)}"
+            })
+
     @socketio.on('export_sensor_data')
     def handle_export_sensor_data(data):
         try:
@@ -489,15 +734,15 @@ def register_socket_events(socketio):
                     'error': "Required libraries not installed: pandas and/or xlsxwriter. Please install them using 'pip install pandas xlsxwriter'."
                 })
                 return
-            
+
             location = data.get('location', '')
             status = data.get('status', '')
-            
+
             # Initialize data containers
             fire_data = []
             smoke_data = []
             dht11_data = []
-            
+
             # Fetch fire sensor data directly
             try:
                 # Try non-paginated endpoint first for exports
@@ -1163,4 +1408,189 @@ def register_socket_events(socketio):
                 'success': False,
                 'alert_id': data.get('alert_id'),
                 'error': str(e)
+            })
+
+    @socketio.on('generate_chart')
+    def handle_generate_chart(data):
+        try:
+            print(f"Received chart generation request with parameters: {data}")
+            
+            # Get filter parameters
+            location = data.get('location')
+            status = data.get('status')
+            date_range = data.get('dateRange', 'all')
+            date_filter = data.get('date')
+            start_date = data.get('startDate')
+            end_date = data.get('endDate')
+
+            # Initialize chart data
+            chart_data = {
+                'fire': [],
+                'smoke': [],
+                'dht11': []
+            }
+
+            # Build API URLs with filters
+            fire_api_url = f'{API_BASE_URL}/api/sensor/sensor-data/fire'
+            smoke_api_url = f'{API_BASE_URL}/api/sensor/sensor-data/smoke'
+            dht11_api_url = f'{API_BASE_URL}/api/sensor/sensor-data/dht11'
+
+            # Add date filter parameters if provided
+            if date_filter and date_range == 'day':
+                fire_api_url += f'?date={date_filter}'
+                smoke_api_url += f'?date={date_filter}'
+                dht11_api_url += f'?date={date_filter}'
+            elif date_range == 'monthly' and date_filter:
+                # Extract year and month from date_filter
+                try:
+                    date_obj = datetime.strptime(date_filter, '%Y-%m-%d')
+                    year = date_obj.year
+                    month = date_obj.month
+                    fire_api_url += f'?year={year}&month={month}'
+                    smoke_api_url += f'?year={year}&month={month}'
+                    dht11_api_url += f'?year={year}&month={month}'
+                except:
+                    print(f"Invalid date format for monthly filter: {date_filter}")
+            elif date_range == 'yearly' and date_filter:
+                # Extract year from date_filter
+                try:
+                    date_obj = datetime.strptime(date_filter, '%Y-%m-%d')
+                    year = date_obj.year
+                    fire_api_url += f'?year={year}'
+                    smoke_api_url += f'?year={year}'
+                    dht11_api_url += f'?year={year}'
+                except:
+                    print(f"Invalid date format for yearly filter: {date_filter}")
+            elif date_range == 'custom' and start_date and end_date:
+                fire_api_url += f'?startDate={start_date}&endDate={end_date}'
+                smoke_api_url += f'?startDate={start_date}&endDate={end_date}'
+                dht11_api_url += f'?startDate={start_date}&endDate={end_date}'
+            
+            # Add location filter if provided
+            if location:
+                if '?' in fire_api_url:
+                    fire_api_url += f'&location={location}'
+                    smoke_api_url += f'&location={location}'
+                    dht11_api_url += f'&location={location}'
+                else:
+                    fire_api_url += f'?location={location}'
+                    smoke_api_url += f'?location={location}'
+                    dht11_api_url += f'?location={location}'
+            
+            # Add status filter if provided
+            if status:
+                if '?' in fire_api_url:
+                    fire_api_url += f'&status={status}'
+                    smoke_api_url += f'&status={status}'
+                    dht11_api_url += f'&status={status}'
+                else:
+                    fire_api_url += f'?status={status}'
+                    smoke_api_url += f'?status={status}'
+                    dht11_api_url += f'?status={status}'
+            
+            print(f"Requesting fire sensor data for chart from: {fire_api_url}")
+            print(f"Requesting smoke sensor data for chart from: {smoke_api_url}")
+            print(f"Requesting DHT11 sensor data for chart from: {dht11_api_url}")
+            
+            # Fetch fire sensor data
+            try:
+                fire_response = requests.get(fire_api_url, timeout=5)
+                if fire_response.status_code == 200:
+                    fire_data = fire_response.json()
+                    
+                    # Process data for chart
+                    detected_count = sum(1 for item in fire_data if item.get('fire_status') == 'Detected')
+                    not_detected_count = sum(1 for item in fire_data if item.get('fire_status') == 'Not Detected')
+                    
+                    chart_data['fire'] = [
+                        {
+                            'label': 'Detected',
+                            'value': detected_count,
+                            'color': '#17a2b8'  # Info color
+                        },
+                        {
+                            'label': 'Not Detected',
+                            'value': not_detected_count,
+                            'color': '#6c757d'  # Secondary color
+                        }
+                    ]
+                    
+                    print(f"Fire chart data prepared: {chart_data['fire']}")
+                else:
+                    print(f"Fire sensor API error: {fire_response.text}")
+            except Exception as e:
+                print(f"Error fetching fire sensor data for chart: {str(e)}")
+            
+            # Fetch smoke sensor data
+            try:
+                smoke_response = requests.get(smoke_api_url, timeout=5)
+                if smoke_response.status_code == 200:
+                    smoke_data = smoke_response.json()
+                    
+                    # Process data for chart
+                    detected_count = sum(1 for item in smoke_data if item.get('smoke_status') == 'Detected')
+                    not_detected_count = sum(1 for item in smoke_data if item.get('smoke_status') == 'Not Detected')
+                    
+                    chart_data['smoke'] = [
+                        {
+                            'label': 'Detected',
+                            'value': detected_count,
+                            'color': '#17a2b8'  # Info color
+                        },
+                        {
+                            'label': 'Not Detected',
+                            'value': not_detected_count,
+                            'color': '#6c757d'  # Secondary color
+                        }
+                    ]
+                    
+                    print(f"Smoke chart data prepared: {chart_data['smoke']}")
+                else:
+                    print(f"Smoke sensor API error: {smoke_response.text}")
+            except Exception as e:
+                print(f"Error fetching smoke sensor data for chart: {str(e)}")
+            
+            # Fetch DHT11 sensor data
+            try:
+                dht11_response = requests.get(dht11_api_url, timeout=5)
+                if dht11_response.status_code == 200:
+                    dht11_data = dht11_response.json()
+                    
+                    # Process data for chart
+                    normal_temp_count = sum(1 for item in dht11_data if item.get('dht11_status') == 'Normal')
+                    high_temp_count = sum(1 for item in dht11_data if item.get('dht11_status') == 'High Temp')
+                    
+                    chart_data['dht11'] = [
+                        {
+                            'label': 'Normal',
+                            'value': normal_temp_count,
+                            'color': '#28a745'  # Success color
+                        },
+                        {
+                            'label': 'High Temp',
+                            'value': high_temp_count,
+                            'color': '#dc3545'  # Danger color
+                        }
+                    ]
+                    
+                    print(f"DHT11 chart data prepared: {chart_data['dht11']}")
+                else:
+                    print(f"DHT11 sensor API error: {dht11_response.text}")
+            except Exception as e:
+                print(f"Error fetching DHT11 sensor data for chart: {str(e)}")
+            
+            # Emit chart data to client
+            socketio.emit('generate_chart_response', {
+                'success': True,
+                'data': chart_data
+            })
+            
+            print(f"Chart data emitted successfully")
+        except Exception as e:
+            print(f"Error in handle_generate_chart: {str(e)}")
+            print(f"Error type: {type(e).__name__}")
+            print(f"Error details: {traceback.format_exc()}")
+            socketio.emit('generate_chart_response', {
+                'success': False,
+                'error': f"Error generating chart data: {str(e)}"
             })

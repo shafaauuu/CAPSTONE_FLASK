@@ -4,9 +4,24 @@ console.log('Using API base URL:', API_BASE_URL);
 // Initialize Socket.IO connection
 let socket = io();
 
+// Global variables to store all sensor data
+let allFireSensorData = null;
+let allSmokeSensorData = null;
+let allDHT11SensorData = null;
+let lastAllDataRequest = 0;
+const ALL_DATA_REFRESH_INTERVAL = 60000; // 1 minute
+
 // Connection status handlers
 socket.on('connect', function() {
     console.log('Socket.IO connected with ID:', socket.id);
+    
+    // Request all sensor data initially for accurate counting
+    requestAllSensorData();
+    
+    // Set up periodic refresh of all sensor data (less frequent than paginated data)
+    setInterval(() => {
+        requestAllSensorData();
+    }, ALL_DATA_REFRESH_INTERVAL);
     
     // Initialize data requests based on current page
     const currentPath = window.location.pathname;
@@ -35,7 +50,13 @@ socket.on('connect', function() {
     } else if (currentPath.includes('/data-sensor')) {
         // Sensor data page - refresh sensor data
         requestSensorData();
+        
+        // Request all sensor data for accurate counting
+        requestAllSensorData();
+        
+        // Set intervals for refreshing
         setInterval(requestSensorData, 5000);
+        setInterval(requestAllSensorData, 30000); // Refresh complete data less frequently
     } else if (currentPath.includes('/alert-logs')) {
         // Alert logs page is now handled by alert-logs.js
         console.log('Alert logs page detected - functionality handled by alert-logs.js');
@@ -298,29 +319,29 @@ function updateFireSensorTable(fireData) {
         `;
         tableBody.appendChild(row);
     });
-    
+
     // Update pagination
     updatePagination('fire-sensor-pagination', fireData.pagination);
 }
 
 function updateSmokeSensorTable(smokeData) {
     if (!smokeData || !smokeData.data) return;
-    
+
     const tableBody = document.getElementById('smoke-sensor-table').querySelector('tbody');
     tableBody.innerHTML = '';
-    
+
     if (smokeData.data.length === 0) {
         const row = document.createElement('tr');
         row.innerHTML = '<td colspan="5" class="text-center">No smoke sensor data available</td>';
         tableBody.appendChild(row);
         return;
     }
-    
+
     smokeData.data.forEach((sensor) => {
         const row = document.createElement('tr');
         const statusClass = sensor.smoke_status === 'Detected' ? 'text-danger' : 'text-success';
         const statusIndicator = sensor.smoke_status === 'Detected' ? 'status-danger' : 'status-active';
-        
+
         row.innerHTML = `
             <td><a href="#" class="text-primary fw-bold">SMOKE-${sensor.smoke_id.toString().padStart(3, '0')}</a></td>
             <td class="fw-bold">${sensor.smoke_loc || 'N/A'}</td>
@@ -334,29 +355,29 @@ function updateSmokeSensorTable(smokeData) {
         `;
         tableBody.appendChild(row);
     });
-    
+
     // Update pagination
     updatePagination('smoke-sensor-pagination', smokeData.pagination);
 }
 
 function updateDHT11SensorTable(dht11Data) {
     if (!dht11Data || !dht11Data.data) return;
-    
+
     const tableBody = document.getElementById('dht11-sensor-table').querySelector('tbody');
     tableBody.innerHTML = '';
-    
+
     if (dht11Data.data.length === 0) {
         const row = document.createElement('tr');
         row.innerHTML = '<td colspan="5" class="text-center">No temperature sensor data available</td>';
         tableBody.appendChild(row);
         return;
     }
-    
+
     dht11Data.data.forEach((sensor) => {
         const row = document.createElement('tr');
         let statusClass = 'text-success';
         let statusIndicator = 'status-active';
-        
+
         if (sensor.dht11_status === 'High Temp') {
             statusClass = 'text-danger';
             statusIndicator = 'status-danger';
@@ -364,7 +385,7 @@ function updateDHT11SensorTable(dht11Data) {
             statusClass = 'text-warning';
             statusIndicator = 'status-warning';
         }
-        
+
         row.innerHTML = `
             <td><a href="#" class="text-primary fw-bold">TEMP-${sensor.dht11_id.toString().padStart(3, '0')}</a></td>
             <td class="fw-bold">${sensor.dht11_loc || 'N/A'}</td>
@@ -378,54 +399,54 @@ function updateDHT11SensorTable(dht11Data) {
         `;
         tableBody.appendChild(row);
     });
-    
+
     // Update pagination
     updatePagination('dht11-sensor-pagination', dht11Data.pagination);
 }
 
 function updatePagination(paginationId, pagination) {
     if (!pagination) return;
-    
+
     const paginationElement = document.getElementById(paginationId);
     if (!paginationElement) return;
-    
+
     paginationElement.innerHTML = '';
-    
+
     // Previous button
     const prevLi = document.createElement('li');
     prevLi.className = `page-item ${pagination.page <= 1 ? 'disabled' : ''}`;
     prevLi.innerHTML = `<a class="page-link" href="#" data-page="${pagination.page - 1}">Previous</a>`;
     paginationElement.appendChild(prevLi);
-    
+
     // Page numbers
     const startPage = Math.max(1, pagination.page - 2);
     const endPage = Math.min(pagination.totalPages, pagination.page + 2);
-    
+
     for (let i = startPage; i <= endPage; i++) {
         const pageLi = document.createElement('li');
         pageLi.className = `page-item ${i === pagination.page ? 'active' : ''}`;
         pageLi.innerHTML = `<a class="page-link" href="#" data-page="${i}">${i}</a>`;
         paginationElement.appendChild(pageLi);
     }
-    
+
     // Next button
     const nextLi = document.createElement('li');
     nextLi.className = `page-item ${pagination.page >= pagination.totalPages ? 'disabled' : ''}`;
     nextLi.innerHTML = `<a class="page-link" href="#" data-page="${pagination.page + 1}">Next</a>`;
     paginationElement.appendChild(nextLi);
-    
+
     // Add event listeners to pagination links
     paginationElement.querySelectorAll('.page-link').forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
             const page = parseInt(this.getAttribute('data-page'));
-            
+
             // Get current filter values
-            const locationFilter = document.getElementById('location-filter') ? 
+            const locationFilter = document.getElementById('location-filter') ?
                 document.getElementById('location-filter').value : null;
-            const statusFilter = document.getElementById('status-filter') ? 
+            const statusFilter = document.getElementById('status-filter') ?
                 document.getElementById('status-filter').value : null;
-            
+
             // Request new data with updated page
             requestSensorData(page, pagination.pageSize, locationFilter, statusFilter);
         });
@@ -434,20 +455,20 @@ function updatePagination(paginationId, pagination) {
 
 function updateLocationFilters(locations) {
     console.log('Updating location filters with:', locations);
-    
+
     // dropdown
     const locationDropdown = document.querySelector('ul[aria-labelledby="locationFilterDropdown"]');
-    
+
     if (locationDropdown) {
         // Keep the first option (All Locations)
         const allLocationsItem = locationDropdown.querySelector('.location-filter[data-location=""]');
-        
+
         // Clear existing location options except the "All Locations" option
         locationDropdown.querySelectorAll('.location-filter:not([data-location=""])').forEach(item => item.remove());
-        
+
         // Create a set to store unique locations
         const uniqueLocations = new Set();
-        
+
         // Handle both array and object formats
         if (Array.isArray(locations)) {
             // If locations is a direct array (from API)
@@ -464,24 +485,24 @@ function updateLocationFilters(locations) {
                 if (locations.fireLocations) {
                     locations.fireLocations.forEach(loc => uniqueLocations.add(loc));
                 }
-                
+
                 if (locations.smokeLocations) {
                     locations.smokeLocations.forEach(loc => uniqueLocations.add(loc));
                 }
-                
+
                 if (locations.dht11Locations) {
                     locations.dht11Locations.forEach(loc => uniqueLocations.add(loc));
                 }
             }
         }
-        
+
         // Add locations to dropdown
         uniqueLocations.forEach(loc => {
             if (loc && loc.trim() !== '') {
                 const li = document.createElement('li');
                 li.innerHTML = `<a class="dropdown-item location-filter" href="#" data-location="${loc}"><i class="fas fa-map-marker-alt me-2"></i>${loc}</a>`;
                 locationDropdown.appendChild(li);
-                
+
                 // Add click event handler for the new location item
                 const anchor = li.querySelector('a');
                 anchor.addEventListener('click', function(e) {
@@ -505,66 +526,156 @@ function updateLocationFilters(locations) {
                 });
             }
         });
-        
+
         console.log(`Added ${uniqueLocations.size} locations to dropdown`);
     } else {
         console.warn('Location dropdown not found in the DOM');
     }
 }
 
-function updateSensorOverviewCards(sensorData) {
+function updateSensorOverviewCards(sensorData, useFullDataOnly = false) {
     // Update fire sensor overview
     if (sensorData.fireSensorData && document.getElementById('fire-sensor-count')) {
         const total = sensorData.fireSensorData.pagination ? sensorData.fireSensorData.pagination.total : 0;
         document.getElementById('fire-sensor-count').textContent = total;
-        
-        // Count detected fires
-        if (sensorData.fireSensorData.data) {
-            const detected = sensorData.fireSensorData.data.filter(s => s.fire_status === 'Detected').length;
-            if (document.getElementById('fire-detected-count')) {
-                document.getElementById('fire-detected-count').textContent = detected;
-            }
-            if (document.getElementById('fire-normal-count')) {
-                document.getElementById('fire-normal-count').textContent = total - detected;
+        if (document.getElementById('fire-sensor-count-mobile')) {
+            document.getElementById('fire-sensor-count-mobile').textContent = total;
+        }
+
+        // Use pre-calculated counts if available, otherwise count from data
+        let detected = 0;
+        let notDetected = total;
+
+        // Always prioritize using the complete dataset for counts
+        if (!useFullDataOnly && allFireSensorData && allFireSensorData.counts) {
+            detected = allFireSensorData.counts.detected || 0;
+            notDetected = allFireSensorData.counts.notDetected || 0;
+        } else if (sensorData.fireSensorData.counts) {
+            detected = sensorData.fireSensorData.counts.detected || 0;
+            notDetected = sensorData.fireSensorData.counts.notDetected || (total - detected);
+        } else if (sensorData.fireSensorData.data && sensorData.fireSensorData.data.length > 0) {
+            // Count sensors based on their status
+            detected = sensorData.fireSensorData.data.filter(s => s.fire_status === 'Detected').length;
+            notDetected = sensorData.fireSensorData.data.filter(s => s.fire_status === 'Not Detected').length;
+        }
+
+        // Ensure counts add up to total
+        if (detected + notDetected !== total) {
+            notDetected = total - detected;
+        }
+
+        // Update detected/not detected counts
+        if (document.getElementById('fire-sensor-normal')) {
+            document.getElementById('fire-sensor-normal').textContent = detected;
+        }
+        if (document.getElementById('fire-sensor-danger')) {
+            document.getElementById('fire-sensor-danger').textContent = notDetected;
+        }
+
+        // Update last check timestamp from the most recent record
+        if (document.getElementById('fire-sensor-last-check') && sensorData.fireSensorData.data && sensorData.fireSensorData.data.length > 0) {
+            const sortedData = [...sensorData.fireSensorData.data].sort((a, b) =>
+                new Date(b.fire_timestamp) - new Date(a.fire_timestamp));
+            if (sortedData.length > 0) {
+                document.getElementById('fire-sensor-last-check').textContent =
+                    new Date(sortedData[0].fire_timestamp).toLocaleString();
             }
         }
     }
-    
+
     // Update smoke sensor overview
     if (sensorData.smokeSensorData && document.getElementById('smoke-sensor-count')) {
         const total = sensorData.smokeSensorData.pagination ? sensorData.smokeSensorData.pagination.total : 0;
         document.getElementById('smoke-sensor-count').textContent = total;
-        
-        // Count detected smoke
-        if (sensorData.smokeSensorData.data) {
-            const detected = sensorData.smokeSensorData.data.filter(s => s.smoke_status === 'Detected').length;
-            if (document.getElementById('smoke-detected-count')) {
-                document.getElementById('smoke-detected-count').textContent = detected;
-            }
-            if (document.getElementById('smoke-normal-count')) {
-                document.getElementById('smoke-normal-count').textContent = total - detected;
+        if (document.getElementById('smoke-sensor-count-mobile')) {
+            document.getElementById('smoke-sensor-count-mobile').textContent = total;
+        }
+
+        // Use pre-calculated counts if available, otherwise count from data
+        let detected = 0;
+        let notDetected = total;
+
+        // Always prioritize using the complete dataset for counts
+        if (!useFullDataOnly && allSmokeSensorData && allSmokeSensorData.counts) {
+            detected = allSmokeSensorData.counts.detected || 0;
+            notDetected = allSmokeSensorData.counts.notDetected || 0;
+        } else if (sensorData.smokeSensorData.counts) {
+            detected = sensorData.smokeSensorData.counts.detected || 0;
+            notDetected = sensorData.smokeSensorData.counts.notDetected || (total - detected);
+        } else if (sensorData.smokeSensorData.data && sensorData.smokeSensorData.data.length > 0) {
+            // Count sensors based on their status
+            detected = sensorData.smokeSensorData.data.filter(s => s.smoke_status === 'Detected').length;
+            notDetected = sensorData.smokeSensorData.data.filter(s => s.smoke_status === 'Not Detected').length;
+        }
+
+        // Ensure counts add up to total
+        if (detected + notDetected !== total) {
+            notDetected = total - detected;
+        }
+
+        // Update detected/not detected counts
+        if (document.getElementById('smoke-sensor-normal')) {
+            document.getElementById('smoke-sensor-normal').textContent = detected;
+        }
+        if (document.getElementById('smoke-sensor-danger')) {
+            document.getElementById('smoke-sensor-danger').textContent = notDetected;
+        }
+
+        // Update last check timestamp from the most recent record
+        if (document.getElementById('smoke-sensor-last-check') && sensorData.smokeSensorData.data && sensorData.smokeSensorData.data.length > 0) {
+            const sortedData = [...sensorData.smokeSensorData.data].sort((a, b) =>
+                new Date(b.smoke_timestamp) - new Date(a.smoke_timestamp));
+            if (sortedData.length > 0) {
+                document.getElementById('smoke-sensor-last-check').textContent =
+                    new Date(sortedData[0].smoke_timestamp).toLocaleString();
             }
         }
     }
-    
+
     // Update DHT11 sensor overview
-    if (sensorData.dht11Data && document.getElementById('dht11-sensor-count')) {
-        const total = sensorData.dht11Data.pagination ? sensorData.dht11Data.pagination.total : 0;
+    if (sensorData.dht11SensorData && document.getElementById('dht11-sensor-count')) {
+        const total = sensorData.dht11SensorData.pagination ? sensorData.dht11SensorData.pagination.total : 0;
         document.getElementById('dht11-sensor-count').textContent = total;
-        
-        // Count high temperature alerts
-        if (sensorData.dht11Data.data) {
-            const highTemp = sensorData.dht11Data.data.filter(s => s.dht11_status === 'High Temp').length;
-            const warning = sensorData.dht11Data.data.filter(s => s.dht11_status === 'Warning').length;
-            
-            if (document.getElementById('dht11-high-count')) {
-                document.getElementById('dht11-high-count').textContent = highTemp;
-            }
-            if (document.getElementById('dht11-warning-count')) {
-                document.getElementById('dht11-warning-count').textContent = warning;
-            }
-            if (document.getElementById('dht11-normal-count')) {
-                document.getElementById('dht11-normal-count').textContent = total - highTemp - warning;
+        if (document.getElementById('dht11-sensor-count-mobile')) {
+            document.getElementById('dht11-sensor-count-mobile').textContent = total;
+        }
+
+        // Use pre-calculated counts if available, otherwise count from data
+        let normalTemp = 0;
+        let highTemp = total;
+
+        // Always prioritize using the complete dataset for counts
+        if (!useFullDataOnly && allDHT11SensorData && allDHT11SensorData.counts) {
+            normalTemp = allDHT11SensorData.counts.normalTemp || 0;
+            highTemp = allDHT11SensorData.counts.highTemp || 0;
+        } else if (sensorData.dht11SensorData.counts) {
+            normalTemp = sensorData.dht11SensorData.counts.normalTemp || 0;
+            highTemp = sensorData.dht11SensorData.counts.highTemp || (total - normalTemp);
+        } else if (sensorData.dht11SensorData.data && sensorData.dht11SensorData.data.length > 0) {
+            normalTemp = sensorData.dht11SensorData.data.filter(s => parseFloat(s.temperature) < 30).length;
+            highTemp = sensorData.dht11SensorData.data.filter(s => parseFloat(s.temperature) >= 30).length;
+        }
+
+        // Ensure counts add up to total
+        if (normalTemp + highTemp !== total) {
+            normalTemp = total - highTemp;
+        }
+
+        // Update normal/high temp counts
+        if (document.getElementById('dht11-sensor-normal')) {
+            document.getElementById('dht11-sensor-normal').textContent = normalTemp;
+        }
+        if (document.getElementById('dht11-sensor-danger')) {
+            document.getElementById('dht11-sensor-danger').textContent = highTemp;
+        }
+
+        // Update last check timestamp from the most recent record
+        if (document.getElementById('dht11-sensor-last-check') && sensorData.dht11SensorData.data && sensorData.dht11SensorData.data.length > 0) {
+            const sortedData = [...sensorData.dht11SensorData.data].sort((a, b) =>
+                new Date(b.dht11_timestamp) - new Date(a.dht11_timestamp));
+            if (sortedData.length > 0) {
+                document.getElementById('dht11-sensor-last-check').textContent =
+                    new Date(sortedData[0].dht11_timestamp).toLocaleString();
             }
         }
     }
@@ -578,11 +689,11 @@ function requestCameraDetections(limit = 5, status = null, location = null) {
         status: status,
         location: location
     });
-    
+
     // Set a timeout to fall back to direct API call if socket doesn't respond
     setTimeout(() => {
-        if (document.querySelector('.alert-history .spinner-border') || 
-            (document.getElementById('detectionsTableBody') && 
+        if (document.querySelector('.alert-history .spinner-border') ||
+            (document.getElementById('detectionsTableBody') &&
              document.getElementById('detectionsTableBody').querySelector('.spinner-border'))) {
             console.log('Socket did not respond in time, falling back to direct API call');
             fetchCameraDetectionsDirectly(limit, status, location);
@@ -593,7 +704,7 @@ function requestCameraDetections(limit = 5, status = null, location = null) {
 // Fallback function to fetch camera detections directly from API
 function fetchCameraDetectionsDirectly(limit = 5, status = null, location = null) {
     console.log('Fetching camera detections directly from API');
-    
+
     // Determine which endpoint to call based on parameters
     let apiUrl = '';
     if (status) {
@@ -603,14 +714,14 @@ function fetchCameraDetectionsDirectly(limit = 5, status = null, location = null
         // For recent detections
         apiUrl = `${API_BASE_URL}/api/camera-detection/recent?limit=${limit}`;
     }
-    
+
     // Add location filter if provided
     if (location) {
         apiUrl += `&location=${encodeURIComponent(location)}`;
     }
-    
+
     console.log(`Making direct API request to: ${apiUrl}`);
-    
+
     fetch(apiUrl)
         .then(response => {
             if (!response.ok) {
@@ -620,7 +731,7 @@ function fetchCameraDetectionsDirectly(limit = 5, status = null, location = null
         })
         .then(detections => {
             console.log(`Received ${detections.length} detections from direct API call`);
-            
+
             // Format timestamps for display
             detections.forEach(detection => {
                 if ('detection_timestamp' in detection && detection['detection_timestamp']) {
@@ -628,7 +739,7 @@ function fetchCameraDetectionsDirectly(limit = 5, status = null, location = null
                         // Handle different timestamp formats
                         const timestamp_str = detection['detection_timestamp'];
                         let timestamp;
-                        
+
                         if ('Z' in timestamp_str) {
                             timestamp = new Date(timestamp_str);
                         } else if ('T' in timestamp_str) {
@@ -637,7 +748,7 @@ function fetchCameraDetectionsDirectly(limit = 5, status = null, location = null
                             // Try to parse as a standard format
                             timestamp = new Date(timestamp_str);
                         }
-                        
+
                         detection['formatted_time'] = timestamp.toLocaleString();
                     } catch (e) {
                         detection['formatted_time'] = detection['detection_timestamp'];
@@ -645,13 +756,13 @@ function fetchCameraDetectionsDirectly(limit = 5, status = null, location = null
                     }
                 }
             });
-            
+
             // Update UI with detections
             updateCameraDetectionsUI(detections);
         })
         .catch(error => {
             console.error('Error fetching camera detections directly:', error);
-            
+
             // Show error message in UI
             const alertHistory = document.querySelector('.alert-history');
             if (alertHistory) {
@@ -662,7 +773,7 @@ function fetchCameraDetectionsDirectly(limit = 5, status = null, location = null
                     </div>
                 `;
             }
-            
+
             const detectionsTableBody = document.getElementById('detectionsTableBody');
             if (detectionsTableBody) {
                 detectionsTableBody.innerHTML = `
@@ -685,7 +796,7 @@ let currentDetectionView = 'dashboard';
 socket.on('camera_detections', function(data) {
     if (data.success) {
         console.log(`Received ${data.detections.length} camera detections from socket`);
-        
+
         // Check which view to update based on current page
         if (currentDetectionView === 'modal') {
             // Update the modal table
@@ -699,7 +810,7 @@ socket.on('camera_detections', function(data) {
         }
     } else {
         console.error('Error fetching camera detections:', data.error);
-        
+
         // Show error message in UI based on current view
         if (currentDetectionView === 'modal') {
             const tableBody = document.getElementById('allDetectionsTableBody');
@@ -748,26 +859,26 @@ function updateCameraDetectionsUI(detections) {
     const alertHistoryContainer = document.querySelector('.alert-history');
     if (alertHistoryContainer) {
         alertHistoryContainer.innerHTML = '';
-        
+
         if (!detections || detections.length === 0) {
             alertHistoryContainer.innerHTML = '<div class="text-center py-3">No recent detections</div>';
             return;
         }
-        
+
         console.log('Updating UI with detections:', detections);
-        
+
         detections.forEach(detection => {
             const confidenceScore = parseFloat(detection.confidence_score) || 0;
             const confidenceClass = confidenceScore > 0.7 ? 'danger' : (confidenceScore > 0.4 ? 'warning' : 'success');
             const confidenceText = confidenceScore > 0.7 ? 'High' : (confidenceScore > 0.4 ? 'Medium' : 'Low');
-            
+
             // Handle image path - ensure it's properly formatted for the frontend
             let imagePath = detection.image_path || '';
             // If the path starts with /uploads, prepend the API base URL
             if (imagePath.startsWith('/uploads')) {
                 imagePath = `${API_BASE_URL}${imagePath}`;
             }
-            
+
             const alertItem = document.createElement('div');
             alertItem.className = 'd-flex mt-2 mb-3 pb-3 border-bottom';
             alertItem.innerHTML = `
@@ -794,10 +905,10 @@ function updateCameraDetectionsUI(detections) {
                     </div>` : ''}
                 </div>
             `;
-            
+
             alertHistoryContainer.appendChild(alertItem);
         });
-        
+
         // Add event listeners for detection image clicks
         document.querySelectorAll('.view-detection').forEach(link => {
             link.addEventListener('click', function() {
@@ -806,7 +917,7 @@ function updateCameraDetectionsUI(detections) {
             });
         });
     }
-    
+
     // Update fire status indicator based on detections
     updateFireStatusIndicator(detections);
 }
@@ -815,24 +926,24 @@ function updateDetectionsModalTable(detections) {
     const tableBody = document.getElementById('allDetectionsTableBody');
     if (tableBody) {
         tableBody.innerHTML = '';
-        
+
         if (!detections || detections.length === 0) {
             tableBody.innerHTML = '<tr><td colspan="6" class="text-center">No detections found</td></tr>';
             return;
         }
-        
+
         detections.forEach(detection => {
             const confidenceScore = parseFloat(detection.confidence_score) || 0;
             const confidenceClass = confidenceScore > 0.7 ? 'danger' : (confidenceScore > 0.4 ? 'warning' : 'success');
             const confidenceText = confidenceScore > 0.7 ? 'High' : (confidenceScore > 0.4 ? 'Medium' : 'Low');
-            
+
             // Handle image path - ensure it's properly formatted for the frontend
             let imagePath = detection.image_path || '';
             // If the path starts with /uploads, prepend the API base URL
             if (imagePath.startsWith('/uploads')) {
                 imagePath = `${API_BASE_URL}${imagePath}`;
             }
-            
+
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${detection.detection_id}</td>
@@ -856,10 +967,10 @@ function updateDetectionsModalTable(detections) {
                     </span>
                 </td>
             `;
-            
+
             tableBody.appendChild(row);
         });
-        
+
         // Add event listeners for detection image clicks in modal
         document.querySelectorAll('.view-detection-modal').forEach(link => {
             link.addEventListener('click', function() {
@@ -873,11 +984,11 @@ function updateDetectionsModalTable(detections) {
 function viewDetectionDetails(detectionId) {
     // Instead of redirecting, show the details in a modal
     console.log(`Viewing detection details for ID: ${detectionId}`);
-    
+
     // Show the modal
     const detailsModal = new bootstrap.Modal(document.getElementById('detectionDetailsModal'));
     detailsModal.show();
-    
+
     // Reset modal content and show loading state
     document.getElementById('detectionImageContainer').innerHTML = `
         <div class="spinner-border text-primary" role="status">
@@ -891,7 +1002,7 @@ function viewDetectionDetails(detectionId) {
     document.getElementById('detailConfidence').textContent = '-';
     document.getElementById('detailStatus').textContent = '-';
     document.getElementById('detailRiskLevel').textContent = '-';
-    
+
     // Fetch detection details from API
     fetchDetectionDetails(detectionId);
 }
@@ -928,7 +1039,7 @@ function updateDetectionDetailsModal(detection) {
     if (imagePath.startsWith('/uploads')) {
         imagePath = `${API_BASE_URL}${imagePath}`;
     }
-    
+
     // Update image container
     if (imagePath) {
         document.getElementById('detectionImageContainer').innerHTML = `
@@ -943,35 +1054,35 @@ function updateDetectionDetailsModal(detection) {
             </div>
         `;
     }
-    
+
     // Update detection details
     document.getElementById('detailDetectionId').textContent = detection.detection_id || '-';
     document.getElementById('detailLocation').textContent = detection.camera_location || '-';
     document.getElementById('detailTime').textContent = detection.formatted_time || detection.detection_timestamp || '-';
-    
+
     // Calculate confidence level
     const confidenceScore = parseFloat(detection.confidence_score) || 0;
     const confidenceClass = confidenceScore > 0.7 ? 'danger' : (confidenceScore > 0.4 ? 'warning' : 'success');
     const confidenceText = confidenceScore > 0.7 ? 'High' : (confidenceScore > 0.4 ? 'Medium' : 'Low');
-    
+
     document.getElementById('detailConfidence').innerHTML = `
         <span class="badge bg-${confidenceClass} text-white">
             ${(confidenceScore * 100).toFixed(0)}% (${confidenceText})
         </span>
     `;
-    
+
     document.getElementById('detailStatus').innerHTML = `
         <span class="badge ${detection.detection_status === 'Active' ? 'bg-warning' : 'bg-success'}">
             ${detection.detection_status || 'Unknown'}
         </span>
     `;
-    
+
     document.getElementById('detailRiskLevel').innerHTML = `
         <span class="badge bg-${confidenceClass} text-white">
             ${confidenceText} Risk
         </span>
     `;
-    
+
     // Set up the "Mark as Resolved" button
     const resolveButton = document.getElementById('markAsResolvedBtn');
     if (detection.detection_status === 'Active') {
@@ -990,42 +1101,42 @@ function markDetectionAsResolved(detectionId) {
             'Content-Type': 'application/json'
         }
     })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`API returned status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log('Detection marked as resolved:', data);
-        // Show success message
-        document.getElementById('detailStatus').innerHTML = `
-            <span class="badge bg-success">Resolved</span>
-        `;
-        // Hide the resolve button
-        document.getElementById('markAsResolvedBtn').style.display = 'none';
-        // Refresh the detections list
-        requestCameraDetections(10);
-    })
-    .catch(error => {
-        console.error('Error marking detection as resolved:', error);
-        alert(`Error: ${error.message}`);
-    });
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`API returned status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Detection marked as resolved:', data);
+            // Show success message
+            document.getElementById('detailStatus').innerHTML = `
+                <span class="badge bg-success">Resolved</span>
+            `;
+            // Hide the resolve button
+            document.getElementById('markAsResolvedBtn').style.display = 'none';
+            // Refresh the detections list
+            requestCameraDetections(10);
+        })
+        .catch(error => {
+            console.error('Error marking detection as resolved:', error);
+            alert(`Error: ${error.message}`);
+        });
 }
 
 function updateFireStatusIndicator(detections) {
     const fireStatus = document.querySelector('.fire-status');
     if (!fireStatus || detections.length === 0) return;
-    
+
     // Check if there are any active detections
     const activeDetections = detections.filter(d => d.detection_status === 'Active');
-    
+
     if (activeDetections.length > 0) {
         // Sort by confidence score to get the highest risk detection
         activeDetections.sort((a, b) => parseFloat(b.confidence_score) - parseFloat(a.confidence_score));
         const highestRisk = activeDetections[0];
         const confidenceScore = parseFloat(highestRisk.confidence_score) || 0;
-        
+
         if (confidenceScore > 0.7) {
             // High risk fire detected
             fireStatus.className = 'fire-status status-danger';
@@ -1060,19 +1171,19 @@ function updateFireStatusIndicator(detections) {
 
 function updateDetectionsTable(detections) {
     console.log('Updating detections table with', detections.length, 'detections');
-    
+
     // Set the current view to detections page
     currentDetectionView = 'detections';
-    
+
     const tableBody = document.getElementById('detectionsTableBody');
     if (!tableBody) {
         console.error('Detections table body not found');
         return;
     }
-    
+
     // Clear loading state
     tableBody.innerHTML = '';
-    
+
     if (detections.length === 0) {
         tableBody.innerHTML = `
             <tr>
@@ -1086,7 +1197,7 @@ function updateDetectionsTable(detections) {
         `;
         return;
     }
-    
+
     // Update the table with detection data
     detections.forEach((detection, index) => {
         // Determine status badge class
@@ -1096,11 +1207,11 @@ function updateDetectionsTable(detections) {
         } else if (detection.status === 'active') {
             statusBadgeClass = 'badge-soft-danger';
         }
-        
+
         // Determine risk level badge class
         let riskBadgeClass = 'badge-soft-warning';
         let riskText = 'Medium';
-        
+
         if (detection.confidence && detection.confidence > 0.8) {
             riskBadgeClass = 'badge-soft-danger';
             riskText = 'High';
@@ -1108,10 +1219,10 @@ function updateDetectionsTable(detections) {
             riskBadgeClass = 'badge-soft-success';
             riskText = 'Low';
         }
-        
+
         // Format the timestamp
         let formattedTime = detection.formatted_time || 'Unknown';
-        
+
         // Create image HTML with fallback
         let imageHtml = '';
         if (detection.image_url) {
@@ -1126,7 +1237,7 @@ function updateDetectionsTable(detections) {
                      class="img-thumbnail detection-thumbnail">
             `;
         }
-        
+
         // Create action buttons based on status
         let actionButtons = `
             <button type="button" class="btn btn-sm btn-primary view-detection" 
@@ -1134,7 +1245,7 @@ function updateDetectionsTable(detections) {
                 <i class="fas fa-eye"></i> View
             </button>
         `;
-        
+
         if (detection.status !== 'resolved') {
             actionButtons += `
                 <button type="button" class="btn btn-sm btn-success ms-1 resolve-detection" 
@@ -1143,7 +1254,7 @@ function updateDetectionsTable(detections) {
                 </button>
             `;
         }
-        
+
         // Create table row
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -1169,15 +1280,15 @@ function updateDetectionsTable(detections) {
             <td>${detection.analysis || 'No analysis available'}</td>
             <td>${actionButtons}</td>
         `;
-        
+
         // Add data attributes for filtering
         row.dataset.detectionId = detection.id || index;
         row.dataset.status = detection.status || 'unknown';
         row.dataset.location = detection.location || 'unknown';
-        
+
         tableBody.appendChild(row);
     });
-    
+
     // Add event listeners to the buttons
     addDetectionButtonEventListeners();
 }
@@ -1190,7 +1301,7 @@ function addDetectionButtonEventListeners() {
             viewDetectionDetails(detectionId);
         });
     });
-    
+
     // Resolve detection buttons
     document.querySelectorAll('.resolve-detection').forEach(button => {
         button.addEventListener('click', function() {
@@ -1205,10 +1316,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check if we're on the detections page
     if (window.location.pathname.includes('/detections')) {
         console.log('Setting up detections page event listeners');
-        
+
         // Set the current view to detections page
         currentDetectionView = 'detections';
-        
+
         // Status filter
         const statusFilter = document.getElementById('detectionStatusFilter');
         if (statusFilter) {
@@ -1216,9 +1327,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const status = this.value;
                 const limit = document.getElementById('detectionLimitFilter')?.value || 20;
                 const location = document.getElementById('detectionLocationFilter')?.value || null;
-                
+
                 console.log(`Filtering detections by status: ${status}, limit: ${limit}, location: ${location}`);
-                
+
                 // Show loading state
                 const tableBody = document.getElementById('detectionsTableBody');
                 if (tableBody) {
@@ -1233,12 +1344,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         </tr>
                     `;
                 }
-                
+
                 // Request filtered detections
                 requestCameraDetections(limit, status, location);
             });
         }
-        
+
         // Location filter
         const locationFilter = document.getElementById('detectionLocationFilter');
         if (locationFilter) {
@@ -1246,9 +1357,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const location = this.value;
                 const status = document.getElementById('detectionStatusFilter')?.value || null;
                 const limit = document.getElementById('detectionLimitFilter')?.value || 20;
-                
+
                 console.log(`Filtering detections by location: ${location}, status: ${status}, limit: ${limit}`);
-                
+
                 // Show loading state
                 const tableBody = document.getElementById('detectionsTableBody');
                 if (tableBody) {
@@ -1263,12 +1374,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         </tr>
                     `;
                 }
-                
+
                 // Request filtered detections
                 requestCameraDetections(limit, status, location);
             });
         }
-        
+
         // Limit filter
         const limitFilter = document.getElementById('detectionLimitFilter');
         if (limitFilter) {
@@ -1276,9 +1387,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const limit = this.value;
                 const status = document.getElementById('detectionStatusFilter')?.value || null;
                 const location = document.getElementById('detectionLocationFilter')?.value || null;
-                
+
                 console.log(`Filtering detections by limit: ${limit}, status: ${status}, location: ${location}`);
-                
+
                 // Show loading state
                 const tableBody = document.getElementById('detectionsTableBody');
                 if (tableBody) {
@@ -1293,12 +1404,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         </tr>
                     `;
                 }
-                
+
                 // Request filtered detections
                 requestCameraDetections(limit, status, location);
             });
         }
-        
+
         // Refresh button
         const refreshButton = document.getElementById('refreshDetectionsBtn');
         if (refreshButton) {
@@ -1306,9 +1417,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const status = document.getElementById('detectionStatusFilter')?.value || null;
                 const location = document.getElementById('detectionLocationFilter')?.value || null;
                 const limit = document.getElementById('detectionLimitFilter')?.value || 20;
-                
+
                 console.log(`Refreshing detections with status: ${status}, location: ${location}, limit: ${limit}`);
-                
+
                 // Show loading state
                 const tableBody = document.getElementById('detectionsTableBody');
                 if (tableBody) {
@@ -1323,7 +1434,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         </tr>
                     `;
                 }
-                
+
                 // Request filtered detections
                 requestCameraDetections(limit, status, location);
             });
@@ -1368,18 +1479,18 @@ function setupAutoRefresh() {
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM content loaded, initializing Socket.IO event handlers');
-    
+
     // Setup Socket.IO event handlers
     setupAutoRefresh();
-    
+
     // Request initial data if on relevant pages
     const currentPath = window.location.pathname;
-    
+
     if (currentPath.includes('/dashboard')) {
         console.log('On dashboard page, requesting initial data');
         requestAdminData();
         requestDashboardStats();
-        
+
         // Add a small delay to ensure socket connection is established
         setTimeout(() => {
             console.log('Requesting camera detections after delay');
@@ -1396,39 +1507,39 @@ document.addEventListener('DOMContentLoaded', function() {
         allDetectionsModal.addEventListener('show.bs.modal', function() {
             console.log('Detection modal opened, requesting data');
             currentDetectionView = 'modal';
-            
+
             // Get current filter values
             const limit = document.getElementById('detectionLimitFilter').value || 10;
             const status = document.getElementById('detectionStatusFilter').value || null;
-            
+
             // Request data for the modal
             requestCameraDetections(limit, status);
         });
-        
+
         allDetectionsModal.addEventListener('hidden.bs.modal', function() {
             currentDetectionView = 'dashboard';
         });
     }
-    
+
     // Handle filter changes in the modal
     const statusFilter = document.getElementById('detectionStatusFilter');
     const limitFilter = document.getElementById('detectionLimitFilter');
-    
+
     if (statusFilter) {
         statusFilter.addEventListener('change', function() {
             const limit = limitFilter.value || 10;
             const status = this.value || null;
-            
+
             currentDetectionView = 'modal';
             requestCameraDetections(limit, status);
         });
     }
-    
+
     if (limitFilter) {
         limitFilter.addEventListener('change', function() {
             const limit = this.value || 10;
             const status = statusFilter.value || null;
-            
+
             currentDetectionView = 'modal';
             requestCameraDetections(limit, status);
         });
@@ -1476,4 +1587,41 @@ function rejectUser(userId) {
         .catch(error => {
             console.error('Error rejecting user:', error);
         });
+}
+
+// Function to request all sensor data for accurate counting
+function requestAllSensorData() {
+    socket.emit('request_all_sensor_data', {});
+    lastAllDataRequest = Date.now();
+}
+
+socket.on('all_sensor_data', function(data) {
+    console.log('Received all sensor data');
+
+    // Store the complete datasets
+    if (data.fireSensorData) {
+        allFireSensorData = data.fireSensorData;
+    }
+    if (data.smokeSensorData) {
+        allSmokeSensorData = data.smokeSensorData;
+    }
+    if (data.dht11SensorData) {
+        allDHT11SensorData = data.dht11SensorData;
+    }
+
+    // Update the overview cards with the complete data
+    updateSensorOverviewCardsWithFullData();
+});
+
+// Update sensor overview cards using the complete datasets
+function updateSensorOverviewCardsWithFullData() {
+    // Create a data object with the complete datasets
+    const fullData = {
+        fireSensorData: allFireSensorData,
+        smokeSensorData: allSmokeSensorData,
+        dht11SensorData: allDHT11SensorData
+    };
+
+    // Update the overview cards using the complete data
+    updateSensorOverviewCards(fullData, true);
 }
