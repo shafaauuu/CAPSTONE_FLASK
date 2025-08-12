@@ -2,7 +2,7 @@ const API_BASE_URL = API_CONFIG.BASE_URL;
 console.log('Using API base URL:', API_BASE_URL);
 
 // Initialize Socket.IO connection
-const socket = io();
+let socket = io();
 
 // Connection status handlers
 socket.on('connect', function() {

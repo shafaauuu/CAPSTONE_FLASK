@@ -1,0 +1,921 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Camera Detections {% endblock %}
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+    <div class="py-4">
+        <nav aria-label="breadcrumb" class="d-none d-md-inline-block">
+            <ol class="breadcrumb breadcrumb-dark breadcrumb-transparent">
+                <li class="breadcrumb-item">
+                    <a href="/">
+                        <span class="fas fa-home"></span>
+                    </a>
+                </li>
+                <li class="breadcrumb-item"><a href="">Monitoring</a></li>
+                <li class="breadcrumb-item"><a href="/dashboard">Camera</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Detections</li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between w-100 flex-wrap">
+            <div class="mb-3 mb-lg-0">
+                <h1 class="h4">Camera Detections</h1>
+                <p class="mb-0">View all camera detection events with details and images.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow mb-4">
+        <div class="card-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h2 class="fs-5 fw-bold mb-0">Detection Filters</h2>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body py-2">
+                            <div class="row">
+                                <div class="col-12 col-md-3 col-xl-2">
+                                    <div class="form-group">
+                                        <label for="detectionLimitFilter" class="form-label">Show</label>
+                                        <select class="form-select form-select-sm" id="detectionLimitFilter">
+                                            <option value="10">10</option>
+                                            <option value="20" selected>20</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                            <option value="200">200</option>
+                                            <option value="500">500</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-3 col-xl-2">
+                                    <div class="form-group">
+                                        <label for="detectionStatusFilter" class="form-label">Status</label>
+                                        <select class="form-select form-select-sm" id="detectionStatusFilter">
+                                            <option value="">All</option>
+                                            <option value="Active">Active</option>
+                                            <option value="Resolved">Resolved</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-3 col-xl-2">
+                                    <div class="form-group">
+                                        <label for="detectionLocationFilter" class="form-label">Location</label>
+                                        <select class="form-select form-select-sm" id="detectionLocationFilter">
+                                            <option value="">All</option>
+                                            <option value="DroidCam">DroidCam</option>
+                                            <option value="Webcam">Webcam</option>
+                                            <option value="Dashboard Camera">Dashboard Camera</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-3 col-xl-2">
+                                    <div class="form-group">
+                                        <label for="dateRangeType" class="form-label">Date Range</label>
+                                        <select class="form-select form-select-sm" id="dateRangeType">
+                                            <option value="">All Time</option>
+                                            <option value="monthly">Monthly</option>
+                                            <option value="yearly">Yearly</option>
+                                            <option value="custom">Custom Range</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-4 col-xl-3">
+                                    <div id="monthSelector" class="form-group d-none">
+                                        <label for="monthYearPicker" class="form-label">Select Month</label>
+                                        <input type="month" class="form-control form-control-sm" id="monthYearPicker">
+                                    </div>
+                                    <div id="yearSelector" class="form-group d-none">
+                                        <label for="yearPicker" class="form-label">Select Year</label>
+                                        <select class="form-select form-select-sm" id="yearPicker">
+                                            <!-- Will be populated by JavaScript -->
+                                        </select>
+                                    </div>
+                                    <div id="customRangeSelector" class="form-group d-none">
+                                        <label for="dateRangePicker" class="form-label">Custom Range</label>
+                                        <div class="input-group input-group-sm">
+                                            <input type="date" class="form-control form-control-sm" id="startDate">
+                                            <span class="input-group-text">to</span>
+                                            <input type="date" class="form-control form-control-sm" id="endDate">
+                                        </div>
+                                    </div>
+                                </div>
+{#                                <!-- Chart Button -->#}
+{#                                <div class="col-12 col-md-2 col-xl-2 offset-md-1 align-self-end">#}
+{#                                    <div class="form-group mt-3">#}
+{#                                        <button class="btn btn-sm btn-primary w-100" id="generateChartBtn" disabled>#}
+{#                                            <span class="fas fa-chart-bar me-1"></span> Generate Chart#}
+{#                                        </button>#}
+{#                                    </div>#}
+{#                                </div>#}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow">
+        <div class="card-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h2 class="fs-5 fw-bold mb-0">Detection Events</h2>
+                </div>
+                <div class="col text-end">
+                    <button class="btn btn-sm btn-primary" id="refreshDetectionsBtn">
+                        <span class="fas fa-sync-alt me-1"></span> Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-centered table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Location</th>
+                            <th>Time</th>
+                            <th>Confidence</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="detectionsTableBody">
+                        <tr>
+                            <td colspan="6" class="text-center">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="mt-2">Loading detection data...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detection Details Modal -->
+    <div class="modal fade" id="detectionModal" tabindex="-1" role="dialog" aria-labelledby="detectionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="detectionModalLabel">Detection Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="detectionModalBody">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detection Chart Modal -->
+    <div class="modal fade" id="chartModal" tabindex="-1" role="dialog" aria-labelledby="chartModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="chartModalLabel">Detection Statistics</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="chart-container" style="position: relative; height:400px; width:100%">
+                                <canvas id="detectionsChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow mb-4">
+                                <div class="card-body">
+                                    <h5 class="card-title">Detection Summary</h5>
+                                    <div id="chartSummary">
+                                        <p>Loading summary data...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow mb-4">
+                                <div class="card-body">
+                                    <h5 class="card-title">Location Breakdown</h5>
+                                    <div id="locationBreakdown">
+                                        <p>Loading location data...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="downloadChartBtn">
+                        <span class="fas fa-download me-1"></span> Download Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set page as detections page for socket.io
+        currentDetectionView = 'detections';
+
+        // Initialize socket connection if not already initialized
+        if (typeof socket === 'undefined') {
+            console.log('Initializing socket connection');
+            socket = io();
+        }
+
+        // Function to request camera detections with filters
+        function requestCameraDetections(limit = 20, status = null, location = null, dateRangeType = null, dateRangeValue = null) {
+            console.log(`Requesting camera detections: limit=${limit}, status=${status}, location=${location}, dateRangeType=${dateRangeType}, dateRangeValue=${dateRangeValue}`);
+
+            // Show loading indicator
+            const tableBody = document.getElementById('detectionsTableBody');
+            if (tableBody) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading detection data...</p>
+                        </td>
+                    </tr>
+                `;
+            }
+
+            // Save the current filters for client-side filtering
+            window.currentLocationFilter = location;
+            window.currentStatusFilter = status;
+            window.currentDateRangeTypeFilter = dateRangeType;
+            window.currentDateRangeValueFilter = dateRangeValue;
+
+            // Determine which endpoint to use based on status
+            const endpoint = status === 'Active' ? 'active' : 'recent';
+
+            // Emit socket event to request data with filters
+            socket.emit('request_camera_detections', {
+                limit: limit,
+                status: status,
+                endpoint: endpoint,
+                dateRangeType: dateRangeType,
+                dateRangeValue: dateRangeValue
+            });
+        }
+
+        // Request initial data with default values
+        const limit = document.getElementById('detectionLimitFilter').value || 20;
+        const status = document.getElementById('detectionStatusFilter').value || null;
+        const location = document.getElementById('detectionLocationFilter')?.value || null;
+        requestCameraDetections(limit, status, location);
+
+        // Initialize date range selectors
+        const dateRangeTypeFilter = document.getElementById('dateRangeType');
+        const monthSelector = document.getElementById('monthSelector');
+        const yearSelector = document.getElementById('yearSelector');
+        const customRangeSelector = document.getElementById('customRangeSelector');
+        const monthYearPicker = document.getElementById('monthYearPicker');
+        const yearPicker = document.getElementById('yearPicker');
+        const startDateInput = document.getElementById('startDate');
+        const endDateInput = document.getElementById('endDate');
+        const generateChartBtn = document.getElementById('generateChartBtn');
+
+        console.log('Generate Chart Button:', generateChartBtn);
+
+        // Populate year picker with last 5 years
+        const currentYear = new Date().getFullYear();
+        for (let year = currentYear; year >= currentYear - 4; year--) {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            yearPicker.appendChild(option);
+        }
+
+        // Set default values for date inputs
+        const today = new Date();
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setMonth(today.getMonth() - 1);
+
+        startDateInput.valueAsDate = oneMonthAgo;
+        endDateInput.valueAsDate = today;
+        monthYearPicker.value = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}`;
+
+        // Handle date range type changes
+        if (dateRangeTypeFilter) {
+            dateRangeTypeFilter.addEventListener('change', function() {
+                const selectedValue = this.value;
+
+                // Hide all selectors first
+                monthSelector.classList.add('d-none');
+                yearSelector.classList.add('d-none');
+                customRangeSelector.classList.add('d-none');
+
+                // Show the appropriate selector based on selection
+                if (selectedValue === 'monthly') {
+                    monthSelector.classList.remove('d-none');
+                    generateChartBtn.disabled = false;
+                } else if (selectedValue === 'yearly') {
+                    yearSelector.classList.remove('d-none');
+                    generateChartBtn.disabled = false;
+                } else if (selectedValue === 'custom') {
+                    customRangeSelector.classList.remove('d-none');
+                    generateChartBtn.disabled = false;
+                } else {
+                    // All time selected
+                    generateChartBtn.disabled = true;
+                }
+
+                // Request data with the new filter
+                const limit = document.getElementById('detectionLimitFilter').value || 20;
+                const status = document.getElementById('detectionStatusFilter').value || null;
+                const location = document.getElementById('detectionLocationFilter').value || null;
+                const dateRangeType = selectedValue;
+                let dateRangeValue = null;
+
+                if (dateRangeType === 'monthly') {
+                    dateRangeValue = monthYearPicker.value;
+                } else if (dateRangeType === 'yearly') {
+                    dateRangeValue = yearPicker.value;
+                } else if (dateRangeType === 'custom') {
+                    dateRangeValue = `${startDateInput.value} to ${endDateInput.value}`;
+                }
+
+                // Store current filters for chart generation
+                window.currentDateRangeTypeFilter = dateRangeType;
+                window.currentDateRangeValueFilter = dateRangeValue;
+                window.currentLocationFilter = location;
+                window.currentStatusFilter = status;
+
+                // Apply filters to existing data instead of requesting new data
+                if (window.currentDetectionData) {
+                    socket.emit('camera_detections', window.currentDetectionData);
+                } else {
+                    requestCameraDetections(limit, status, location, dateRangeType, dateRangeValue);
+                }
+            });
+        }
+
+        // Add event listeners for date inputs
+        if (monthYearPicker) {
+            monthYearPicker.addEventListener('change', function() {
+                if (window.currentDetectionData) {
+                    window.currentDateRangeValueFilter = this.value;
+                    socket.emit('camera_detections', window.currentDetectionData);
+                }
+            });
+        }
+
+        if (yearPicker) {
+            yearPicker.addEventListener('change', function() {
+                if (window.currentDetectionData) {
+                    window.currentDateRangeValueFilter = this.value;
+                    socket.emit('camera_detections', window.currentDetectionData);
+                }
+            });
+        }
+
+        if (startDateInput && endDateInput) {
+            startDateInput.addEventListener('change', updateCustomDateRange);
+            endDateInput.addEventListener('change', updateCustomDateRange);
+
+            function updateCustomDateRange() {
+                if (startDateInput.value && endDateInput.value && window.currentDetectionData) {
+                    window.currentDateRangeValueFilter = `${startDateInput.value} to ${endDateInput.value}`;
+                    socket.emit('camera_detections', window.currentDetectionData);
+                }
+            }
+        }
+
+        // Add event listener for location filter
+        const locationFilter = document.getElementById('detectionLocationFilter');
+        if (locationFilter) {
+            locationFilter.addEventListener('change', function() {
+                window.currentLocationFilter = this.value;
+                if (window.currentDetectionData) {
+                    socket.emit('camera_detections', window.currentDetectionData);
+                }
+            });
+        }
+
+        // Add event listener for status filter
+        const statusFilter = document.getElementById('detectionStatusFilter');
+        if (statusFilter) {
+            statusFilter.addEventListener('change', function() {
+                window.currentStatusFilter = this.value;
+                if (window.currentDetectionData) {
+                    socket.emit('camera_detections', window.currentDetectionData);
+                }
+            });
+        }
+
+        // Add event listener for limit filter
+        const limitFilter = document.getElementById('detectionLimitFilter');
+        if (limitFilter) {
+            limitFilter.addEventListener('change', function() {
+                const limit = this.value;
+                const status = document.getElementById('detectionStatusFilter').value || null;
+                const location = document.getElementById('detectionLocationFilter').value || null;
+                const dateRangeType = dateRangeTypeFilter ? dateRangeTypeFilter.value : null;
+                let dateRangeValue = null;
+
+                if (dateRangeType === 'monthly') {
+                    dateRangeValue = monthYearPicker.value;
+                } else if (dateRangeType === 'yearly') {
+                    dateRangeValue = yearPicker.value;
+                } else if (dateRangeType === 'custom') {
+                    dateRangeValue = `${startDateInput.value} to ${endDateInput.value}`;
+                }
+
+                requestCameraDetections(limit, status, location, dateRangeType, dateRangeValue);
+            });
+        }
+
+        // Listen for camera detection data from server
+        socket.on('camera_detections', function(data) {
+            console.log('Received camera detections:', data);
+
+            // Store the data for chart generation
+            window.currentDetectionData = data;
+
+            // Extract unique locations for the location filter
+            const uniqueLocations = [...new Set(data.map(item => item.camera_location || 'Unknown'))];
+            console.log('Unique locations:', uniqueLocations);
+
+            const tableBody = document.getElementById('detectionsTableBody');
+            if (!tableBody) return;
+
+            // Apply client-side filtering
+            let filteredData = [...data]; // Create a copy of the data array
+
+            // Apply location filter if set
+            if (window.currentLocationFilter && window.currentLocationFilter !== '') {
+                console.log('Applying location filter:', window.currentLocationFilter);
+                filteredData = filteredData.filter(item =>
+                    (item.camera_location || 'Unknown') === window.currentLocationFilter
+                );
+                console.log('After location filter:', filteredData.length);
+            }
+
+            // Apply status filter if set (in case server-side filtering didn't work)
+            if (window.currentStatusFilter && window.currentStatusFilter !== '') {
+                console.log('Applying status filter:', window.currentStatusFilter);
+                filteredData = filteredData.filter(item =>
+                    item.detection_status === window.currentStatusFilter
+                );
+                console.log('After status filter:', filteredData.length);
+            }
+
+            // Apply date range filter if set
+            if (window.currentDateRangeTypeFilter && window.currentDateRangeValueFilter) {
+                console.log('Applying date filter:', window.currentDateRangeTypeFilter, window.currentDateRangeValueFilter);
+                const dateRangeType = window.currentDateRangeTypeFilter;
+                const dateRangeValue = window.currentDateRangeValueFilter;
+
+                if (dateRangeType === 'monthly') {
+                    const [year, month] = dateRangeValue.split('-');
+                    filteredData = filteredData.filter(item => {
+                        const detectionDate = new Date(item.detection_timestamp || item.created_at);
+                        return detectionDate.getMonth() + 1 === parseInt(month) &&
+                               detectionDate.getFullYear() === parseInt(year);
+                    });
+                } else if (dateRangeType === 'yearly') {
+                    const year = parseInt(dateRangeValue);
+                    filteredData = filteredData.filter(item => {
+                        const detectionDate = new Date(item.detection_timestamp || item.created_at);
+                        return detectionDate.getFullYear() === year;
+                    });
+                } else if (dateRangeType === 'custom') {
+                    const [startDateStr, endDateStr] = dateRangeValue.split(' to ');
+                    const startDate = new Date(startDateStr);
+                    startDate.setHours(0, 0, 0, 0); // Start of day
+
+                    const endDate = new Date(endDateStr);
+                    endDate.setHours(23, 59, 59, 999); // End of day
+
+                    filteredData = filteredData.filter(item => {
+                        const detectionDate = new Date(item.detection_timestamp || item.created_at);
+                        return detectionDate >= startDate && detectionDate <= endDate;
+                    });
+                }
+                console.log('After date filter:', filteredData.length);
+            }
+
+            if (filteredData.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center">
+                            <p class="my-3">No detection records found</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            // Clear the table
+            tableBody.innerHTML = '';
+
+            // Populate the table with data
+            filteredData.forEach(detection => {
+                const row = document.createElement('tr');
+
+                // Format the timestamp
+                const timestamp = new Date(detection.detection_timestamp || detection.created_at);
+                const formattedDate = timestamp.toLocaleDateString();
+                const formattedTime = timestamp.toLocaleTimeString();
+
+                // Create the row content
+                row.innerHTML = `
+                    <td>${detection.detection_id || 'N/A'}</td>
+                    <td>${detection.camera_location || 'Unknown'}</td>
+                    <td>${formattedDate} ${formattedTime}</td>
+                    <td>${detection.confidence_score ? (detection.confidence_score * 100).toFixed(1) + '%' : 'N/A'}</td>
+                    <td>
+                        <span class="badge bg-${detection.detection_status === 'Active' ? 'danger' : 'success'}">
+                            ${detection.detection_status || 'Unknown'}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-primary view-detection" data-id="${detection.detection_id}">
+                            View
+                        </button>
+                    </td>
+                `;
+
+                tableBody.appendChild(row);
+            });
+
+            // Add event listeners to view buttons
+            document.querySelectorAll('.view-detection').forEach(button => {
+                button.addEventListener('click', function() {
+                    const detectionId = this.getAttribute('data-id');
+                    console.log(`Viewing detection ${detectionId}`);
+
+                    // Find the detection in our data
+                    const detection = filteredData.find(d => d.detection_id == detectionId);
+
+                    if (detection) {
+                        // Populate modal with detection details
+                        document.getElementById('detectionModalLabel').textContent = `Detection #${detection.detection_id}`;
+
+                        // Format the timestamp
+                        const timestamp = new Date(detection.detection_timestamp || detection.created_at);
+                        const formattedDateTime = timestamp.toLocaleString();
+
+                        // Populate modal body
+                        const modalBody = document.getElementById('detectionModalBody');
+                        modalBody.innerHTML = `
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Location:</strong> ${detection.camera_location || 'Unknown'}</p>
+                                    <p><strong>Timestamp:</strong> ${formattedDateTime}</p>
+                                    <p><strong>Confidence:</strong> ${detection.confidence_score ? (detection.confidence_score * 100).toFixed(1) + '%' : 'N/A'}</p>
+                                    <p><strong>Status:</strong>
+                                        <span class="badge bg-${detection.detection_status === 'Active' ? 'danger' : 'success'}">
+                                            ${detection.detection_status || 'Unknown'}
+                                        </span>
+                                    </p>
+                                    <p><strong>Alert ID:</strong> ${detection.alert_log_id || 'Not linked'}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    ${detection.image_path ?
+                                        `<img src="${detection.image_path}" class="img-fluid" alt="Fire Detection Image">` :
+                                        '<div class="alert alert-info">No image available</div>'
+                                    }
+                                </div>
+                            </div>
+                        `;
+
+                        // Show the modal
+                        const detectionModal = new bootstrap.Modal(document.getElementById('detectionModal'));
+                        detectionModal.show();
+                    } else {
+                        console.error(`Detection ${detectionId} not found in data`);
+                        notyf.error('Detection details not found');
+                    }
+                });
+            });
+        });
+
+        // Handle chart generation
+        if (generateChartBtn) {
+            console.log('Adding click event listener to Generate Chart button');
+            generateChartBtn.addEventListener('click', function(e) {
+                console.log('Generate Chart button clicked');
+                e.preventDefault();
+
+                const dateRangeType = dateRangeTypeFilter.value;
+                console.log('Date Range Type:', dateRangeType);
+
+                let dateRangeValue = null;
+                let chartTitle = '';
+
+                if (dateRangeType === 'monthly') {
+                    dateRangeValue = monthYearPicker.value;
+                    const date = new Date(dateRangeValue);
+                    chartTitle = `Detection Statistics for ${date.toLocaleString('default', { month: 'long' })} ${date.getFullYear()}`;
+                } else if (dateRangeType === 'yearly') {
+                    dateRangeValue = yearPicker.value;
+                    chartTitle = `Detection Statistics for ${dateRangeValue}`;
+                } else if (dateRangeType === 'custom') {
+                    dateRangeValue = `${startDateInput.value} to ${endDateInput.value}`;
+                    chartTitle = `Detection Statistics from ${new Date(startDateInput.value).toLocaleDateString()} to ${new Date(endDateInput.value).toLocaleDateString()}`;
+                }
+                
+                console.log('Date Range Value:', dateRangeValue);
+                console.log('Chart Title:', chartTitle);
+                
+                // Get the filtered data
+                let filteredData = window.currentDetectionData || [];
+                
+                // Apply location filter if set
+                if (window.currentLocationFilter && window.currentLocationFilter !== '') {
+                    filteredData = filteredData.filter(item => 
+                        (item.camera_location || 'Unknown') === window.currentLocationFilter
+                    );
+                }
+                
+                // Apply status filter if set
+                if (window.currentStatusFilter && window.currentStatusFilter !== '') {
+                    filteredData = filteredData.filter(item =>
+                        item.detection_status === window.currentStatusFilter
+                    );
+                }
+                
+                // Apply date range filter
+                if (dateRangeType === 'monthly') {
+                    const [year, month] = dateRangeValue.split('-');
+                    filteredData = filteredData.filter(item => {
+                        const detectionDate = new Date(item.detection_timestamp || item.created_at);
+                        return detectionDate.getMonth() + 1 === parseInt(month) && 
+                               detectionDate.getFullYear() === parseInt(year);
+                    });
+                } else if (dateRangeType === 'yearly') {
+                    const year = parseInt(dateRangeValue);
+                    filteredData = filteredData.filter(item => {
+                        const detectionDate = new Date(item.detection_timestamp || item.created_at);
+                        return detectionDate.getFullYear() === year;
+                    });
+                } else if (dateRangeType === 'custom') {
+                    const [startDateStr, endDateStr] = dateRangeValue.split(' to ');
+                    const startDate = new Date(startDateStr);
+                    startDate.setHours(0, 0, 0, 0); // Start of day
+                    
+                    const endDate = new Date(endDateStr);
+                    endDate.setHours(23, 59, 59, 999); // End of day
+                    
+                    filteredData = filteredData.filter(item => {
+                        const detectionDate = new Date(item.detection_timestamp || item.created_at);
+                        return detectionDate >= startDate && detectionDate <= endDate;
+                    });
+                }
+                
+                console.log('Filtered Data for Chart:', filteredData);
+                
+                if (!filteredData || filteredData.length === 0) {
+                    alert('No detection data available for the selected period.');
+                    return;
+                }
+                
+                // Add location to chart title if filtered by location
+                if (window.currentLocationFilter && window.currentLocationFilter !== '') {
+                    chartTitle += ` (Location: ${window.currentLocationFilter})`;
+                }
+                
+                // Process data for chart
+                generateDetectionChart(filteredData, chartTitle);
+                
+                // Show the chart modal
+                const chartModal = new bootstrap.Modal(document.getElementById('chartModal'));
+                chartModal.show();
+            });
+        } else {
+            console.error('Generate Chart button not found in the DOM');
+        }
+
+        // Function to generate chart from detection data
+        window.generateDetectionChart = function(data, title) {
+            console.log('Generating chart with data:', data);
+            console.log('Chart title:', title);
+            
+            const chartCanvas = document.getElementById('detectionsChart');
+            if (!chartCanvas) {
+                console.error('Chart canvas element not found');
+                return;
+            }
+            
+            const ctx = chartCanvas.getContext('2d');
+            if (!ctx) {
+                console.error('Could not get 2D context from canvas');
+                return;
+            }
+            
+            // Clear any existing chart
+            if (window.detectionsChart) {
+                console.log('Destroying existing chart');
+                window.detectionsChart.destroy();
+            }
+            
+            // Process data for chart
+            const dateLabels = [];
+            const activeData = [];
+            const resolvedData = [];
+            const locationCounts = {};
+            
+            // Group data by date and status
+            const groupedData = {};
+            
+            data.forEach(detection => {
+                const timestamp = detection.detection_timestamp || detection.created_at;
+                if (!timestamp) {
+                    console.warn('Detection missing timestamp:', detection);
+                    return;
+                }
+                
+                const date = new Date(timestamp);
+                const dateStr = date.toLocaleDateString();
+                
+                if (!groupedData[dateStr]) {
+                    groupedData[dateStr] = { active: 0, resolved: 0 };
+                }
+                
+                if (detection.detection_status === 'Active') {
+                    groupedData[dateStr].active++;
+                } else {
+                    groupedData[dateStr].resolved++;
+                }
+                
+                // Count by location
+                const location = detection.camera_location || 'Unknown';
+                if (!locationCounts[location]) {
+                    locationCounts[location] = 0;
+                }
+                locationCounts[location]++;
+            });
+            
+            // Sort dates and prepare chart data
+            const sortedDates = Object.keys(groupedData).sort((a, b) => new Date(a) - new Date(b));
+            
+            sortedDates.forEach(date => {
+                dateLabels.push(date);
+                activeData.push(groupedData[date].active);
+                resolvedData.push(groupedData[date].resolved);
+            });
+            
+            console.log('Chart data prepared:', {
+                labels: dateLabels,
+                active: activeData,
+                resolved: resolvedData
+            });
+            
+            try {
+                // Create chart
+                window.detectionsChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: dateLabels,
+                        datasets: [
+                            {
+                                label: 'Active Detections',
+                                data: activeData,
+                                backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                                borderColor: 'rgb(255, 99, 132)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Resolved Detections',
+                                data: resolvedData,
+                                backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                                borderColor: 'rgb(75, 192, 192)',
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: title,
+                                font: {
+                                    size: 16
+                                }
+                            },
+                            legend: {
+                                position: 'top'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Number of Detections'
+                                },
+                                ticks: {
+                                    precision: 0
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Date'
+                                }
+                            }
+                        }
+                    }
+                });
+                console.log('Chart created successfully');
+            } catch (error) {
+                console.error('Error creating chart:', error);
+            }
+            
+            // Update summary information
+            const totalDetections = data.length;
+            const activeDetections = data.filter(d => d.detection_status === 'Active').length;
+            const resolvedDetections = data.filter(d => d.detection_status === 'Resolved').length;
+            
+            const summaryHtml = `
+                <div class="mb-3">
+                    <p><strong>Total Detections:</strong> ${totalDetections}</p>
+                    <p><strong>Active Detections:</strong> ${activeDetections} (${totalDetections > 0 ? ((activeDetections / totalDetections) * 100).toFixed(1) : 0}%)</p>
+                    <p><strong>Resolved Detections:</strong> ${resolvedDetections} (${totalDetections > 0 ? ((resolvedDetections / totalDetections) * 100).toFixed(1) : 0}%)</p>
+                </div>
+            `;
+            
+            const chartSummary = document.getElementById('chartSummary');
+            if (chartSummary) {
+                chartSummary.innerHTML = summaryHtml;
+            } else {
+                console.error('Chart summary element not found');
+            }
+            
+            // Update location breakdown
+            let locationHtml = '<ul class="list-group">';
+            
+            Object.entries(locationCounts)
+                .sort((a, b) => b[1] - a[1]) // Sort by count (descending)
+                .forEach(([location, count]) => {
+                    const percentage = totalDetections > 0 ? ((count / totalDetections) * 100).toFixed(1) : 0;
+                    locationHtml += `
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            ${location}
+                            <span class="badge bg-primary rounded-pill">${count} (${percentage}%)</span>
+                        </li>
+                    `;
+                });
+            
+            locationHtml += '</ul>';
+            
+            const locationBreakdown = document.getElementById('locationBreakdown');
+            if (locationBreakdown) {
+                locationBreakdown.innerHTML = locationHtml;
+            } else {
+                console.error('Location breakdown element not found');
+            }
+            
+            // Handle download chart button
+            const downloadBtn = document.getElementById('downloadChartBtn');
+            if (downloadBtn) {
+                // Remove any existing event listeners
+                const newDownloadBtn = downloadBtn.cloneNode(true);
+                downloadBtn.parentNode.replaceChild(newDownloadBtn, downloadBtn);
+                
+                newDownloadBtn.addEventListener('click', function() {
+                    try {
+                        // Create a temporary link
+                        const link = document.createElement('a');
+                        link.download = `detection_report_${new Date().toISOString().split('T')[0]}.png`;
+                        link.href = document.getElementById('detectionsChart').toDataURL('image/png');
+                        link.click();
+                    } catch (error) {
+                        console.error('Error downloading chart:', error);
+                        alert('Failed to download chart: ' + error.message);
+                    }
+                });
+            } else {
+                console.error('Download chart button not found');
+            }
+        };
+    });
+</script>
+{% endblock javascripts %}
